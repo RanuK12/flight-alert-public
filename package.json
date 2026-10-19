@@ -1,0 +1,26 @@
+{
+  "name": "flight-alert-public",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Buscador publico de vuelos Argentina-Europa. Fuente: Travelpayouts.",
+  "main": "src/app.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/app.js",
+    "test": "jest --forceExit"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "mongoose": "^8.9.5",
+    "node-cron": "^3.0.3",
+    "node-telegram-bot-api": "^0.66.0",
+    "stripe": "^17.5.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
