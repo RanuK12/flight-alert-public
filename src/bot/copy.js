@@ -11,7 +11,7 @@ module.exports = {
   trialOn: 'Listo: tenés 7 días de prueba para las alertas y el informe de las 21. Después sigue con Pro.',
   trialOver: 'Se terminó la prueba. Pausé tus alertas. Con /pro las volvés a prender.',
   payOver: 'Se venció el pago. Pausé tus alertas. Cuando pagues, quedan como estaban.',
-  terms: 'Pro es una suscripción de 30 días. Podés dejar de renovar cuando quieras. Los precios de los vuelos son orientativos y pueden cambiar antes de comprar.',
+  terms: 'Pro es una suscripción de 30 días. Podés dejar de renovar cuando quieras. Los precios de los vuelos son orientativos y pueden cambiar antes de comprar. Privacidad: el país de la conexión lo estimamos con una base GeoIP local en el servidor. La IP no se manda a otro servicio.',
   paysupport: 'Si un pago no se acreditó, escribinos por este chat y lo vemos. No mandes datos de la tarjeta.',
   starsOff: 'El pago con estrellas todavía no está prendido.',
   welcome: (name) => {

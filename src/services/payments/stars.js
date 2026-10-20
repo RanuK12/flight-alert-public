@@ -9,12 +9,17 @@ const copy = require('../../bot/copy');
 
 const STARS_TOTAL = 250;
 
-let ephemeral = '';
+function assertSecret() {
+  if (process.env.NODE_ENV !== 'production') return;
+  if (!process.env.STARS_PAYLOAD_SECRET) {
+    throw new Error('STARS_PAYLOAD_SECRET missing');
+  }
+}
 
 function payloadSecret() {
-  if (process.env.STARS_PAYLOAD_SECRET) return process.env.STARS_PAYLOAD_SECRET;
-  if (!ephemeral) ephemeral = crypto.randomBytes(16).toString('hex');
-  return ephemeral;
+  const secret = process.env.STARS_PAYLOAD_SECRET;
+  if (!secret) throw new Error('STARS_PAYLOAD_SECRET missing');
+  return secret;
 }
 
 function sign(userId, nonce) {
@@ -60,11 +65,12 @@ async function checkStar(userId, pay, { requireCharge } = { requireCharge: true 
   if (row.currency !== 'XTR' || Number(row.total) !== STARS_TOTAL) return { ok: false, reason: 'guardado' };
   if (row.usedAt) {
     if (!requireCharge) return { ok: false, reason: 'usado' };
-    const seen = await col('Payment').findOne({
-      provider: 'stars',
-      ref: String(pay.telegram_payment_charge_id),
-    });
+    const chargeId = String(pay.telegram_payment_charge_id);
+    const seen = await col('Payment').findOne({ provider: 'stars', ref: chargeId });
     if (seen && String(seen.telegramUserId) === String(userId)) return { ok: true, replay: true };
+    if (pay.is_recurring && String(row.telegramUserId) === String(userId)) {
+      return { ok: true, recurring: true };
+    }
     return { ok: false, reason: 'usado' };
   }
   return { ok: true };
@@ -121,4 +127,11 @@ async function onSuccess(msg) {
   return result;
 }
 
-module.exports = { sendInvoice, onSuccess, issuePayload, validatePreCheckout, STARS_TOTAL };
+module.exports = {
+  sendInvoice,
+  onSuccess,
+  issuePayload,
+  validatePreCheckout,
+  assertSecret,
+  STARS_TOTAL,
+};

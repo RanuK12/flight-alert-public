@@ -60,3 +60,5 @@ services:
         sync: false
       - key: DEVICE_COOKIE_SECRET
         sync: false
+      - key: STARS_PAYLOAD_SECRET
+        sync: false

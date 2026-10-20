@@ -16,6 +16,7 @@ const link = require('./services/payments/link');
 const { runDailyDigest } = require('./services/dailyReport');
 const { expire } = require('./services/entitlements');
 const { startBot, getBot } = require('./bot');
+const stars = require('./services/payments/stars');
 
 function clientIp(req) {
   return req.ip || (req.socket && req.socket.remoteAddress) || 'local';
@@ -178,8 +179,13 @@ function schedule() {
 
 function start() {
   db.open();
+  stars.assertSecret();
   const app = createApp();
-  db.connect().catch((err) => logger.error('mongo', err));
+  const booting = db.connect().catch((err) => {
+    logger.error('mongo', err);
+    if (process.env.NODE_ENV === 'production') process.exit(1);
+  });
+  app.set('booting', booting);
   if (process.env.TELEGRAM_BOT_TOKEN) startBot();
   schedule();
   logger.info('servicio público', summary());

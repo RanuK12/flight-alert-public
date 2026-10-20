@@ -129,19 +129,24 @@ async function handleWebhook(req) {
   if (eventKind(req) === 'payment') {
     const remote = await fetchPayment(dataId);
     if (!remote || remote.status !== 'approved') return { status: 200, ignored: true };
-    const ref = remote.external_reference ? String(remote.external_reference) : null;
+    const ref = remote.external_reference ? String(remote.external_reference) : '';
     const checkout = ref ? await col('Checkout').findOne({ externalReference: ref }) : null;
-    const already = await col('Payment').findOne({ provider: 'mp_payment', ref: String(dataId) });
-    if (!already) {
-      await col('Payment').create({
-        provider: 'mp_payment',
-        ref: String(dataId),
-        externalReference: ref,
-        telegramUserId: checkout && checkout.telegramUserId ? String(checkout.telegramUserId) : null,
-        status: 'recorded',
-      });
+    if (!checkout) return { status: 200, payment: true, activated: false };
+    if (!checkout.telegramUserId) {
+      await savePending({ provider: 'mp', ref: String(dataId), externalReference: ref });
+      return { status: 200, payment: true, pendingLink: true, activated: false };
     }
-    return { status: 200, payment: true, activated: false };
+    const result = await entitlements.activatePro(
+      checkout.telegramUserId,
+      'mp',
+      String(dataId),
+      entitlements.proUntilFromNow(),
+    );
+    await col('Entitlement').updateOne(
+      { telegramUserId: String(checkout.telegramUserId) },
+      { $set: { country: 'AR', priceCurrency: 'ARS' } },
+    );
+    return { status: 200, payment: true, activated: true, duplicate: Boolean(result.duplicate) };
   }
   const remote = await fetchPreapproval(dataId);
   if (!remote || remote.status !== 'authorized') return { status: 200, ignored: true };

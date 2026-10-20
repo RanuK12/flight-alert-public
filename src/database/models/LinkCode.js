@@ -7,6 +7,7 @@ const schema = new mongoose.Schema({
   webUserKey: { type: String, required: true },
   telegramUserId: { type: String, default: null },
   expiresAt: { type: String, required: true },
+  used: { type: Boolean, default: false },
   usedAt: { type: String, default: null },
 }, { timestamps: true });
 

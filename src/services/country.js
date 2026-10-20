@@ -1,6 +1,6 @@
 'use strict';
 
-const axios = require('axios');
+const geoip = require('geoip-lite');
 
 /**
  * Orden: elección de la persona, IP real (geo del servidor), medio de pago.
@@ -79,11 +79,11 @@ function isLocal(ip) {
   return false;
 }
 
-async function defaultLookup(ip) {
+function defaultLookup(ip) {
   if (isLocal(ip)) return '';
-  const res = await axios.get(`https://ipwho.is/${encodeURIComponent(ip)}`, { timeout: 4000 });
-  const code = res && res.data && res.data.country_code;
-  return String(code || '').toUpperCase();
+  const raw = String(ip || '').replace(/^::ffff:/, '');
+  const hit = geoip.lookup(raw);
+  return String((hit && hit.country) || '').toUpperCase();
 }
 
 let lookup = defaultLookup;

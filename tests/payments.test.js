@@ -37,6 +37,7 @@ beforeEach(() => {
   reset();
   clock.reset();
   axios.get.mockReset();
+  process.env.STARS_PAYLOAD_SECRET = 'test-stars-secret';
 });
 
 afterEach(() => cleanEnv());

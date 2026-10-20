@@ -15,6 +15,7 @@ async function createLink(webUserKey) {
     hash: sha256(code),
     webUserKey: String(webUserKey),
     expiresAt,
+    used: false,
     usedAt: null,
   });
   const bot = process.env.TELEGRAM_BOT_USERNAME || '';
@@ -57,14 +58,18 @@ async function claimPending(webUserKey, telegramUserId) {
 }
 
 async function consume(code, telegramUserId, telegramChatId) {
-  const row = await col('LinkCode').findOne({ hash: sha256(code) });
-  if (!row) return { ok: false, reason: 'no' };
-  if (row.usedAt) return { ok: false, reason: 'usado' };
-  if (new Date(row.expiresAt).getTime() <= clock.now().getTime()) return { ok: false, reason: 'vencido' };
-  await col('LinkCode').updateOne(
-    { hash: row.hash },
-    { $set: { usedAt: clock.now().toISOString(), telegramUserId: String(telegramUserId) } },
+  const now = clock.now();
+  const hash = sha256(code);
+  const row = await col('LinkCode').findOneAndUpdate(
+    { hash, used: false, expiresAt: { $gt: now.toISOString() } },
+    { $set: { used: true, usedAt: now.toISOString(), telegramUserId: String(telegramUserId) } },
   );
+  if (!row) {
+    const existing = await col('LinkCode').findOne({ hash });
+    if (!existing) return { ok: false, reason: 'no' };
+    if (existing.used || existing.usedAt) return { ok: false, reason: 'usado' };
+    return { ok: false, reason: 'vencido' };
+  }
   await claimPending(row.webUserKey, telegramUserId);
   await col('Entitlement').updateOne(
     { telegramUserId: String(telegramUserId) },

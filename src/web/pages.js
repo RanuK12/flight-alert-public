@@ -12,6 +12,7 @@ function home() {
     <h1>Vuelos baratos entre Argentina y Europa</h1>
     <p>Buscás una vez gratis. Después, 10 búsquedas por mes. La alerta diaria y el informe de las 21 se prueban 7 días.</p>
     <p>Entrá por Telegram y escribí /start. Si ya pagaste en la web, el bot te da un link para unir el pago con tu chat.</p>
+    <p>Privacidad: el país lo estimamos con una base GeoIP local. La IP no sale del servidor.</p>
     <p><a href="/pro">Quiero Pro</a></p>
   `);
 }

@@ -13,6 +13,10 @@ jest.mock('axios', () => ({
 
 jest.mock('node-cron', () => ({ schedule: jest.fn() }));
 
+jest.mock('geoip-lite', () => ({
+  lookup: jest.fn(() => null),
+}));
+
 jest.mock('node-telegram-bot-api', () => jest.fn().mockImplementation(() => ({
   _text: [],
   _on: {},
@@ -46,10 +50,11 @@ jest.mock('stripe', () => {
 });
 
 const axios = require('axios');
+const geoip = require('geoip-lite');
 const Stripe = require('stripe');
 const { cleanEnv } = require('./helpers');
 const clock = require('../src/utils/clock');
-const { reset, col, health, open } = require('../src/database');
+const { reset, col, health, open, setConnector, resetConnector, ATTEMPTS } = require('../src/database');
 const rateLimit = require('../src/services/rateLimit');
 const country = require('../src/services/country');
 const fx = require('../src/services/fx');
@@ -123,6 +128,8 @@ beforeEach(() => {
   axios.get.mockReset();
   axios.post.mockReset();
   axios.put.mockReset();
+  process.env.STARS_PAYLOAD_SECRET = 'test-stars-secret';
+  resetConnector();
   Stripe.sessionCreate.mockReset();
   Stripe.customerCreate.mockReset();
   Stripe.subRetrieve.mockReset();
@@ -391,13 +398,17 @@ test('sin URI en producción falla y /health refleja la base', async () => {
 test('la IP sale del trust proxy y el geo no usa headers del cliente', async () => {
   const app = createApp();
   expect(app.get('trust proxy')).toBe(1);
-  axios.get.mockResolvedValue({ data: { success: true, country_code: 'ES' } });
+  geoip.lookup.mockReturnValue({ country: 'ES' });
   const code = await country.ipCountry({
     ip: '203.0.113.8',
     headers: { 'cf-ipcountry': 'AR', 'x-geo-country': 'AR', 'x-forwarded-for': '198.51.100.1' },
   });
   expect(code).toBe('ES');
-  expect(axios.get.mock.calls[0][0]).toBe('https://ipwho.is/203.0.113.8');
+  expect(geoip.lookup).toHaveBeenCalledWith('203.0.113.8');
+  expect(axios.get).not.toHaveBeenCalled();
+  const src = fs.readFileSync(path.join(__dirname, '..', 'src', 'services', 'country.js'), 'utf8');
+  expect(src.includes('ipwho.is')).toBe(false);
+  expect(src.includes('geoip-lite')).toBe(true);
 
   let last = null;
   for (let i = 1; i <= 21; i += 1) {
@@ -419,7 +430,7 @@ test('el dólar sale de dolarapi y si cae queda el último, sin HTML', async () 
   expect(stale.ars).toBe(7700);
 });
 
-test('MP separa un payment de una suscripción y solo el preapproval activa', async () => {
+test('MP separa el endpoint de payment del de preapproval', async () => {
   process.env.MP_ACCESS_TOKEN = 'TEST-mp-token';
   process.env.MP_WEBHOOK_SECRET = 'mp-test-secret';
   const ts = '17000000';
@@ -437,10 +448,10 @@ test('MP separa un payment de una suscripción y solo el preapproval activa', as
     headers: { 'x-signature': signMp('pay-1', 'req-p', ts, 'mp-test-secret'), 'x-request-id': 'req-p' },
     body: { type: 'payment' },
   });
-  expect(payment.activated).toBe(false);
+  expect(payment.activated).toBe(true);
   expect(payment.payment).toBe(true);
   expect(axios.get.mock.calls[0][0]).toContain('/v1/payments/');
-  expect(await col('Entitlement').findOne({ telegramUserId: '101' })).toBeNull();
+  expect((await col('Entitlement').findOne({ telegramUserId: '101' })).plan).toBe('pro');
 
   axios.get.mockResolvedValue({
     data: { id: 'pre-2', status: 'authorized', external_reference: 'ref-pay' },
@@ -501,4 +512,204 @@ test('el pre_checkout del bot exige el payload guardado', async () => {
   });
   expect(bot.answerPreCheckoutQuery).toHaveBeenCalledWith('q2', false, { error_message: 'No pude validar este pago.' });
   resetBot();
+});
+
+test('A. una renovación Stars con charge nuevo extiende 30 días y el mismo cargo no', async () => {
+  const DAY = 24 * 60 * 60 * 1000;
+  clock.setNow(new Date('2026-10-10T15:00:00.000Z'));
+  const payload = await stars.issuePayload('101');
+  const base = {
+    from: { id: '101' },
+    chat: { id: '101' },
+  };
+  const first = await stars.onSuccess({
+    ...base,
+    successful_payment: {
+      telegram_payment_charge_id: 'charge-1',
+      currency: 'XTR',
+      total_amount: 250,
+      invoice_payload: payload,
+    },
+  });
+  expect(first.duplicate).toBe(false);
+  const reused = await stars.onSuccess({
+    ...base,
+    successful_payment: {
+      telegram_payment_charge_id: 'charge-4',
+      currency: 'XTR',
+      total_amount: 250,
+      invoice_payload: payload,
+      is_recurring: false,
+    },
+  });
+  expect(reused.ok).toBe(false);
+  expect((await col('Entitlement').findOne({ telegramUserId: '101' })).proUntil).toBe(first.proUntil);
+
+  clock.setNow(new Date('2026-10-30T15:00:00.000Z'));
+  const renew = await stars.onSuccess({
+    ...base,
+    successful_payment: {
+      telegram_payment_charge_id: 'charge-2',
+      currency: 'XTR',
+      total_amount: 250,
+      invoice_payload: payload,
+      is_recurring: true,
+    },
+  });
+  expect(renew.duplicate).toBe(false);
+  expect(new Date(renew.proUntil).getTime() - clock.now().getTime()).toBe(30 * DAY);
+  expect(new Date(renew.proUntil).getTime()).toBeGreaterThan(new Date(first.proUntil).getTime());
+  const same = await stars.onSuccess({
+    ...base,
+    successful_payment: {
+      telegram_payment_charge_id: 'charge-2',
+      currency: 'XTR',
+      total_amount: 250,
+      invoice_payload: payload,
+      is_recurring: true,
+    },
+  });
+  expect(same.duplicate).toBe(true);
+  expect(same.proUntil).toBe(renew.proUntil);
+  const other = await stars.onSuccess({
+    from: { id: '202' },
+    chat: { id: '202' },
+    successful_payment: {
+      telegram_payment_charge_id: 'charge-3',
+      currency: 'XTR',
+      total_amount: 250,
+      invoice_payload: payload,
+      is_recurring: true,
+    },
+  });
+  expect(other.ok).toBe(false);
+});
+
+test('B. un payment aprobado vinculado extiende Pro; sin vínculo queda pending_link', async () => {
+  process.env.MP_ACCESS_TOKEN = 'TEST-mp-token';
+  process.env.MP_WEBHOOK_SECRET = 'mp-test-secret';
+  const ts = '17000000';
+  clock.setNow(new Date('2026-10-10T15:00:00.000Z'));
+  await col('Checkout').create({
+    externalReference: 'ref-linked',
+    telegramUserId: '101',
+    provider: 'mp',
+    currency: 'ARS',
+  });
+  axios.get.mockResolvedValue({
+    data: { id: 'pay-1', status: 'approved', external_reference: 'ref-linked' },
+  });
+  const headers = {
+    'x-signature': signMp('pay-1', 'req-b', ts, 'mp-test-secret'),
+    'x-request-id': 'req-b',
+  };
+  const first = await mp.handleWebhook({
+    query: { 'data.id': 'pay-1' },
+    headers,
+    body: { type: 'payment' },
+  });
+  expect(first.activated).toBe(true);
+  const until = (await col('Entitlement').findOne({ telegramUserId: '101' })).proUntil;
+  clock.setNow(new Date('2026-11-01T15:00:00.000Z'));
+  axios.get.mockResolvedValue({
+    data: { id: 'pay-2', status: 'approved', external_reference: 'ref-linked' },
+  });
+  const renew = await mp.handleWebhook({
+    query: { 'data.id': 'pay-2' },
+    headers: {
+      'x-signature': signMp('pay-2', 'req-b2', ts, 'mp-test-secret'),
+      'x-request-id': 'req-b2',
+    },
+    body: { type: 'payment' },
+  });
+  expect(renew.activated).toBe(true);
+  const extended = (await col('Entitlement').findOne({ telegramUserId: '101' })).proUntil;
+  expect(new Date(extended).getTime()).toBeGreaterThan(new Date(until).getTime());
+  const dup = await mp.handleWebhook({
+    query: { 'data.id': 'pay-2' },
+    headers: {
+      'x-signature': signMp('pay-2', 'req-b2', ts, 'mp-test-secret'),
+      'x-request-id': 'req-b2',
+    },
+    body: { type: 'payment' },
+  });
+  expect(dup.duplicate).toBe(true);
+  expect((await col('Entitlement').findOne({ telegramUserId: '101' })).proUntil).toBe(extended);
+
+  await col('Checkout').create({
+    externalReference: 'ref-open',
+    telegramUserId: null,
+    webUserKey: 'web-open',
+    provider: 'mp',
+    currency: 'ARS',
+  });
+  axios.get.mockResolvedValue({
+    data: { id: 'pay-3', status: 'approved', external_reference: 'ref-open' },
+  });
+  const pending = await mp.handleWebhook({
+    query: { 'data.id': 'pay-3' },
+    headers: {
+      'x-signature': signMp('pay-3', 'req-b3', ts, 'mp-test-secret'),
+      'x-request-id': 'req-b3',
+    },
+    body: { type: 'payment' },
+  });
+  expect(pending.pendingLink).toBe(true);
+  expect(pending.activated).toBe(false);
+  expect((await col('Payment').findOne({ provider: 'mp', ref: 'pay-3' })).status).toBe('pending_link');
+  expect(await col('Entitlement').findOne({ telegramUserId: '202' })).toBeNull();
+});
+
+test('el link se marca usado una sola vez', async () => {
+  const created = await link.createLink('web-atom');
+  await col('Checkout').create({
+    externalReference: 'ref-atom',
+    telegramUserId: null,
+    webUserKey: 'web-atom',
+    provider: 'mp',
+    currency: 'ARS',
+  });
+  await col('Payment').create({
+    provider: 'mp',
+    ref: 'pay-atom',
+    externalReference: 'ref-atom',
+    telegramUserId: null,
+    status: 'pending_link',
+  });
+  const [first, second] = await Promise.all([
+    link.consume(created.code, '101', '101'),
+    link.consume(created.code, '202', '202'),
+  ]);
+  const oks = [first, second].filter((row) => row.ok);
+  expect(oks).toHaveLength(1);
+  expect([first, second].some((row) => row.reason === 'usado')).toBe(true);
+  expect((await col('Entitlement').findOne({ telegramUserId: '101' })).plan).toBe('pro');
+  expect(await col('Entitlement').findOne({ telegramUserId: '202' })).toBeNull();
+  const row = await col('LinkCode').findOne({ webUserKey: 'web-atom' });
+  expect(row.used).toBe(true);
+});
+
+test('en producción, si Mongo no conecta tras reintentos, el proceso sale', async () => {
+  process.env.NODE_ENV = 'production';
+  process.env.MONGODB_URI = 'mongodb://127.0.0.1:27017/db';
+  process.env.STARS_PAYLOAD_SECRET = 'test-stars-secret';
+  let calls = 0;
+  setConnector(async () => {
+    calls += 1;
+    throw new Error('down');
+  });
+  const exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => {});
+  const app = start();
+  await app.get('booting');
+  expect(calls).toBe(ATTEMPTS);
+  expect(exitSpy).toHaveBeenCalledWith(1);
+  exitSpy.mockRestore();
+  resetConnector();
+});
+
+test('en producción falta STARS_PAYLOAD_SECRET y no arranca', () => {
+  process.env.NODE_ENV = 'production';
+  process.env.MONGODB_URI = 'mongodb://127.0.0.1:27017/db';
+  delete process.env.STARS_PAYLOAD_SECRET;
+  expect(() => start()).toThrow(/STARS_PAYLOAD_SECRET/);
 });
