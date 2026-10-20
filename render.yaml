@@ -1,0 +1,64 @@
+# Blueprint del producto público. Todos los valores se cargan en el dashboard.
+services:
+  - type: web
+    name: flight-alert-public
+    runtime: docker
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        sync: false
+      - key: PORT
+        sync: false
+      - key: LOG_LEVEL
+        sync: false
+      - key: TZ
+        sync: false
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: PUBLIC_KILL_SWITCH
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_BOT_USERNAME
+        sync: false
+      - key: TELEGRAM_POLLING
+        sync: false
+      - key: FEATURE_SEARCH
+        sync: false
+      - key: FEATURE_ALERTS
+        sync: false
+      - key: FEATURE_PAYMENTS_STARS
+        sync: false
+      - key: FEATURE_PAYMENTS_MP
+        sync: false
+      - key: FEATURE_PAYMENTS_STRIPE
+        sync: false
+      - key: FEATURE_CHANNELS
+        sync: false
+      - key: OWNER_TELEGRAM_IDS
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: TRAVELPAYOUTS_TOKEN
+        sync: false
+      - key: TRAVELPAYOUTS_MARKER
+        sync: false
+      - key: MP_ACCESS_TOKEN
+        sync: false
+      - key: MP_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_USD
+        sync: false
+      - key: STRIPE_PRICE_EUR
+        sync: false
+      - key: STRIPE_TAX_ENABLED
+        sync: false
+      - key: DEVICE_COOKIE_SECRET
+        sync: false
+      - key: STARS_PAYLOAD_SECRET
+        sync: false
