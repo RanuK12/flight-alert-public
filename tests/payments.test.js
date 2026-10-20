@@ -43,10 +43,16 @@ afterEach(() => cleanEnv());
 
 test('P9. Stars activa Pro 30 días y el mismo cargo no duplica', async () => {
   clock.setNow(new Date('2026-10-10T15:00:00.000Z'));
+  const payload = await stars.issuePayload('101');
   const msg = {
     from: { id: '101' },
     chat: { id: '101' },
-    successful_payment: { telegram_payment_charge_id: 'charge-1', currency: 'XTR' },
+    successful_payment: {
+      telegram_payment_charge_id: 'charge-1',
+      currency: 'XTR',
+      total_amount: 250,
+      invoice_payload: payload,
+    },
   };
   const first = await stars.onSuccess(msg);
   const second = await stars.onSuccess(msg);
@@ -60,7 +66,7 @@ test('P9. Stars activa Pro 30 días y el mismo cargo no duplica', async () => {
 
 test('P10. MP: firma inválida 401 y no activa; firma válida y authorized activa', async () => {
   process.env.MP_WEBHOOK_SECRET = 'mp-test-secret';
-  process.env.MP_ACCESS_TOKEN = 'mp-test-token';
+  process.env.MP_ACCESS_TOKEN = 'TEST-mp-token';
   await col('Checkout').create({
     externalReference: 'ref-opaco',
     telegramUserId: '101',
@@ -101,7 +107,7 @@ test('P10. MP: firma inválida 401 y no activa; firma válida y authorized activ
 });
 
 test('P11. Stripe rechaza firma o timestamp viejo; el fallo abre gracia y el día 4 pasa a free', async () => {
-  process.env.STRIPE_SECRET_KEY = 'test-stripe-key';
+  process.env.STRIPE_SECRET_KEY = 'sk_test_fixture';
   process.env.STRIPE_WEBHOOK_SECRET = 'whsec-test';
   const Stripe = require('stripe');
   const start = new Date('2026-10-10T15:00:00.000Z');

@@ -124,11 +124,18 @@ async function startTrial(id, deviceHash) {
 async function activatePro(id, provider, ref, until) {
   const telegramUserId = idOf(id);
   const seen = await payments().findOne({ provider, ref });
-  if (seen) {
-    const doc = await ent().findOne({ telegramUserId: seen.telegramUserId });
+  if (seen && seen.status !== 'pending_link') {
+    const doc = await ent().findOne({ telegramUserId: seen.telegramUserId || telegramUserId });
     return { ok: true, duplicate: true, proUntil: doc && doc.proUntil };
   }
-  await payments().create({ provider, ref, telegramUserId });
+  if (seen && seen.status === 'pending_link') {
+    await payments().updateOne(
+      { provider, ref },
+      { $set: { telegramUserId, status: 'paid' } },
+    );
+  } else {
+    await payments().create({ provider, ref, telegramUserId, status: 'paid' });
+  }
   await ensure(id);
   const proUntil = (until instanceof Date ? until : new Date(until)).toISOString();
   await ent().updateOne(
@@ -149,6 +156,17 @@ async function activatePro(id, provider, ref, until) {
     { $set: { paused: false, pausedByBilling: false } },
   );
   return { ok: true, duplicate: false, proUntil };
+}
+
+async function downgrade(id) {
+  const telegramUserId = idOf(id);
+  await pauseForBilling(telegramUserId);
+  await ensure(id);
+  await ent().updateOne(
+    { telegramUserId },
+    { $set: { plan: 'free', proUntil: null, graceUntil: null, expiryNoticeAt: clock.now().toISOString() } },
+  );
+  return { plan: 'free' };
 }
 
 async function openGrace(id) {
@@ -218,6 +236,7 @@ module.exports = {
   canUseAlerts,
   startTrial,
   activatePro,
+  downgrade,
   openGrace,
   expire,
   pauseForBilling,

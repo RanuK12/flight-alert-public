@@ -28,7 +28,7 @@ function deviceHash(req, res) {
     token = `${fresh}.${sig}`;
     res.setHeader('Set-Cookie', `fa_d=${token}; HttpOnly; SameSite=Lax; Path=/`);
   }
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+  const ip = req.ip || (req.socket && req.socket.remoteAddress) || '';
   const ua = req.headers['user-agent'] || '';
   return sha256(`${token.split('.')[0]}|${ip}|${ua}`);
 }

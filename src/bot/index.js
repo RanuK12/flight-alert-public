@@ -87,8 +87,14 @@ function startBot() {
   bot.on('message', async (msg) => {
     if (msg.successful_payment) {
       try {
-        await stars.onSuccess(msg);
-        await bot.sendMessage(msg.chat.id, 'Listo, ya tenés Pro por 30 días.');
+        const result = await stars.onSuccess(msg);
+        if (result && result.ok !== false && !result.reason) {
+          await bot.sendMessage(msg.chat.id, result.duplicate
+            ? 'Ese pago ya estaba acreditado.'
+            : 'Listo, ya tenés Pro por 30 días.');
+        } else {
+          await bot.sendMessage(msg.chat.id, 'No pude validar el pago.');
+        }
       } catch (err) {
         logger.error('pago stars', err);
       }
@@ -107,6 +113,11 @@ function startBot() {
   bot.on('pre_checkout_query', async (q) => {
     if (flags.kill()) {
       await bot.answerPreCheckoutQuery(q.id, false, { error_message: copy.maintenance }).catch(() => {});
+      return;
+    }
+    const verdict = await stars.validatePreCheckout(q);
+    if (!verdict.ok) {
+      await bot.answerPreCheckoutQuery(q.id, false, { error_message: 'No pude validar este pago.' }).catch(() => {});
       return;
     }
     await bot.answerPreCheckoutQuery(q.id, true).catch(() => {});

@@ -4,10 +4,11 @@ const express = require('express');
 const flags = require('./config/flags');
 const { summary } = require('./config');
 const logger = require('./utils/logger').child('app');
+const db = require('./database');
 const rateLimit = require('./services/rateLimit');
 const pages = require('./web/pages');
 const { deviceHash } = require('./web/device');
-const { rail, ipCountry } = require('./services/country');
+const { ipCountry, currencyFor } = require('./services/country');
 const fx = require('./services/fx');
 const mp = require('./services/payments/mp');
 const stripePay = require('./services/payments/stripe');
@@ -16,9 +17,19 @@ const { runDailyDigest } = require('./services/dailyReport');
 const { expire } = require('./services/entitlements');
 const { startBot, getBot } = require('./bot');
 
+function clientIp(req) {
+  return req.ip || (req.socket && req.socket.remoteAddress) || 'local';
+}
+
+function validEmail(value) {
+  const email = String(value || '').trim();
+  return email.length <= 200 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 function createApp() {
   const app = express();
   app.disable('x-powered-by');
+  app.set('trust proxy', 1);
 
   app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
     try {
@@ -34,13 +45,14 @@ function createApp() {
   app.use(express.urlencoded({ extended: false }));
 
   app.get('/health', (_req, res) => {
-    res.status(200).json({ ok: true });
+    const status = db.health();
+    res.status(status.ok ? 200 : 503).json({ ok: status.ok, db: status.db });
   });
 
   app.use((req, res, next) => {
     if (req.path === '/health') return next();
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'local';
-    if (rateLimit.limited('ip', String(ip).split(',')[0], 20, 60 * 1000)) {
+    const ip = clientIp(req);
+    if (rateLimit.limited('ip', String(ip), 20, 60 * 1000)) {
       res.status(429).type('text/plain').send('Esperá un toque');
       return;
     }
@@ -53,57 +65,73 @@ function createApp() {
     res.type('html').send(pages.home());
   });
 
-  app.get('/pro', (req, res) => {
+  app.get('/pro', async (req, res) => {
     if (flags.kill()) return res.status(503).type('html').send(pages.maintenance());
     deviceHash(req, res);
-    res.type('html').send(pages.pro(req));
+    const geo = await ipCountry(req);
+    const choice = req.query && req.query.pais ? String(req.query.pais) : '';
+    res.type('html').send(pages.pro({
+      choice,
+      ipCountry: geo,
+      language: req.headers['accept-language'] || '',
+    }));
   });
 
   app.post('/pro/checkout', async (req, res) => {
     if (flags.kill()) return res.status(503).send(pages.maintenance());
-    const ip = String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'local').split(',')[0];
+    const ip = clientIp(req);
     if (rateLimit.limited('checkout', ip, 5, 60 * 60 * 1000)) {
       return res.status(429).type('text/plain').send('Esperá un toque');
     }
+    const email = req.body && req.body.email;
+    if (!validEmail(email)) {
+      return res.status(400).type('text/plain').send('El email no es válido.');
+    }
     const choice = req.body && req.body.pais;
-    const method = rail({ choice, ipCountry: ipCountry(req) });
+    const geo = await ipCountry(req);
+    const offer = currencyFor(choice, geo);
     const hash = deviceHash(req, res);
-    const quote = await fx.latest();
-    const amount = quote ? quote.publishedArs : null;
+    const base = process.env.PUBLIC_BASE_URL || '';
     try {
-      if (method === 'mp') {
+      if (offer.rail === 'mp') {
         if (!flags.mp()) return res.status(403).type('text/plain').send('Mercado Pago no está prendido.');
+        const quote = await fx.latest();
+        const amount = quote ? Number(quote.publishedArs) : NaN;
+        if (!Number.isFinite(amount) || amount <= 0) {
+          return res.status(400).type('text/plain').send('No tengo una cotización en pesos para cobrar. Probá más tarde.');
+        }
         const externalReference = await link.newReference('mp', {
           webUserKey: hash,
           amount,
           currency: 'ARS',
         });
-        const base = process.env.PUBLIC_BASE_URL || '';
-        await mp.createPreapproval({
+        const created = await mp.createPreapproval({
           amount,
           externalReference,
-          payerEmail: req.body.email,
+          payerEmail: String(email).trim(),
           backUrl: `${base}/pro/listo`,
         });
-        const created = await link.createLink(hash);
-        return res.redirect(303, `/pro/listo?ok=1`);
+        const url = mp.checkoutUrl(created);
+        if (!url) return res.status(502).type('text/plain').send('No pude abrir el pago. Probá de nuevo en un rato.');
+        return res.redirect(303, url);
       }
       if (!flags.stripe()) return res.status(403).type('text/plain').send('La tarjeta no está prendida.');
-      const currency = String(choice || '').toUpperCase() === 'ES' ? 'EUR' : 'USD';
-      const priceId = currency === 'EUR' ? process.env.STRIPE_PRICE_EUR : process.env.STRIPE_PRICE_USD;
       const externalReference = await link.newReference('stripe', {
         webUserKey: hash,
-        currency,
+        currency: offer.currency,
       });
-      const base = process.env.PUBLIC_BASE_URL || '';
-      await stripePay.createCheckout({
-        priceId,
+      const session = await stripePay.createCheckout({
         externalReference,
+        currency: offer.currency,
+        unitAmount: offer.unitAmount,
+        customerEmail: String(email).trim(),
         successUrl: `${base}/pro/listo`,
         cancelUrl: `${base}/pro`,
       });
-      await link.createLink(hash);
-      return res.redirect(303, '/pro/listo?ok=1');
+      if (!session || !session.url) {
+        return res.status(502).type('text/plain').send('No pude abrir el pago. Probá de nuevo en un rato.');
+      }
+      return res.redirect(303, session.url);
     } catch (err) {
       logger.error('checkout', err);
       return res.status(502).type('text/plain').send('No pude abrir el pago. Probá de nuevo en un rato.');
@@ -149,7 +177,9 @@ function schedule() {
 }
 
 function start() {
+  db.open();
   const app = createApp();
+  db.connect().catch((err) => logger.error('mongo', err));
   if (process.env.TELEGRAM_BOT_TOKEN) startBot();
   schedule();
   logger.info('servicio público', summary());
@@ -157,9 +187,14 @@ function start() {
 }
 
 if (require.main === module) {
-  const app = start();
-  const port = Number(process.env.PORT || 4000);
-  app.listen(port, () => logger.info('escuchando', { port }));
+  try {
+    const app = start();
+    const port = Number(process.env.PORT || 4000);
+    app.listen(port, () => logger.info('escuchando', { port }));
+  } catch (err) {
+    logger.error('arranque', err);
+    process.exit(1);
+  }
 }
 
 module.exports = { createApp, start, schedule };

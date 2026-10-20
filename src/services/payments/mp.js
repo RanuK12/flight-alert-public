@@ -5,6 +5,7 @@ const axios = require('axios');
 const { col } = require('../../database');
 const entitlements = require('../entitlements');
 const logger = require('../../utils/logger').child('mp');
+const { savePending } = require('./pending');
 
 function timingSafeEqual(a, b) {
   const left = Buffer.from(String(a));
@@ -23,19 +24,55 @@ function verifySignature({ id, requestId, signatureHeader, secret }) {
   return timingSafeEqual(expected, v1[1]);
 }
 
+function assertMpTest(token) {
+  if (!String(token || '').startsWith('TEST-')) {
+    throw new Error('MP_ACCESS_TOKEN debe ser de test');
+  }
+}
+
+function authHeaders(token) {
+  assertMpTest(token);
+  return { Authorization: `Bearer ${token}` };
+}
+
 async function fetchPreapproval(id) {
   const token = process.env.MP_ACCESS_TOKEN;
   if (!token) throw new Error('MP_ACCESS_TOKEN missing');
   const res = await axios.get(`https://api.mercadopago.com/preapproval/${encodeURIComponent(id)}`, {
     timeout: 8000,
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeaders(token),
   });
   return res.data;
+}
+
+async function fetchPayment(id) {
+  const token = process.env.MP_ACCESS_TOKEN;
+  if (!token) throw new Error('MP_ACCESS_TOKEN missing');
+  const res = await axios.get(`https://api.mercadopago.com/v1/payments/${encodeURIComponent(id)}`, {
+    timeout: 8000,
+    headers: authHeaders(token),
+  });
+  return res.data;
+}
+
+function checkoutUrl(data) {
+  return (data && data.sandbox_init_point) || '';
+}
+
+function eventKind(req) {
+  const raw = String(
+    (req.body && (req.body.type || req.body.topic))
+    || (req.query && (req.query.type || req.query.topic))
+    || '',
+  ).toLowerCase();
+  if (raw.includes('payment') && !raw.includes('preapproval')) return 'payment';
+  return 'subscription';
 }
 
 async function createPreapproval({ amount, externalReference, payerEmail, backUrl }) {
   const token = process.env.MP_ACCESS_TOKEN;
   if (!token) throw new Error('MP_ACCESS_TOKEN missing');
+  assertMpTest(token);
   const res = await axios.post('https://api.mercadopago.com/preapproval', {
     reason: 'Alertas de vuelos Pro',
     external_reference: externalReference,
@@ -65,6 +102,10 @@ async function updatePreapprovalAmount(id, amount) {
     logger.warn('no actualicé el monto: falta el token de MP');
     return { skipped: true };
   }
+  if (!String(token).startsWith('TEST-')) {
+    logger.warn('no actualicé el monto: el token de MP no es de test');
+    return { skipped: true };
+  }
   const res = await axios.put(
     `https://api.mercadopago.com/preapproval/${encodeURIComponent(id)}`,
     { auto_recurring: { transaction_amount: amount, currency_id: 'ARS' } },
@@ -85,11 +126,31 @@ async function handleWebhook(req) {
     secret,
   });
   if (!ok) return { status: 401 };
+  if (eventKind(req) === 'payment') {
+    const remote = await fetchPayment(dataId);
+    if (!remote || remote.status !== 'approved') return { status: 200, ignored: true };
+    const ref = remote.external_reference ? String(remote.external_reference) : null;
+    const checkout = ref ? await col('Checkout').findOne({ externalReference: ref }) : null;
+    const already = await col('Payment').findOne({ provider: 'mp_payment', ref: String(dataId) });
+    if (!already) {
+      await col('Payment').create({
+        provider: 'mp_payment',
+        ref: String(dataId),
+        externalReference: ref,
+        telegramUserId: checkout && checkout.telegramUserId ? String(checkout.telegramUserId) : null,
+        status: 'recorded',
+      });
+    }
+    return { status: 200, payment: true, activated: false };
+  }
   const remote = await fetchPreapproval(dataId);
   if (!remote || remote.status !== 'authorized') return { status: 200, ignored: true };
   const ref = remote.external_reference;
   const checkout = await col('Checkout').findOne({ externalReference: String(ref) });
-  if (!checkout || !checkout.telegramUserId) return { status: 200, pendingLink: true };
+  if (!checkout || !checkout.telegramUserId) {
+    await savePending({ provider: 'mp', ref: String(dataId), externalReference: ref });
+    return { status: 200, pendingLink: true };
+  }
   await entitlements.activatePro(
     checkout.telegramUserId,
     'mp',
@@ -106,7 +167,9 @@ async function handleWebhook(req) {
 module.exports = {
   verifySignature,
   fetchPreapproval,
+  fetchPayment,
   createPreapproval,
+  checkoutUrl,
   updatePreapprovalAmount,
   handleWebhook,
 };

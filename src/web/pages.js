@@ -1,7 +1,7 @@
 'use strict';
 
 const copy = require('../bot/copy');
-const { rail, preselect } = require('../services/country');
+const { preselect, currencyFor, EU_COUNTRIES } = require('../services/country');
 
 function layout(title, body) {
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title></head><body><main>${body}</main></body></html>`;
@@ -16,27 +16,36 @@ function home() {
   `);
 }
 
-function pro(req) {
-  const choice = String((req.query && req.query.pais) || '');
-  const ip = String(req.headers['cf-ipcountry'] || req.headers['x-geo-country'] || '').toUpperCase();
-  const suggested = choice || preselect(req.headers['accept-language']);
-  const method = rail({ choice: suggested, ipCountry: ip });
-  const note = method === 'mp'
+function countryOptions(suggested) {
+  const rows = [['AR', 'Argentina'], ...EU_COUNTRIES, ['OTRO', 'Otro']];
+  return rows.map(([code, name]) => (
+    `<option value="${code}" ${suggested === code ? 'selected' : ''}>${name}</option>`
+  )).join('');
+}
+
+function pro({ choice = '', ipCountry: geo = '', language = '' } = {}) {
+  const suggested = String(choice || preselect(language) || '').toUpperCase();
+  const offer = currencyFor(suggested, geo);
+  const priceLine = offer.currency === 'ARS'
+    ? 'Vas a pagar en pesos, al valor del día.'
+    : offer.currency === 'EUR'
+      ? 'Son €4,50 por mes, IVA incluido.'
+      : 'Son USD 5 por mes.';
+  const note = offer.rail === 'mp'
     ? 'Podés pagar en pesos con Mercado Pago.'
-    : 'El pago en pesos solo aparece si elegís Argentina y estás en Argentina. Si no, es con tarjeta en dólares o euros.';
+    : 'El pago en pesos solo aparece si elegís Argentina y estás en Argentina.';
   return layout('Pro', `
     <h1>Pro</h1>
     <p>${note}</p>
+    <p>${priceLine}</p>
     <form method="post" action="/pro/checkout">
       <label>País
         <select name="pais">
-          <option value="AR" ${suggested === 'AR' ? 'selected' : ''}>Argentina</option>
-          <option value="ES" ${suggested === 'ES' ? 'selected' : ''}>España</option>
-          <option value="OTRO" ${suggested !== 'AR' && suggested !== 'ES' ? 'selected' : ''}>Otro</option>
+          ${countryOptions(suggested)}
         </select>
       </label>
       <label>Email <input name="email" type="email" required></label>
-      <button type="submit">${method === 'mp' ? 'Seguir con Mercado Pago' : 'Seguir con tarjeta'}</button>
+      <button type="submit">${offer.rail === 'mp' ? 'Seguir con Mercado Pago' : 'Seguir con tarjeta'}</button>
     </form>
     <p>En el bot, Pro se paga solo con estrellas de Telegram. Este sitio no pide datos de tarjeta.</p>
   `);

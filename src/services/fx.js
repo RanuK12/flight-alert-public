@@ -7,47 +7,34 @@ const logger = require('../utils/logger').child('fx');
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-let fetchers = {
+async function readOficial() {
+  const res = await axios.get('https://dolarapi.com/v1/dolares/oficial', { timeout: 8000 });
+  const n = Number(res.data && res.data.venta);
+  if (!Number.isFinite(n) || n <= 0) throw new Error('dolarapi sin venta');
+  return n;
+}
+
+const defaultFetchers = {
   async bna() {
-    const res = await axios.get('https://www.bna.com.ar/Personas', {
-      timeout: 8000,
-      headers: { 'User-Agent': 'flight-alert-public' },
-    });
-    return parseBnaVenta(res.data);
+    return readOficial();
   },
   async dolarapi() {
-    const res = await axios.get('https://dolarapi.com/v1/dolares/oficial', { timeout: 8000 });
-    const n = Number(res.data && res.data.venta);
-    if (!Number.isFinite(n) || n <= 0) throw new Error('dolarapi sin venta');
-    return n;
+    return readOficial();
   },
 };
+
+let fetchers = { ...defaultFetchers };
 
 function setFetchers(next) {
   fetchers = { ...fetchers, ...next };
 }
 
+function resetFetchers() {
+  fetchers = { ...defaultFetchers };
+}
+
 function arsPrice(rate) {
   return Math.ceil((5 * rate) / 100) * 100;
-}
-
-function parseBnaVenta(html) {
-  const text = String(html);
-  const block = text.match(/D[oó]lar U\.S\.A[\s\S]{0,400}/i);
-  if (!block) throw new Error('bna sin fila de dolar');
-  const nums = [...block[0].matchAll(/(\d{1,3}(?:\.\d{3})*,\d{2}|\d{3,5}(?:[.,]\d{1,2})?)/g)]
-    .map((m) => m[1]);
-  if (nums.length < 2) throw new Error('bna sin venta');
-  return parseArsNumber(nums[1]);
-}
-
-function parseArsNumber(raw) {
-  const s = String(raw).trim();
-  if (s.includes(',') && s.includes('.')) {
-    return Number(s.replace(/\./g, '').replace(',', '.'));
-  }
-  if (s.includes(',')) return Number(s.replace(',', '.'));
-  return Number(s);
 }
 
 async function latest() {
@@ -135,9 +122,9 @@ async function adjustSubscriptions(updateAmount) {
 
 module.exports = {
   arsPrice,
-  parseBnaVenta,
   refresh,
   latest,
   setFetchers,
+  resetFetchers,
   adjustSubscriptions,
 };
