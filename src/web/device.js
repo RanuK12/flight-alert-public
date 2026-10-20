@@ -5,8 +5,18 @@ const { sha256 } = require('../utils/mask');
 
 let ephemeral = '';
 
+function assertSecret() {
+  if (process.env.NODE_ENV !== 'production') return;
+  if (!process.env.DEVICE_COOKIE_SECRET) {
+    throw new Error('DEVICE_COOKIE_SECRET missing');
+  }
+}
+
 function secret() {
   if (process.env.DEVICE_COOKIE_SECRET) return process.env.DEVICE_COOKIE_SECRET;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('DEVICE_COOKIE_SECRET missing');
+  }
   if (!ephemeral) ephemeral = crypto.randomBytes(16).toString('hex');
   return ephemeral;
 }
@@ -33,4 +43,4 @@ function deviceHash(req, res) {
   return sha256(`${token.split('.')[0]}|${ip}|${ua}`);
 }
 
-module.exports = { deviceHash };
+module.exports = { deviceHash, assertSecret };

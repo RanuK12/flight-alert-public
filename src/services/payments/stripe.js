@@ -4,18 +4,51 @@ const { col } = require('../../database');
 const clock = require('../../utils/clock');
 const entitlements = require('../entitlements');
 const { savePending } = require('./pending');
-
-function assertStripeTest(key) {
-  const prefix = 'sk_' + 'test';
-  if (!String(key || '').startsWith(prefix)) {
-    throw new Error('STRIPE_SECRET_KEY debe ser de test');
-  }
-}
+const { paymentsMode, assertStripeKey } = require('./mode');
+const { notifyCharge } = require('./notify');
 
 function stripeClient() {
   const key = process.env.STRIPE_SECRET_KEY;
-  assertStripeTest(key);
+  assertStripeKey(key);
   return require('stripe')(key);
+}
+
+function webhookSecret() {
+  if (paymentsMode() === 'live') return process.env.STRIPE_WEBHOOK_SECRET_LIVE || '';
+  return process.env.STRIPE_WEBHOOK_SECRET || '';
+}
+
+function lineItem(currency, unitAmount) {
+  if (paymentsMode() !== 'live') {
+    return {
+      quantity: 1,
+      price_data: {
+        currency: String(currency || '').toLowerCase(),
+        unit_amount: unitAmount,
+        recurring: { interval: 'month' },
+        product_data: { name: 'Vuelos Pro' },
+        tax_behavior: 'inclusive',
+      },
+    };
+  }
+  const cur = String(currency || '').toUpperCase();
+  const envName = cur === 'EUR' ? 'STRIPE_PRICE_EUR' : 'STRIPE_PRICE_USD';
+  if (cur !== 'EUR' && cur !== 'USD') throw new Error('moneda de Stripe no soportada');
+  const price = process.env[envName] || '';
+  if (!price) throw new Error(`${envName} missing`);
+  return { quantity: 1, price };
+}
+
+function automaticTax(currency) {
+  const flag = String(process.env.STRIPE_TAX_ENABLED || '').toLowerCase() === 'on';
+  if (paymentsMode() === 'live' && String(currency || '').toUpperCase() === 'EUR') return true;
+  return flag;
+}
+
+function majorAmount(minor) {
+  const n = Number(minor);
+  if (!Number.isFinite(n) || n <= 0) return '';
+  return (n / 100).toFixed(2);
 }
 
 async function createCheckout({
@@ -27,7 +60,6 @@ async function createCheckout({
   cancelUrl,
 }) {
   const stripe = stripeClient();
-  const automaticTax = String(process.env.STRIPE_TAX_ENABLED || '').toLowerCase() === 'on';
   const customer = await stripe.customers.create({
     email: customerEmail,
     metadata: { external_reference: externalReference },
@@ -40,17 +72,8 @@ async function createCheckout({
     subscription_data: { metadata: { external_reference: externalReference } },
     success_url: successUrl,
     cancel_url: cancelUrl,
-    line_items: [{
-      quantity: 1,
-      price_data: {
-        currency: String(currency || '').toLowerCase(),
-        unit_amount: unitAmount,
-        recurring: { interval: 'month' },
-        product_data: { name: 'Vuelos Pro' },
-        tax_behavior: 'inclusive',
-      },
-    }],
-    automatic_tax: { enabled: automaticTax },
+    line_items: [lineItem(currency, unitAmount)],
+    automatic_tax: { enabled: automaticTax(currency) },
   });
 }
 
@@ -85,7 +108,7 @@ async function resolveRef(stripe, type, obj) {
 }
 
 async function handleWebhook(req) {
-  const secret = process.env.STRIPE_WEBHOOK_SECRET || '';
+  const secret = webhookSecret();
   const stripe = stripeClient();
   let event;
   try {
@@ -102,19 +125,34 @@ async function handleWebhook(req) {
 
   if (event.type === 'checkout.session.completed' || event.type === 'invoice.paid') {
     const chargeRef = String(obj.id || '');
+    const currency = String(obj.currency || (checkout && checkout.currency) || '').toUpperCase();
+    const isCharge = event.type === 'invoice.paid' || !obj.subscription;
+    const alert = async () => {
+      if (!isCharge) return;
+      const minor = obj.amount_paid != null ? obj.amount_paid : obj.amount_total;
+      await notifyCharge({
+        provider: 'stripe',
+        amount: majorAmount(minor),
+        currency,
+      });
+    };
     if (!userId) {
+      const existing = chargeRef
+        ? await col('Payment').findOne({ provider: 'stripe', ref: chargeRef })
+        : null;
       await savePending({ provider: 'stripe', ref: chargeRef, externalReference: ref });
+      if (!existing) await alert();
       return { status: 200, pendingLink: true };
     }
-    await entitlements.activatePro(userId, 'stripe', chargeRef, entitlements.proUntilFromNow());
-    const currency = String(obj.currency || (checkout && checkout.currency) || '').toUpperCase();
+    const result = await entitlements.activatePro(userId, 'stripe', chargeRef, entitlements.proUntilFromNow());
     if (currency) {
       await col('Entitlement').updateOne(
         { telegramUserId: String(userId) },
         { $set: { priceCurrency: currency } },
       );
     }
-    return { status: 200 };
+    if (!result.duplicate) await alert();
+    return { status: 200, duplicate: Boolean(result.duplicate) };
   }
   if (event.type === 'invoice.payment_failed') {
     if (userId) await entitlements.openGrace(userId);

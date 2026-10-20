@@ -7,7 +7,8 @@ const logger = require('./utils/logger').child('app');
 const db = require('./database');
 const rateLimit = require('./services/rateLimit');
 const pages = require('./web/pages');
-const { deviceHash } = require('./web/device');
+const { deviceHash, assertSecret: assertDeviceSecret } = require('./web/device');
+const { assertConfigured } = require('./services/payments/mode');
 const { ipCountry, currencyFor } = require('./services/country');
 const fx = require('./services/fx');
 const mp = require('./services/payments/mp');
@@ -180,6 +181,8 @@ function schedule() {
 function start() {
   db.open();
   stars.assertSecret();
+  assertDeviceSecret();
+  assertConfigured();
   const app = createApp();
   const booting = db.connect().catch((err) => {
     logger.error('mongo', err);

@@ -693,6 +693,7 @@ test('en producción, si Mongo no conecta tras reintentos, el proceso sale', asy
   process.env.NODE_ENV = 'production';
   process.env.MONGODB_URI = 'mongodb://127.0.0.1:27017/db';
   process.env.STARS_PAYLOAD_SECRET = 'test-stars-secret';
+  process.env.DEVICE_COOKIE_SECRET = 'test-cookie-secret';
   let calls = 0;
   setConnector(async () => {
     calls += 1;
