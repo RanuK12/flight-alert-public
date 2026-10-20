@@ -6,6 +6,8 @@ const { col } = require('../../database');
 const entitlements = require('../entitlements');
 const logger = require('../../utils/logger').child('mp');
 const { savePending } = require('./pending');
+const { paymentsMode, assertMpKey } = require('./mode');
+const { notifyCharge } = require('./notify');
 
 function timingSafeEqual(a, b) {
   const left = Buffer.from(String(a));
@@ -24,14 +26,8 @@ function verifySignature({ id, requestId, signatureHeader, secret }) {
   return timingSafeEqual(expected, v1[1]);
 }
 
-function assertMpTest(token) {
-  if (!String(token || '').startsWith('TEST-')) {
-    throw new Error('MP_ACCESS_TOKEN debe ser de test');
-  }
-}
-
 function authHeaders(token) {
-  assertMpTest(token);
+  assertMpKey(token);
   return { Authorization: `Bearer ${token}` };
 }
 
@@ -56,7 +52,32 @@ async function fetchPayment(id) {
 }
 
 function checkoutUrl(data) {
-  return (data && data.sandbox_init_point) || '';
+  if (!data) return '';
+  if (paymentsMode() === 'live') return data.init_point || '';
+  return data.sandbox_init_point || '';
+}
+
+function preapprovalIdOf(remote) {
+  if (!remote || typeof remote !== 'object') return '';
+  if (remote.preapproval_id) return String(remote.preapproval_id);
+  if (remote.metadata && remote.metadata.preapproval_id) return String(remote.metadata.preapproval_id);
+  const tx = remote.point_of_interaction && remote.point_of_interaction.transaction_data;
+  if (tx && (tx.subscription_id || tx.preapproval_id)) {
+    return String(tx.subscription_id || tx.preapproval_id);
+  }
+  return '';
+}
+
+async function checkoutForPayment(remote) {
+  let ref = remote && remote.external_reference ? String(remote.external_reference) : '';
+  if (!ref) {
+    const preId = preapprovalIdOf(remote);
+    if (!preId) return { ref: '', checkout: null };
+    const pre = await fetchPreapproval(preId);
+    ref = pre && pre.external_reference ? String(pre.external_reference) : '';
+  }
+  const checkout = ref ? await col('Checkout').findOne({ externalReference: ref }) : null;
+  return { ref, checkout };
 }
 
 function eventKind(req) {
@@ -72,7 +93,7 @@ function eventKind(req) {
 async function createPreapproval({ amount, externalReference, payerEmail, backUrl }) {
   const token = process.env.MP_ACCESS_TOKEN;
   if (!token) throw new Error('MP_ACCESS_TOKEN missing');
-  assertMpTest(token);
+  assertMpKey(token);
   const res = await axios.post('https://api.mercadopago.com/preapproval', {
     reason: 'Alertas de vuelos Pro',
     external_reference: externalReference,
@@ -102,8 +123,12 @@ async function updatePreapprovalAmount(id, amount) {
     logger.warn('no actualicé el monto: falta el token de MP');
     return { skipped: true };
   }
-  if (!String(token).startsWith('TEST-')) {
-    logger.warn('no actualicé el monto: el token de MP no es de test');
+  const livePrefix = 'APP_' + 'USR-';
+  const matches = paymentsMode() === 'live'
+    ? String(token).startsWith(livePrefix)
+    : String(token).startsWith('TEST-');
+  if (!matches) {
+    logger.warn('no actualicé el monto: el token de MP no coincide con el modo');
     return { skipped: true };
   }
   const res = await axios.put(
@@ -129,11 +154,18 @@ async function handleWebhook(req) {
   if (eventKind(req) === 'payment') {
     const remote = await fetchPayment(dataId);
     if (!remote || remote.status !== 'approved') return { status: 200, ignored: true };
-    const ref = remote.external_reference ? String(remote.external_reference) : '';
-    const checkout = ref ? await col('Checkout').findOne({ externalReference: ref }) : null;
+    const { ref, checkout } = await checkoutForPayment(remote);
     if (!checkout) return { status: 200, payment: true, activated: false };
+    const alert = () => notifyCharge({
+      provider: 'mp',
+      amount: remote.transaction_amount,
+      currency: remote.currency_id || (checkout && checkout.currency) || 'ARS',
+    });
     if (!checkout.telegramUserId) {
-      await savePending({ provider: 'mp', ref: String(dataId), externalReference: ref });
+      const chargeRef = String(dataId);
+      const existing = await col('Payment').findOne({ provider: 'mp', ref: chargeRef });
+      await savePending({ provider: 'mp', ref: chargeRef, externalReference: ref });
+      if (!existing) await alert();
       return { status: 200, payment: true, pendingLink: true, activated: false };
     }
     const result = await entitlements.activatePro(
@@ -146,6 +178,7 @@ async function handleWebhook(req) {
       { telegramUserId: String(checkout.telegramUserId) },
       { $set: { country: 'AR', priceCurrency: 'ARS' } },
     );
+    if (!result.duplicate) await alert();
     return { status: 200, payment: true, activated: true, duplicate: Boolean(result.duplicate) };
   }
   const remote = await fetchPreapproval(dataId);

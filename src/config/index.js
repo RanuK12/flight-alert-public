@@ -2,6 +2,7 @@
 
 require('dotenv').config();
 const flags = require('./flags');
+const { paymentsMode } = require('../services/payments/mode');
 
 function optional(name, fallback) {
   const v = process.env[name];
@@ -17,6 +18,7 @@ function summary() {
     telegram: { hasToken: Boolean(process.env.TELEGRAM_BOT_TOKEN) },
     mongo: { hasUri: Boolean(process.env.MONGODB_URI) },
     travelpayouts: { enabled: Boolean(process.env.TRAVELPAYOUTS_TOKEN) },
+    payments: paymentsMode(),
   };
 }
 

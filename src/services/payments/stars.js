@@ -123,6 +123,11 @@ async function onSuccess(msg) {
       { telegramUserId: String(userId) },
       { $set: { telegramChatId: String(msg.chat.id), priceCurrency: 'XTR' } },
     );
+    await require('./notify').notifyCharge({
+      provider: 'stars',
+      amount: pay.total_amount,
+      currency: 'XTR',
+    });
   }
   return result;
 }
