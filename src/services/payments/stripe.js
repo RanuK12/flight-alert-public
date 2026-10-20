@@ -64,7 +64,8 @@ async function createCheckout({
     email: customerEmail,
     metadata: { external_reference: externalReference },
   });
-  return stripe.checkout.sessions.create({
+  const tax = automaticTax(currency);
+  const session = {
     mode: 'subscription',
     customer: customer.id,
     client_reference_id: externalReference,
@@ -73,8 +74,13 @@ async function createCheckout({
     success_url: successUrl,
     cancel_url: cancelUrl,
     line_items: [lineItem(currency, unitAmount)],
-    automatic_tax: { enabled: automaticTax(currency) },
-  });
+    automatic_tax: { enabled: tax },
+  };
+  if (tax) {
+    session.customer_update = { address: 'auto' };
+    session.billing_address_collection = 'required';
+  }
+  return stripe.checkout.sessions.create(session);
 }
 
 async function metadataRef(stripe, obj) {

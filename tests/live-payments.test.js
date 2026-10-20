@@ -138,8 +138,11 @@ test('Stripe live usa el precio del env, IVA incluido en EUR y el secreto live',
     successUrl: 'http://local.test/ok',
     cancelUrl: 'http://local.test/no',
   });
-  expect(Stripe.sessionCreate.mock.calls[0][0].line_items[0]).toEqual({ quantity: 1, price: 'price_eur' });
-  expect(Stripe.sessionCreate.mock.calls[0][0].automatic_tax).toEqual({ enabled: true });
+  const eurSession = Stripe.sessionCreate.mock.calls[0][0];
+  expect(eurSession.line_items[0]).toEqual({ quantity: 1, price: 'price_eur' });
+  expect(eurSession.automatic_tax).toEqual({ enabled: true });
+  expect(eurSession.customer_update).toEqual({ address: 'auto' });
+  expect(eurSession.billing_address_collection).toBe('required');
 
   await stripePay.createCheckout({
     externalReference: 'ref-usd',
@@ -149,8 +152,11 @@ test('Stripe live usa el precio del env, IVA incluido en EUR y el secreto live',
     successUrl: 'http://local.test/ok',
     cancelUrl: 'http://local.test/no',
   });
-  expect(Stripe.sessionCreate.mock.calls[1][0].line_items[0]).toEqual({ quantity: 1, price: 'price_usd' });
-  expect(Stripe.sessionCreate.mock.calls[1][0].automatic_tax).toEqual({ enabled: false });
+  const usdSession = Stripe.sessionCreate.mock.calls[1][0];
+  expect(usdSession.line_items[0]).toEqual({ quantity: 1, price: 'price_usd' });
+  expect(usdSession.automatic_tax).toEqual({ enabled: false });
+  expect(usdSession.customer_update).toBeUndefined();
+  expect(usdSession.billing_address_collection).toBeUndefined();
 
   delete process.env.STRIPE_PRICE_EUR;
   await expect(stripePay.createCheckout({
@@ -369,6 +375,23 @@ test('cada cobro real avisa monto, moneda y proveedor, sin datos personales', as
   });
   expect(quiet).not.toHaveBeenCalled();
   quiet.mockRestore();
+
+  const starsSend = jest.fn().mockResolvedValue({});
+  const starsSpy = jest.spyOn(bot, 'getBot').mockReturnValue({ sendMessage: starsSend });
+  const starPayload = await stars.issuePayload('88');
+  await stars.onSuccess({
+    from: { id: '88' },
+    chat: { id: '88' },
+    successful_payment: {
+      telegram_payment_charge_id: 'charge-test-stars',
+      currency: 'XTR',
+      total_amount: 250,
+      invoice_payload: starPayload,
+    },
+  });
+  expect(starsSend.mock.calls.map((call) => call[1])).toEqual(['Cobro real stars 250 XTR']);
+  expect(starsSend.mock.calls[0][1]).not.toContain('88');
+  starsSpy.mockRestore();
 });
 
 test('MP live abre init_point y actualiza el monto', async () => {

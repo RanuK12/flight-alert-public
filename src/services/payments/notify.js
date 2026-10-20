@@ -19,13 +19,13 @@ function currencyField(value) {
 }
 
 /**
- * Aviso al owner por un cobro con PAYMENTS_MODE=live.
- * Solo monto, moneda y proveedor.
+ * Aviso al owner: monto, moneda y proveedor.
+ * Stars es dinero real también en test. Stripe y Mercado Pago solo en live.
  */
 async function notifyCharge({ provider, amount, currency }) {
-  if (paymentsMode() !== 'live') return;
   const name = providerName(provider);
   if (!name) return;
+  if (name !== 'stars' && paymentsMode() !== 'live') return;
   const amt = amountField(amount);
   const cur = currencyField(currency);
   const text = ['Cobro real', name, amt, cur].filter(Boolean).join(' ');

@@ -42,7 +42,9 @@ Mercado Pago tiene que notificar pagos (`payment`) y suscripciones (`subscriptio
 
 ## Precios
 
-- EUR: precio mensual de €4,50 en Stripe, con IVA incluido (`tax_behavior` inclusive). El id va en `STRIPE_PRICE_EUR`. En live, un checkout EUR enciende Stripe Tax aunque `STRIPE_TAX_ENABLED` esté apagado.
+Antes de pasar a live, Stripe Tax tiene que estar activado en el dashboard de Stripe, con el registro de IVA (Italia/OSS). El Price EUR tiene que tener `tax_behavior` inclusive. Sin eso, el checkout EUR no puede calcular el IVA.
+
+- EUR: precio mensual de €4,50 en Stripe. El id va en `STRIPE_PRICE_EUR` y ese Price tiene `tax_behavior` inclusive (IVA incluido). En live, un checkout EUR enciende Stripe Tax aunque `STRIPE_TAX_ENABLED` esté apagado, pide la dirección de facturación y la guarda en el cliente.
 - USD: precio mensual de USD 5. El id va en `STRIPE_PRICE_USD`. El impuesto de USD sigue a `STRIPE_TAX_ENABLED`.
 - ARS: lo publica la cotización guardada. No hay precio fijo en Stripe.
 
@@ -50,7 +52,7 @@ En test, Stripe sigue armando el monto en el checkout. Los ids de arriba se usan
 
 ## Alerta de cada cobro real
 
-Con `PAYMENTS_MODE=live`, cada cobro nuevo deja un log `cobro real` y un mensaje de Telegram a `OWNER_TELEGRAM_IDS`. El texto lleva monto, moneda y proveedor (`stripe`, `mp` o `stars`). No lleva email, nombre ni id de quien pagó. En `test` no se avisa.
+Cada cobro nuevo deja un log `cobro real` y un mensaje de Telegram a `OWNER_TELEGRAM_IDS`. El texto lleva monto, moneda y proveedor (`stripe`, `mp` o `stars`). No lleva email, nombre ni id de quien pagó. Stripe y Mercado Pago avisan solo con `PAYMENTS_MODE=live`. Stars avisa siempre, también en `test`, porque es dinero real.
 
 ## Prueba con un pago real chico y reembolso
 
