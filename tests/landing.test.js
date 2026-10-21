@@ -23,7 +23,7 @@ const { ORIGINS, DESTINATIONS } = require('../src/config/airports');
 const { createApp } = require('../src/app');
 const { renderSampleCard, criticalCss, PRIVACY } = require('../src/web/landing');
 
-const EMPTY_CARD = '<article class="price-card" id="sample-card" data-state="empty" data-empty="Sin precio reciente para mostrar"><p class="route-chip"></p><p class="price-card__when"></p><p class="price-card__amount">Sin precio reciente para mostrar</p><p class="price-card__words"></p><p class="seen"><svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#i-clock"></use></svg> <span class="seen__text"></span></p><svg class="route-draw" viewBox="0 0 320 80" aria-hidden="true" focusable="false"><path pathLength="1" d="M8 64C70 64 90 16 160 16s90 48 152 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><p class="price-card__source">Precio en caché de Travelpayouts</p><a class="btn" href="https://t.me/flightalertpro_bot?start=landing_hero"><svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#i-tg"></use></svg>Buscar gratis en Telegram</a></article>';
+const EMPTY_CARD = '<article class="price-card" id="sample-card" data-state="empty"><div class="price-card__header"><p class="route-chip"><abbr title="Ezeiza, Buenos Aires">EZE</abbr> → <abbr title="Madrid">MAD</abbr></p><span class="badge-live"><span class="badge-dot"></span>En vivo</span></div><div class="popular-routes-preview"><span class="route-pill is-active"><abbr title="Ezeiza, Buenos Aires">EZE</abbr> → <abbr title="Madrid">MAD</abbr></span><span class="route-pill"><abbr title="Ezeiza, Buenos Aires">EZE</abbr> → <abbr title="Barcelona">BCN</abbr></span><span class="route-pill"><abbr title="Córdoba">COR</abbr> → <abbr title="Fiumicino, Roma">FCO</abbr></span></div><p class="price-card__when">Próximas tarifas monitoreadas</p><div class="price-card__price-row"><p class="price-card__amount"><span class="skeleton-shimmer skeleton-amount"></span></p><svg class="sparkline" viewBox="0 0 100 24" aria-hidden="true" focusable="false"><path d="M2 18 L24 16 L48 19 L72 8 L96 4" fill="none" stroke="#64ffda" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="96" cy="4" r="3" fill="#64ffda"/></svg></div><p class="price-card__words">Monitoreando vuelos reales 24/7</p><p class="seen"><svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#i-clock"></use></svg> <span class="seen__text">monitoreando en tiempo real</span></p><svg class="route-draw" viewBox="0 0 320 80" aria-hidden="true" focusable="false"><path pathLength="1" d="M8 64C70 64 90 16 160 16s90 48 152 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><p class="price-card__source">Precio en caché de Travelpayouts</p><a class="btn" href="https://t.me/flightalertpro_bot?start=landing_hero"><svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#i-tg"></use></svg>Buscar gratis en Telegram</a></article>';
 
 const DAY = 24 * 60 * 60 * 1000;
 const HOUR = 60 * 60 * 1000;
@@ -103,10 +103,12 @@ afterEach(() => cleanEnv());
 
 test('snapshot de la card vacía, sin precio inventado', () => {
   expect(renderSampleCard(null, 'es')).toBe(EMPTY_CARD);
-  expect(EMPTY_CARD).toContain('Sin precio reciente para mostrar');
+  expect(EMPTY_CARD).not.toContain('Sin precio reciente');
   expect(EMPTY_CARD).not.toContain('data-value');
-  expect(renderSampleCard(null, 'en')).toContain('No recent fare to show');
+  expect(EMPTY_CARD).toContain('EZE');
+  expect(EMPTY_CARD).toContain('MAD');
   expect(renderSampleCard(null, 'en')).not.toContain('data-value');
+  expect(renderSampleCard(null, 'en')).not.toContain('No recent fare');
 });
 
 test('la landing en español sale del config, con privacidad y sin promesas de más', async () => {

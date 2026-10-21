@@ -1,6 +1,7 @@
 'use strict';
 
 const crypto = require('crypto');
+const path = require('path');
 const express = require('express');
 const flags = require('./config/flags');
 const { summary } = require('./config');
@@ -117,6 +118,8 @@ function createApp() {
     return next();
   });
 
+  app.use('/public', express.static(path.join(__dirname, '..', 'public'), { maxAge: '30d' }));
+
   app.get('/assets/:name', (req, res) => {
     const hit = landing.assetByName(req.params.name);
     if (!hit) return res.status(404).type('text/plain').send('No está');
@@ -125,9 +128,37 @@ function createApp() {
     return res.send(hit.body);
   });
 
-  app.get('/api/sample-price', (_req, res) => {
+  async function resolveSample() {
+    let sample = samplePrice.current();
+    if (!sample) {
+      try {
+        const Route = db.col('Route');
+        if (Route) {
+          const lastRoute = await Route.findOne({ lastPriceEur: { $gt: 0 }, foundAt: { $ne: null } })
+            .sort({ foundAt: -1 })
+            .lean();
+          if (lastRoute && lastRoute.lastPriceEur) {
+            samplePrice.remember({
+              origin: lastRoute.origin,
+              destination: lastRoute.destination,
+              price: lastRoute.lastPriceEur,
+              currency: lastRoute.currency || 'EUR',
+              departureDate: lastRoute.outboundDate,
+              foundAt: lastRoute.foundAt,
+              actual: true,
+            });
+            sample = samplePrice.current();
+          }
+        }
+      } catch { /* mongo opcional */ }
+    }
+    return sample;
+  }
+
+  app.get('/api/sample-price', async (_req, res) => {
     res.set('Cache-Control', 'no-store');
-    res.json({ ok: true, sample: samplePrice.current() });
+    const sample = await resolveSample();
+    res.json({ ok: true, sample });
   });
 
   async function sendLanding(req, res, lang) {
@@ -139,13 +170,14 @@ function createApp() {
       const geo = await ipCountry(req);
       let quote = null;
       try { quote = await fx.latest(); } catch { quote = null; }
+      const sample = await resolveSample();
       res.set('Cache-Control', 'no-cache');
       res.set('Vary', 'Accept-Language');
       return res.type('html').send(pages.home({
         lang,
         region: landing.regionFor(geo),
         ars: landing.arsFromQuote(quote),
-        sample: samplePrice.current(),
+        sample,
         nonce: res.locals.cspNonce,
         base: process.env.PUBLIC_BASE_URL || '',
       }));

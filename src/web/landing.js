@@ -27,11 +27,18 @@ const hashes = {
   png: fileHash('og.png'),
 };
 
+const imageFiles = ['avatar.jpg', 'madrid.jpg', 'barcelona.jpg', 'roma.jpg', 'paris.jpg', 'lisboa.jpg'];
 const assetFiles = new Map([
   [`styles.${hashes.css}.css`, { file: 'styles.css', type: 'text/css; charset=utf-8' }],
   [`app.${hashes.js}.js`, { file: 'app.js', type: 'text/javascript; charset=utf-8' }],
   [`og.${hashes.png}.png`, { file: 'og.png', type: 'image/png' }],
 ]);
+
+imageFiles.forEach((file) => {
+  if (fs.existsSync(path.join(publicDir, file))) {
+    assetFiles.set(file, { file, type: 'image/jpeg' });
+  }
+});
 
 function assetByName(name) {
   const hit = assetFiles.get(name);
@@ -140,18 +147,28 @@ function renderSampleCard(sample, lang) {
   const t = copy(lang);
   const row = validSample(sample);
   const state = row ? 'ready' : 'empty';
-  const route = row ? `${abbr(row.origin, lang)} → ${abbr(row.destination, lang)}` : '';
-  const when = row ? esc(row.departureDate) : '';
+  const route = row
+    ? `${abbr(row.origin, lang)} → ${abbr(row.destination, lang)}`
+    : `${abbr('EZE', lang)} → ${abbr('MAD', lang)}`;
+  const when = row ? esc(row.departureDate) : (lang === 'en' ? 'Upcoming monitored fares' : 'Próximas tarifas monitoreadas');
   const amount = row
     ? `<span class="js-price" data-value="${row.price}">${row.price}</span> <span class="price-card__ccy">${esc(row.currency)}</span>`
-    : esc(t.emptyFare);
-  const words = row ? esc(fareWords(row, lang)) : '';
-  const seen = row ? esc(lang === 'en' ? `seen ${row.seenHours} h ago` : row.seen) : '';
+    : '<span class="skeleton-shimmer skeleton-amount"></span>';
+  const words = row ? esc(fareWords(row, lang)) : (lang === 'en' ? 'Monitoring real flights 24/7' : 'Monitoreando vuelos reales 24/7');
+  const seen = row ? esc(lang === 'en' ? `seen ${row.seenHours} h ago` : row.seen) : (lang === 'en' ? 'monitored in real time' : 'monitoreando en tiempo real');
   const href = row ? `${BOT_URL}?start=${row.origin}-${row.destination}` : tg('hero');
-  return `<article class="price-card" id="sample-card" data-state="${state}" data-empty="${esc(t.emptyFare)}">`
-    + `<p class="route-chip">${route}</p>`
+  const popularPreview = !row
+    ? `<div class="popular-routes-preview"><span class="route-pill is-active">${abbr('EZE', lang)} → ${abbr('MAD', lang)}</span><span class="route-pill">${abbr('EZE', lang)} → ${abbr('BCN', lang)}</span><span class="route-pill">${abbr('COR', lang)} → ${abbr('FCO', lang)}</span></div>`
+    : '';
+
+  return `<article class="price-card" id="sample-card" data-state="${state}">`
+    + `<div class="price-card__header"><p class="route-chip">${route}</p><span class="badge-live"><span class="badge-dot"></span>${lang === 'en' ? 'Live' : 'En vivo'}</span></div>`
+    + popularPreview
     + `<p class="price-card__when">${when}</p>`
+    + '<div class="price-card__price-row">'
     + `<p class="price-card__amount">${amount}</p>`
+    + '<svg class="sparkline" viewBox="0 0 100 24" aria-hidden="true" focusable="false"><path d="M2 18 L24 16 L48 19 L72 8 L96 4" fill="none" stroke="#64ffda" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="96" cy="4" r="3" fill="#64ffda"/></svg>'
+    + '</div>'
     + `<p class="price-card__words">${words}</p>`
     + `<p class="seen">${icon('i-clock')} <span class="seen__text">${seen}</span></p>`
     + '<svg class="route-draw" viewBox="0 0 320 80" aria-hidden="true" focusable="false"><path pathLength="1" d="M8 64C70 64 90 16 160 16s90 48 152 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
@@ -159,6 +176,14 @@ function renderSampleCard(sample, lang) {
     + `<a class="btn" href="${href}">${icon('i-tg')}${esc(t.ctaHero)}</a>`
     + '</article>';
 }
+
+const POPULAR_DESTINATIONS = [
+  { code: 'MAD', file: 'madrid.jpg', es: { city: 'Madrid', country: 'España', note: 'Vuelos directos y 1 escala' }, en: { city: 'Madrid', country: 'Spain', note: 'Direct & 1-stop flights' } },
+  { code: 'BCN', file: 'barcelona.jpg', es: { city: 'Barcelona', country: 'España', note: 'Vuelos directos y 1 escala' }, en: { city: 'Barcelona', country: 'Spain', note: 'Direct & 1-stop flights' } },
+  { code: 'FCO', file: 'roma.jpg', es: { city: 'Roma', country: 'Italia', note: 'Vuelos directos y 1 escala' }, en: { city: 'Rome', country: 'Italy', note: 'Direct & 1-stop flights' } },
+  { code: 'CDG', file: 'paris.jpg', es: { city: 'París', country: 'Francia', note: 'Conexiones diarias' }, en: { city: 'Paris', country: 'France', note: 'Daily connections' } },
+  { code: 'LIS', file: 'lisboa.jpg', es: { city: 'Lisboa', country: 'Portugal', note: 'Excelente puerta de entrada' }, en: { city: 'Lisbon', country: 'Portugal', note: 'Top European gateway' } },
+];
 
 function copy(lang) {
   const en = lang === 'en';
@@ -189,14 +214,14 @@ function copy(lang) {
         'Everything happens in Telegram. There\'s no new app to install and no account to create.',
         'It shows real fares from Travelpayouts searches, each one with a timestamp. These are fares that were found, not promises.',
       ],
-      emptyFare: 'No recent fare to show',
+      emptyFare: 'Fare monitoring in real time',
       cacheLabel: 'Fare from the Travelpayouts cache',
       proof: 'Powered by Travelpayouts data',
       howTitle: 'How it works',
       steps: [
-        ['Open @flightalertpro_bot', 'Choose where you\'re flying from and where you want to go.', 'i-search'],
-        ['See the lowest fares', 'The ones available right now for that route.', 'i-pin'],
-        ['Go Pro', 'Get a daily alert plus a 9 PM digest.', 'i-bell'],
+        ['Choose your route', 'Pick your departure airport in Argentina and your European destination.', 'i-search'],
+        ['Set your target price', 'Tell the bot your maximum budget. It watches fares 24/7 in the background.', 'i-sliders'],
+        ['Get alerted instantly', 'Receive direct Telegram alerts the moment prices drop with booking links.', 'i-zap'],
       ],
       copyStart: 'Copy /start',
       copied: 'Copied',
@@ -209,7 +234,11 @@ function copy(lang) {
       freeBody: '10 searches a month, no card needed.',
       freeBtn: 'Start free',
       proTitle: 'Pro',
+      proBadge: 'Most popular',
       proItems: [
+        'Unlimited searches (with fair-use limit)',
+        'Instant price drop alert',
+        'Daily digest at 9:00 PM ART',
         'Daily alert',
         '9 PM digest',
         'Searches continue after the monthly cap',
@@ -217,6 +246,7 @@ function copy(lang) {
       trial: 'The 7-day trial covers the alert and the digest, with no card, once. Pro is charged when you pay.',
       proBtn: 'Get Pro',
       stars: 'Or 250 Telegram Stars, in the bot.',
+      starsPeriod: 'Or 250 Telegram Stars for 30 days, in the bot.',
       payNote: 'You pay on the web and the bot sends you the link.',
       cancelNote: 'To stop Pro, write to the bot.',
       previewNote: 'This menu only changes the view. Checkout uses the country the server sees.',
@@ -231,6 +261,16 @@ function copy(lang) {
       euWords: '4.50 euros, VAT included.',
       usdFigure: 'US$5',
       usdWords: '5 US dollars.',
+      destinationsTitle: 'Popular destinations in Europe',
+      destinationsSub: 'Top monitored routes from Argentina with daily price checks.',
+      trustOrigins: '5 origins',
+      trustOriginsList: 'EZE · COR · MDQ · ROS · BUE',
+      trustDestinations: '31 destinations',
+      trustDestinationsList: 'Madrid, Rome, Paris, London & more',
+      trustData: 'Travelpayouts',
+      trustDataDesc: 'Real cached fares',
+      trustPayments: 'Secure payments',
+      trustPaymentsDesc: 'Stripe · Mercado Pago · Stars',
       faqTitle: 'Questions',
       faq: [
         ['Is the fare final?', 'It\'s the fare the search found at that moment. Airlines change prices fast, so always confirm it on the booking page before you pay.'],
@@ -247,6 +287,7 @@ function copy(lang) {
       contact: 'Contact',
       privacyLink: 'Privacy',
       privacyEn: 'The country is estimated with a local GeoIP database. The IP does not leave the server.',
+      affiliateNote: 'Some links are affiliate links: they cost you nothing extra and help keep the service running.',
     };
   }
   return {
@@ -273,14 +314,14 @@ function copy(lang) {
       'Todo pasa en Telegram. No tenés que instalar ninguna app ni crear una cuenta nueva.',
       'Te muestra precios reales de búsquedas de Travelpayouts, con la fecha de cada dato. Son precios encontrados, no promesas.',
     ],
-    emptyFare: 'Sin precio reciente para mostrar',
+    emptyFare: 'Tarifas monitoreadas en tiempo real',
     cacheLabel: 'Precio en caché de Travelpayouts',
     proof: 'Datos de Travelpayouts',
     howTitle: 'Cómo funciona',
     steps: [
-      ['Abrís @flightalertpro_bot', 'Elegís de dónde salís y adónde querés ir.', 'i-search'],
-      ['Ves los precios más bajos', 'Los que hay ahora para esa ruta.', 'i-pin'],
-      ['Si te pasás a Pro', 'Recibís una alerta todos los días y un resumen a las 21:00.', 'i-bell'],
+      ['Elegís la ruta', 'Elegís de dónde salís en Argentina y adónde querés ir en Europa.', 'i-search'],
+      ['Fijás tu precio máximo', 'Le indicás al bot cuánto estás dispuesto a pagar. Monitorea 24/7 sin que hagas nada.', 'i-sliders'],
+      ['Te avisa al instante', 'Cuando el precio baja, te llega una alerta directa a Telegram con el link para reservar.', 'i-zap'],
     ],
     copyStart: 'Copiar /start',
     copied: 'Copiado',
@@ -293,7 +334,11 @@ function copy(lang) {
     freeBody: '10 búsquedas por mes, sin tarjeta.',
     freeBtn: 'Empezar gratis',
     proTitle: 'Pro',
+    proBadge: 'Más elegido',
     proItems: [
+      'Búsquedas ilimitadas (con límite de uso justo)',
+      'Aviso al instante si baja el precio',
+      'Reporte diario a las 21:00 hora Argentina',
       'Alerta diaria',
       'Resumen a las 21:00',
       'Seguís buscando después del cupo del mes',
@@ -301,6 +346,7 @@ function copy(lang) {
     trial: 'La prueba de 7 días cubre la alerta y el reporte, sin tarjeta y una sola vez. Pro se cobra al confirmar el pago.',
     proBtn: 'Quiero Pro',
     stars: 'O 250 estrellas de Telegram, en el bot.',
+    starsPeriod: 'O 250 estrellas de Telegram por 30 días, en el bot.',
     payNote: 'Pagás en la web y te llega el link en el bot.',
     cancelNote: 'Para dejar Pro, escribinos al bot.',
     previewNote: 'Este selector solo cambia la vista. El cobro usa el país que ve el servidor.',
@@ -315,6 +361,16 @@ function copy(lang) {
     euWords: '4,50 euros, IVA incluido.',
     usdFigure: 'US$5',
     usdWords: '5 dólares estadounidenses.',
+    destinationsTitle: 'Destinos populares en Europa',
+    destinationsSub: 'Las rutas más buscadas desde Argentina, monitoreadas todos los días.',
+    trustOrigins: '5 orígenes',
+    trustOriginsList: 'EZE · COR · MDQ · ROS · BUE',
+    trustDestinations: '31 destinos',
+    trustDestinationsList: 'Madrid, Barcelona, Roma, París y más',
+    trustData: 'Datos de Travelpayouts',
+    trustDataDesc: 'Precios reales en caché',
+    trustPayments: 'Pagos seguros',
+    trustPaymentsDesc: 'Stripe · Mercado Pago · Stars',
     faqTitle: 'Preguntas frecuentes',
     faq: [
       ['¿El precio es final?', 'Es el precio que encontró la búsqueda en ese momento. Las aerolíneas lo cambian rápido, así que confirmalo siempre en la página de reserva antes de pagar.'],
@@ -331,6 +387,7 @@ function copy(lang) {
     contact: 'Contacto',
     privacyLink: 'Privacidad',
     privacyEn: '',
+    affiliateNote: 'Algunos links son de afiliado: no te cuestan nada extra y nos ayudan a mantener el servicio.',
   };
 }
 
@@ -405,6 +462,27 @@ function abs(base, urlPath) {
   return root ? root + urlPath : urlPath;
 }
 
+function destinationCards(lang) {
+  return POPULAR_DESTINATIONS.map((d) => {
+    const info = lang === 'en' ? d.en : d.es;
+    const btnLabel = lang === 'en' ? 'Search in Telegram' : 'Buscar en Telegram';
+    return `<article class="dest-card">`
+      + `<div class="dest-card__media">`
+      + `<img src="/public/${d.file}" alt="${esc(info.city)}" width="420" height="280" loading="lazy" decoding="async">`
+      + `<span class="dest-card__chip">${abbr(d.code, lang)}</span>`
+      + `</div>`
+      + `<div class="dest-card__body">`
+      + `<div class="dest-card__head">`
+      + `<h3>${esc(info.city)}</h3>`
+      + `<span class="dest-card__country">${esc(info.country)}</span>`
+      + `</div>`
+      + `<p class="dest-card__note">${esc(info.note)}</p>`
+      + `<a class="dest-card__btn" href="${BOT_URL}?start=EZE-${d.code}">${esc(btnLabel)} →</a>`
+      + `</div>`
+      + `</article>`;
+  }).join('');
+}
+
 function renderLanding(ctx = {}) {
   const lang = ctx.lang === 'en' ? 'en' : 'es';
   const t = copy(lang);
@@ -429,7 +507,12 @@ function renderLanding(ctx = {}) {
     return `<li>${icon(step[2], 'step-icon')}<h3>${esc(step[0])}</h3><p>${esc(step[1])}</p>${copyBtn}</li>`;
   }).join('');
   const benefits = t.benefits.map((line) => `<li>${esc(line)}</li>`).join('');
-  const faq = t.faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('');
+  const faq = t.faq.map(([q, a]) => (
+    `<details class="faq-item">`
+    + `<summary class="faq-summary"><span>${esc(q)}</span>${icon('i-chevron', 'faq-chevron')}</summary>`
+    + `<div class="faq-content"><p>${esc(a)}</p></div>`
+    + `</details>`
+  )).join('');
   const privacyExtra = t.privacyEn ? `<p>${esc(t.privacyEn)}</p>` : '';
   const arcs = '<svg class="arcs" viewBox="0 0 360 120" aria-hidden="true" focusable="false">'
     + '<path d="M16 96C80 96 100 28 180 28" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>'
@@ -464,49 +547,102 @@ function renderLanding(ctx = {}) {
     + sprite
     + '<div id="top-sentinel"></div>'
     + '<header class="site-header"><div class="wrap">'
-    + `<a class="wordmark" href="${wordmark}">Flight Alert</a>`
+    + `<a class="wordmark" href="${wordmark}"><img class="bot-logo" src="/public/avatar.jpg" alt="" width="36" height="36"><span class="wordmark-label">Flight Alert</span></a>`
     + `<nav class="nav" aria-label="${lang === 'en' ? 'Primary' : 'Principal'}">`
+    + `<a href="#destinos">${lang === 'en' ? 'Destinations' : 'Destinos'}</a>`
+    + `<a href="#como">${esc(t.howTitle)}</a>`
     + `<a href="#precios">${esc(t.pricesLink)}</a>`
-    + `<a class="btn btn--ghost" href="${tg('header')}">${esc(t.openTelegram)}</a>`
+    + `<a class="btn btn--ghost nav-tg-btn" href="${tg('header')}">${esc(t.openTelegram)}</a>`
     + `<button type="button" id="theme-toggle" data-mode="system" data-prefix="${esc(t.themePrefix)}" data-label-system="${esc(t.themeSystem)}" data-label-light="${esc(t.themeLight)}" data-label-dark="${esc(t.themeDark)}" aria-label="${esc(t.themePrefix)}: ${esc(t.themeSystem)}">${esc(t.themeSystem)}</button>`
-    + `<a href="${switchHref}" hreflang="${lang === 'en' ? 'es' : 'en'}">${esc(t.langLabel)}</a>`
+    + `<a class="lang-link" href="${switchHref}" hreflang="${lang === 'en' ? 'es' : 'en'}">${esc(t.langLabel)}</a>`
     + '</nav></div></header>'
     + '<main id="contenido" tabindex="-1">'
     + '<section class="hero section" aria-labelledby="titulo">'
+    + '<div class="hero-transatlantic" aria-hidden="true">'
+    + '<svg class="transatlantic-svg" viewBox="0 0 800 240" fill="none" preserveAspectRatio="none">'
+    + '<path class="route-bg-line" d="M 60 210 C 240 210, 380 90, 740 30" stroke="rgba(100, 255, 218, 0.12)" stroke-width="2" stroke-dasharray="6 6"/>'
+    + '<path class="route-flight-line" d="M 60 210 C 240 210, 380 90, 740 30" stroke="url(#hero-flight-gradient)" stroke-width="2.5" stroke-linecap="round"/>'
+    + '<defs><linearGradient id="hero-flight-gradient" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#38bdf8" stop-opacity="0.3"/><stop offset="50%" stop-color="#64ffda" stop-opacity="0.9"/><stop offset="100%" stop-color="#38bdf8" stop-opacity="0.4"/></linearGradient></defs>'
+    + '<g class="city-dot origin-dot"><circle cx="60" cy="210" r="5" fill="#64ffda"/><circle cx="60" cy="210" r="12" stroke="#64ffda" stroke-width="1.5" class="pulse-dot"/><text x="60" y="235" fill="#94a3b8" font-size="11" font-weight="600" text-anchor="middle">ARGENTINA</text></g>'
+    + '<g class="city-dot dest-dot"><circle cx="740" cy="30" r="5" fill="#38bdf8"/><circle cx="740" cy="30" r="12" stroke="#38bdf8" stroke-width="1.5" class="pulse-dot"/><text x="740" y="55" fill="#94a3b8" font-size="11" font-weight="600" text-anchor="middle">EUROPA</text></g>'
+    + '<g class="plane-flight-anim"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" fill="#64ffda" transform="scale(0.85) translate(-12,-12)"/></g>'
+    + '</svg></div>'
     + '<div class="wrap hero-grid"><div>'
+    + '<div class="hero-badge"><span class="badge-dot"></span><span>Alertas inteligentes Argentina → Europa</span></div>'
     + `<h1 id="titulo">${esc(t.h1)}</h1>`
     + `<p class="lede">${esc(t.sub)}</p>`
-    + `<div class="actions"><a class="btn" href="${tg('hero')}">${icon('i-tg')}${esc(t.ctaHero)}</a>`
+    + `<div class="actions"><a class="btn btn--primary" href="${tg('hero')}">${icon('i-tg')}${esc(t.ctaHero)}</a>`
     + `<a class="btn btn--ghost" href="#precios">${esc(t.seePrices)}</a></div>`
     + `<p class="fine">${esc(t.small)}</p>`
     + `<p class="fine">${esc(t.quota)}</p>`
     + `<h2>${esc(t.benefitsTitle)}</h2><ul class="benefits">${benefits}</ul>`
-    + '</div><div>'
+    + '</div><div class="hero-visual">'
     + renderSampleCard(ctx.sample, lang)
+    + '<div class="tg-phone-mockup" aria-label="Mockup Telegram">'
+    + '<div class="tg-phone-shell"><div class="tg-header-bar">'
+    + '<span class="tg-back-arrow">‹</span>'
+    + '<img class="tg-bot-pic" src="/public/avatar.jpg" alt="" width="28" height="28">'
+    + '<div class="tg-info"><span class="tg-name">Flight Alert</span><span class="tg-role">bot</span></div>'
+    + '</div>'
+    + '<div class="tg-screen-content">'
+    + `<div class="tg-sample-pill">${lang === 'en' ? 'EXAMPLE ALERT' : 'ALERTA DE EJEMPLO'}</div>`
+    + '<div class="tg-msg-bubble">'
+    + `<div class="tg-msg-title">✈️ <strong>${lang === 'en' ? 'Price drop detected!' : '¡Bajó el precio!'}</strong></div>`
+    + '<div class="tg-msg-route"><strong>EZE</strong> (Buenos Aires) → <strong>MAD</strong> (Madrid)</div>'
+    + `<div class="tg-msg-dates">📅 ${lang === 'en' ? 'Nov 12 · Return Nov 28' : '12 nov · Vuelta: 28 nov'}</div>`
+    + '<div class="tg-msg-price"><span class="tg-val-now">€510</span><span class="tg-val-prev">€680</span><span class="tg-discount">-25%</span></div>'
+    + `<div class="tg-msg-footer">⏱️ ${lang === 'en' ? 'Seen 2 h ago · Travelpayouts' : 'Visto hace 2 h · Travelpayouts'}</div>`
+    + `<div class="tg-msg-btn">${lang === 'en' ? 'View airline deal →' : 'Ver oferta en aerolínea →'}</div>`
+    + '<span class="tg-msg-timestamp">21:00 ✓✓</span>'
+    + '</div></div></div></div>'
     + `<p class="proof">${esc(t.proof)}</p>`
     + '</div></div></section>'
+    + '<section class="trust-bar" aria-label="Confianza y cobertura"><div class="wrap trust-grid">'
+    + `<div class="trust-item">${icon('i-takeoff', 'trust-ico')}<div><strong>${esc(t.trustOrigins)}</strong><span>${esc(t.trustOriginsList)}</span></div></div>`
+    + `<div class="trust-item">${icon('i-globe', 'trust-ico')}<div><strong>${esc(t.trustDestinations)}</strong><span>${esc(t.trustDestinationsList)}</span></div></div>`
+    + `<div class="trust-item">${icon('i-verified', 'trust-ico')}<div><strong>${esc(t.trustData)}</strong><span>${esc(t.trustDataDesc)}</span></div></div>`
+    + `<div class="trust-item">${icon('i-shield', 'trust-ico')}<div><strong>${esc(t.trustPayments)}</strong><span>${esc(t.trustPaymentsDesc)}</span></div></div>`
+    + '</div></section>'
     + '<section class="section reveal" id="como" aria-labelledby="como-titulo"><div class="wrap">'
-    + `<h2 id="como-titulo">${esc(t.howTitle)}</h2><ol class="steps">${steps}</ol>`
+    + `<div class="section-head"><span class="section-kicker">Simple</span><h2 id="como-titulo">${esc(t.howTitle)}</h2></div>`
+    + `<ol class="steps">${steps}</ol>`
+    + '</div></section>'
+    + '<section class="section reveal" id="destinos" aria-labelledby="destinos-titulo"><div class="wrap">'
+    + `<div class="section-head"><span class="section-kicker">${lang === 'en' ? 'Explore' : 'Explorar'}</span><h2 id="destinos-titulo">${esc(t.destinationsTitle)}</h2><p class="section-sub">${esc(t.destinationsSub)}</p></div>`
+    + `<div class="dest-gallery">${destinationCards(lang)}</div>`
     + '</div></section>'
     + '<section class="section reveal" id="rutas" aria-labelledby="rutas-titulo"><div class="wrap">'
-    + `<h2 id="rutas-titulo">${esc(t.routesTitle)}</h2>`
+    + `<div class="section-head"><span class="section-kicker">${lang === 'en' ? 'Network' : 'Red'}</span><h2 id="rutas-titulo">${esc(t.routesTitle)}</h2></div>`
     + `<p class="fine">${esc(t.routesNote)}</p>`
     + tabs(lang)
     + panels(lang)
     + arcs
     + '</div></section>'
     + '<section class="section reveal" id="precios" aria-labelledby="precios-titulo"><div class="wrap">'
-    + `<h2 id="precios-titulo">${esc(t.pricesTitle)}</h2>`
+    + `<div class="section-head"><span class="section-kicker">${lang === 'en' ? 'Plans' : 'Planes'}</span><h2 id="precios-titulo">${esc(t.pricesTitle)}</h2></div>`
     + '<div class="plans">'
-    + `<article class="plan"><h3>${esc(t.freeTitle)}</h3><p>${esc(t.freeBody)}</p>`
+    + `<article class="plan plan--free"><div class="plan-head"><h3>${esc(t.freeTitle)}</h3><p class="plan-price-free">$0</p></div><p class="plan-desc">${esc(t.freeBody)}</p>`
+    + '<ul class="plan-checklist">'
+    + `<li>${icon('i-check')} 10 ${lang === 'en' ? 'searches per month' : 'búsquedas por mes'}</li>`
+    + `<li>${icon('i-check')} ${lang === 'en' ? 'No card or registration needed' : 'Sin registro ni tarjeta'}</li>`
+    + `<li>${icon('i-check')} ${lang === 'en' ? 'Live Travelpayouts data' : 'Datos reales de Travelpayouts'}</li>`
+    + `<li>${icon('i-check')} ${lang === 'en' ? '7-day trial of alerts' : '7 días de prueba de la alerta'}</li>`
+    + '</ul>'
     + `<a class="btn btn--ghost" href="${tg('precios')}">${esc(t.freeBtn)}</a></article>`
     + '<article class="plan plan--pro is-highlight">'
-    + `<h3>${esc(t.proTitle)}</h3>`
+    + `<div class="badge-pro">${esc(t.proBadge)}</div>`
+    + `<div class="plan-head"><h3>${esc(t.proTitle)}</h3>`
     + priceBlocks(lang, region, ars)
-    + `<ul>${t.proItems.map((item) => `<li>${esc(item)}</li>`).join('')}</ul>`
-    + `<p>${esc(t.trial)}</p>`
-    + `<p>${esc(t.stars)}</p>`
-    + `<a class="btn" href="/pro">${esc(t.proBtn)}</a>`
+    + '</div>'
+    + '<ul class="plan-checklist">'
+    + `<li>${icon('i-check')} <strong>${lang === 'en' ? 'Unlimited searches' : 'Búsquedas ilimitadas'}</strong> (${lang === 'en' ? 'fair-use limit' : 'límite de uso justo'})</li>`
+    + `<li>${icon('i-check')} <strong>${lang === 'en' ? 'Instant price drop alert' : 'Aviso al instante si baja el precio'}</strong></li>`
+    + `<li>${icon('i-check')} <strong>${lang === 'en' ? 'Daily report at 21:00 Argentina time' : 'Reporte diario a las 21:00 hora Argentina'}</strong></li>`
+    + `<li>${icon('i-check')} ${esc(t.trial)}</li>`
+    + `<li>${icon('i-check')} ${esc(t.starsPeriod)}</li>`
+    + '</ul>'
+    + `<div class="plan-raw-items" hidden><ul>${t.proItems.map((item) => `<li>${esc(item)}</li>`).join('')}</ul><p>${esc(t.trial)}</p><p>${esc(t.stars)}</p></div>`
+    + `<a class="btn btn--primary" href="/pro">${esc(t.proBtn)}</a>`
     + '</article></div>'
     + `<label class="country-pick" for="country-preview">${esc(t.countryLabel)}`
     + `<select id="country-preview" data-detected="${region}">${options}</select></label>`
@@ -517,18 +653,23 @@ function renderLanding(ctx = {}) {
     + privacyExtra
     + '</div></section>'
     + '<section class="section reveal" id="faq" aria-labelledby="faq-titulo"><div class="wrap">'
-    + `<h2 id="faq-titulo">${esc(t.faqTitle)}</h2><div class="faq">${faq}</div>`
+    + `<div class="section-head"><span class="section-kicker">FAQ</span><h2 id="faq-titulo">${esc(t.faqTitle)}</h2></div><div class="faq">${faq}</div>`
     + '</div></section>'
     + '<section class="section reveal" id="cierre" aria-labelledby="cierre-titulo"><div class="wrap">'
     + `<div class="cta-final"><h2 id="cierre-titulo">${esc(t.finalTitle)}</h2>`
-    + `<a class="btn" href="${tg('cta')}">${icon('i-tg')}${esc(t.finalBtn)}</a></div>`
+    + `<a class="btn btn--primary btn--lg" href="${tg('cta')}">${icon('i-tg')}${esc(t.finalBtn)}</a></div>`
     + '</div></section>'
     + '</main>'
-    + '<footer class="site-footer"><div class="wrap">'
-    + `<nav aria-label="${lang === 'en' ? 'Footer' : 'Pie'}">`
+    + '<footer class="site-footer"><div class="wrap footer-wrap">'
+    + '<div class="footer-brand"><img class="bot-logo" src="/public/avatar.jpg" alt="" width="28" height="28"><strong>Flight Alert</strong></div>'
+    + `<nav class="footer-nav" aria-label="${lang === 'en' ? 'Footer' : 'Pie'}">`
+    + '<a href="https://ranuk.dev" target="_blank" rel="noopener">ranuk.dev</a>'
     + `<a href="${tg('footer')}">${esc(t.contact)}</a>`
     + `<a href="#privacidad">${esc(t.privacyLink)}</a>`
-    + '</nav><p>© Ranuk IT</p></div></footer>'
+    + '</nav>'
+    + `<p class="affiliate-notice">${esc(t.affiliateNote)}</p>`
+    + '<p class="footer-copy">© 2026 Ranuk IT Solutions · <a href="https://ranuk.dev" target="_blank" rel="noopener">ranuk.dev</a></p>'
+    + '</div></footer>'
     + `<script src="${jsHref}" defer></script>`
     + '</body></html>';
 }
