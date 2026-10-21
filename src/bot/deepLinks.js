@@ -19,7 +19,9 @@ function bookingUrl(flight) {
   const q = `${origin}${depart}${destination}${back}1`;
   const marker = process.env.TRAVELPAYOUTS_MARKER || '';
   const url = `https://www.aviasales.com/search/${encodeURIComponent(q)}`;
-  return marker ? `${url}?marker=${encodeURIComponent(marker)}` : url;
+  // Misma moneda que el precio del bot (la API pide currency=eur).
+  const qs = marker ? `marker=${encodeURIComponent(marker)}&currency=eur` : 'currency=eur';
+  return `${url}?${qs}`;
 }
 
 module.exports = { bookingUrl };

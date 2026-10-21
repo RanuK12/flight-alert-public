@@ -15,7 +15,7 @@ function results(flights) {
   if (!ordered.length) return 'No encontré precios de los últimos 7 días para esa búsqueda.';
   const cheapest = ordered[0];
   const lines = ordered.slice(0, 8).map((flight, i) => `${i === 0 ? '→' : ' '} ${line(flight, now)}`);
-  return [`Lo más barato: €${cheapest.price}.`, ...lines].join('\n');
+  return [`Lo más barato: desde €${cheapest.price} (precio aproximado, visto antes; el final lo ves en Aviasales).`, ...lines].join('\n');
 }
 
 module.exports = { line, results, sortFlights };
