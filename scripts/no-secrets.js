@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const root = path.join(__dirname, '..');
-const skip = new Set(['node_modules', '.git', 'data', 'coverage']);
+const skip = new Set(['node_modules', '.git', 'data', 'coverage', 'screenshots']);
 const banned = [
   'mongodb+' + 'srv://',
   'sk_' + 'live',

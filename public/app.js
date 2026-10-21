@@ -160,17 +160,15 @@
     var origin = sample && /^[A-Z]{3}$/.test(sample.origin) ? sample.origin : '';
     var destination = sample && /^[A-Z]{3}$/.test(sample.destination) ? sample.destination : '';
     var currency = sample && /^[A-Z]{3}$/.test(sample.currency) ? sample.currency : '';
+    var popular = card.querySelector('.popular-routes-preview');
     if (!sample || price <= 0 || !origin || !destination || !currency) {
       card.setAttribute('data-state', 'empty');
-      if (amount) amount.textContent = card.getAttribute('data-empty') || '';
-      if (route) route.textContent = '';
-      if (when) when.textContent = '';
-      if (words) words.textContent = '';
-      if (seen) seen.textContent = '';
+      if (popular) popular.style.display = '';
       if (cta) cta.setAttribute('href', BOT + '?start=landing_hero');
       return;
     }
     card.setAttribute('data-state', 'ready');
+    if (popular) popular.style.display = 'none';
     if (route) {
       route.textContent = '';
       route.appendChild(abbr(origin));
