@@ -5,6 +5,7 @@ const logger = require('../utils/logger').child('travelpayouts');
 const { pairAllowed } = require('../config/coverage');
 const { isFresh } = require('../services/sortFlights');
 const clock = require('../utils/clock');
+const samplePrice = require('../services/samplePrice');
 
 const BASE = 'https://api.travelpayouts.com';
 // La misma moneda y el mismo mercado van en el link (src/bot/deepLinks.js).
@@ -64,12 +65,14 @@ async function search(query) {
     return [];
   }
   const now = clock.now();
-  return payload.rows
+  const rows = payload.rows
     .map(mapRow)
     .filter((row) => row.actual && Number.isFinite(row.price) && row.price > 0)
     .filter((row) => row.departureDate === query.departureDate)
     .filter((row) => (query.returnDate ? row.returnDate === query.returnDate : !row.returnDate))
     .filter((row) => isFresh(row, now));
+  rows.forEach((row) => samplePrice.remember(row));
+  return rows;
 }
 
 module.exports = { enabled, search, get, mapRow, market, CURRENCY };

@@ -35,6 +35,14 @@ test('los webhooks no pasan por el límite por IP', async () => {
   }
 });
 
+test('la landing en /es y /en usa la misma ráfaga que la home', async () => {
+  for (const path of ['/es', '/en']) {
+    let last;
+    for (let i = 0; i < 25; i += 1) last = await hit(path, '203.0.113.11');
+    expect(last.status).not.toBe(429);
+  }
+});
+
 test('otras rutas siguen con 20 por minuto', async () => {
   let last;
   for (let i = 0; i < 25; i += 1) last = await hit('/no-existe', '203.0.113.9');
