@@ -7,6 +7,7 @@ const FEATURES = [
   'FEATURE_PAYMENTS_MP',
   'FEATURE_PAYMENTS_STRIPE',
   'FEATURE_CHANNELS',
+  'FEATURE_INSTANT_ALERTS',
 ];
 
 function on(name) {
@@ -47,4 +48,5 @@ module.exports = {
   mp: () => on('FEATURE_PAYMENTS_MP'),
   stripe: () => on('FEATURE_PAYMENTS_STRIPE'),
   channels: () => on('FEATURE_CHANNELS'),
+  instantAlerts: () => on('FEATURE_INSTANT_ALERTS'),
 };

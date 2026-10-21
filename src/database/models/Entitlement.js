@@ -21,6 +21,8 @@ const schema = new mongoose.Schema({
   pendingArs: { type: Number, default: null },
   noticeSentAt: { type: String, default: null },
   lastAdjustAt: { type: String, default: null },
+  proSearchDay: { type: String, default: null },
+  proSearchesToday: { type: Number, default: 0 },
 }, { timestamps: true });
 
 module.exports = mongoose.models.Entitlement || mongoose.model('Entitlement', schema);

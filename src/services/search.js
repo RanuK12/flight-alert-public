@@ -40,7 +40,8 @@ async function remember(id, query) {
 async function runSearch(id, query) {
   if (flags.kill()) return { status: 503, text: copy.maintenance };
   if (!flags.search()) return { status: 403, text: copy.searchOff };
-  if (rateLimit.tooSoon(id)) {
+  const pro = !flags.isOwner(id) && await entitlements.isPro(id);
+  if (!pro && rateLimit.tooSoon(id)) {
     return { status: 429, text: copy.wait, charged: false };
   }
   if (await recentDup(id, query)) {
@@ -48,6 +49,21 @@ async function runSearch(id, query) {
     return { status: 200, results, charged: false, duplicate: true };
   }
   const owner = flags.isOwner(id);
+  if (pro) {
+    const caps = entitlements.proCaps();
+    if (rateLimit.limited('pro-min', String(id), caps.perMin, 60 * 1000)) {
+      return { status: 429, text: copy.proCapMinute, charged: false, proCap: 'minute' };
+    }
+    if (!(await entitlements.proDayOk(id))) {
+      return { status: 429, text: copy.proCapDay(caps.perDay), charged: false, proCap: 'day' };
+    }
+    const results = sortFlights(await travelpayouts.search(query));
+    if (results.length) {
+      await entitlements.countProSearch(id);
+      await remember(id, query);
+    }
+    return { status: 200, results, charged: false, pro: true };
+  }
   if (!owner) {
     const gate = await entitlements.peek(id);
     if (!gate.ok) return { status: 402, text: copy.paywall, paywall: true, charged: false };

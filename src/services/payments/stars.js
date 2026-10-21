@@ -100,7 +100,7 @@ async function sendInvoice(bot, chatId, userId) {
     [{ label: 'Pro 30 días', amount: STARS_TOTAL }],
     { subscription_period: 2592000 },
   );
-  await bot.sendMessage(chatId, `Pro por 30 días: 250 estrellas.\n${link}`);
+  await bot.sendMessage(chatId, `Pro por 30 días: 250 estrellas.\n${link}\nIncluye búsquedas sin límite (tope anti-abuso), aviso al instante cuando el precio baja de tu techo y el informe de las 21:00.`);
 }
 
 async function onSuccess(msg) {

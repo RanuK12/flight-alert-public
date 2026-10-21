@@ -86,6 +86,43 @@ async function canUseAlerts(id) {
   return false;
 }
 
+/** Pro activo (o en gracia) u owner. La prueba no cuenta como Pro. */
+async function isPro(id) {
+  if (flags.isOwner(id)) return true;
+  const doc = await ent().findOne({ telegramUserId: idOf(id) });
+  if (!doc) return false;
+  const t = clock.now().getTime();
+  if (doc.plan === 'owner') return true;
+  if (doc.plan !== 'pro') return false;
+  if (doc.proUntil && new Date(doc.proUntil).getTime() > t) return true;
+  return Boolean(doc.graceUntil && new Date(doc.graceUntil).getTime() > t);
+}
+
+function proCaps() {
+  const n = (k, d) => { const v = Number(process.env[k]); return Number.isFinite(v) && v > 0 ? v : d; };
+  return { perMin: n('PRO_SEARCH_PER_MIN', 10), perDay: n('PRO_SEARCH_PER_DAY', 60) };
+}
+
+/** Tope anti-abuso de Pro: búsquedas exitosas por día (fecha ART), guardado en Mongo. */
+async function proDayOk(id) {
+  const day = require('../utils/art').parts(clock.now()).day;
+  const doc = await ent().findOne({ telegramUserId: idOf(id) });
+  const used = doc && doc.proSearchDay === day ? Number(doc.proSearchesToday) || 0 : 0;
+  return used < proCaps().perDay;
+}
+
+async function countProSearch(id) {
+  const day = require('../utils/art').parts(clock.now()).day;
+  const telegramUserId = idOf(id);
+  await ensure(id);
+  const moved = await ent().updateOne(
+    { telegramUserId, proSearchDay: { $ne: day } },
+    { $set: { proSearchDay: day, proSearchesToday: 1 } },
+  );
+  if (moved.matchedCount || moved.modifiedCount) return;
+  await ent().updateOne({ telegramUserId, proSearchDay: day }, { $inc: { proSearchesToday: 1 } });
+}
+
 async function startTrial(id, deviceHash) {
   const telegramUserId = idOf(id);
   await ensure(id);
@@ -227,6 +264,10 @@ function proUntilFromNow() {
 }
 
 module.exports = {
+  isPro,
+  proCaps,
+  proDayOk,
+  countProSearch,
   SEARCH_CAP,
   DAY_MS,
   ensure,
