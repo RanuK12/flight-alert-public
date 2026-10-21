@@ -211,7 +211,7 @@ describe('alerta instantánea', () => {
   test('silencio 00–08 ART y kill switch', async () => {
     await makePro('1'); await route('1');
     at('2026-10-21T06:00:00.000Z'); // 03:00 ART
-    expect(await instant.run({})).toEqual({ quiet: true });
+    expect(await instant.run({})).toMatchObject({ quiet: true });
     process.env.FEATURE_INSTANT_ALERTS = 'off';
     at('2026-10-21T15:00:00.000Z');
     expect(await instant.run({})).toEqual({ skipped: true });

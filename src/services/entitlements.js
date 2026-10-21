@@ -171,7 +171,7 @@ async function activatePro(id, provider, ref, until) {
       { $set: { telegramUserId, status: 'paid' } },
     );
   } else {
-    await payments().create({ provider, ref, telegramUserId, status: 'paid' });
+    await payments().create({ provider, ref, telegramUserId, status: 'paid', paidAt: clock.now().toISOString() });
   }
   await ensure(id);
   const proUntil = (until instanceof Date ? until : new Date(until)).toISOString();

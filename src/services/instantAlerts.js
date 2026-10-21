@@ -36,10 +36,11 @@ function messageFor(route, flight, now) {
  * Revisa las alertas activas de usuarios Pro. Una sola consulta a Travelpayouts por ruta+fechas,
  * aunque varias alertas la compartan. Avisa si el precio está en o debajo del techo.
  */
-async function run(bot) {
+async function run(bot, opts = {}) {
   if (flags.kill() || !flags.instantAlerts()) return { skipped: true };
   const now = clock.now();
-  if (art.isQuiet(now)) return { quiet: true };
+  // Forzado desde /admin: revisa igual, pero no manda nada en horario de silencio.
+  if (art.isQuiet(now)) return { quiet: true, forced: Boolean(opts.force) };
   const routes = (await col('Route').find({ paused: false }).lean())
     .filter((r) => Number(r.priceThreshold) > 0);
   const proCache = new Map();

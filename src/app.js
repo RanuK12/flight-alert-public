@@ -118,6 +118,11 @@ function createApp() {
     return next();
   });
 
+  app.use('/admin', require('./web/admin').router({
+    clientIp,
+    priceCheck: () => require('./services/instantAlerts').run(getBot(), { force: true }),
+  }));
+
   app.get('/assets/:name', (req, res) => {
     const hit = landing.assetByName(req.params.name);
     if (!hit) return res.status(404).type('text/plain').send('No está');
@@ -281,6 +286,8 @@ function start() {
   });
   app.set('booting', booting);
   booting.then(() => samplePrice.load()).catch(() => {});
+  booting.then(() => require('./services/runtimeFlags').refresh()).catch(() => {});
+  if (process.env.NODE_ENV !== 'test') require('./services/runtimeFlags').startRefresh();
   if (process.env.TELEGRAM_BOT_TOKEN) startBot();
   schedule();
   logger.info('servicio público', summary());

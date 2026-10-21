@@ -15,6 +15,17 @@ module.exports = {
   payOver: 'Se venció el pago. Pausé tus alertas. Cuando pagues, quedan como estaban.',
   terms: 'Pro es una suscripción de 30 días. Podés dejar de renovar cuando quieras. Los precios de los vuelos son orientativos y pueden cambiar antes de comprar. Privacidad: el país de la conexión lo estimamos con una base GeoIP local en el servidor. La IP no se manda a otro servicio.',
   paysupport: 'Si un pago no se acreditó, escribinos por este chat y lo vemos. No mandes datos de la tarjeta.',
+  help: [
+    'Comandos:',
+    '/buscar: precio más barato para una ruta y fecha',
+    '/nueva_alerta: guardar una ruta con tu techo de precio',
+    '/mis_alertas: ver y pausar tus alertas',
+    '/informe: el último informe de las 21:00',
+    '/pro: planes y pago',
+    '/cancel: cortar lo que estabas haciendo',
+    '',
+    'Un producto de Ranuk IT Solutions · https://ranuk.dev',
+  ].join('\n'),
   starsOff: 'El pago con estrellas todavía no está prendido.',
   welcome: (name) => {
     const who = name ? `, ${name}` : '';
@@ -25,7 +36,9 @@ module.exports = {
       'La alerta diaria y el informe de las 21 se prueban 7 días, una sola vez.',
       'Con Pro: búsquedas sin límite, aviso al instante cuando un precio baja de tu techo e informe de las 21.',
       '',
-      '/buscar  /nueva_alerta  /mis_alertas  /informe  /pro',
+      '/buscar  /nueva_alerta  /mis_alertas  /informe  /pro  /help',
+      '',
+      'Un producto de Ranuk IT Solutions · https://ranuk.dev',
     ].join('\n');
   },
 };
