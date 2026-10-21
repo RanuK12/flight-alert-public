@@ -53,8 +53,16 @@ function createApp() {
 
   app.use((req, res, next) => {
     if (req.path === '/health') return next();
+    // Webhooks de Stripe/MP: los valida la firma, no el límite por IP.
+    if (req.path.startsWith('/webhooks/')) return next();
+    // Archivos estáticos: sin límite.
+    if (/\.(css|js|png|jpe?g|svg|ico|webp|woff2?|txt|map)$/i.test(req.path)) return next();
     const ip = clientIp(req);
-    if (rateLimit.limited('ip', String(ip), 20, 60 * 1000)) {
+    // Páginas públicas: admiten ráfagas (120/min). El resto sigue estricto (20/min).
+    const page = req.method === 'GET' && ['/', '/pro', '/pro/listo'].includes(req.path);
+    const bucket = page ? 'ip-page' : 'ip';
+    const limit = page ? 120 : 20;
+    if (rateLimit.limited(bucket, String(ip), limit, 60 * 1000)) {
       res.status(429).type('text/plain').send('Esperá un toque');
       return;
     }
