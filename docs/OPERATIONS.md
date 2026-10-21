@@ -1,0 +1,114 @@
+# Operaciones: flight-alert-public
+
+Sin valores secretos. Los datos de cuentas son los observados en los dashboards el 21/10/2026; donde no se verificó dice **unknown**.
+
+## 1. Inventario de servicios
+
+| Servicio | Cuenta / login | 2FA | Identificación | Dashboard | Variables | Dónde rotar | Si falta |
+|---|---|---|---|---|---|---|---|
+| **Render** | emilioranucoli@hotmail.com (método de login: unknown) | unknown | Workspace "My Workspace", proyecto `flight-alert-public`, servicio `srv-dbbt3svf3r2c73bo6o6g`, Docker, Frankfurt, plan **Free**; repo GitHub `RanuK12/flight-alert-public` rama `main` | https://dashboard.render.com/web/srv-dbbt3svf3r2c73bo6o6g | todas (Environment) | Render > Environment > Edit > Save only > Manual Deploy | No hay servicio |
+| **Keepalive MBP** | usuario macOS `emilioranucoli` | n/a | LaunchAgent `com.ranuk.fap-keepalive` (`~/Library/LaunchAgents/com.ranuk.fap-keepalive.plist`), `~/.rkfap/keepalive.sh` cada 600 s, log `~/.rkfap/keepalive.log` | `launchctl list \| grep fap-keepalive` | ninguna | n/a | El plan Free duerme a los 15 min: el bot deja de responder y el cron de las 21:00 no corre |
+| **MongoDB Atlas** | unknown | unknown | org/proyecto/cluster: unknown (no observados en esta sesión) | https://cloud.mongodb.com | `MONGODB_URI` | Atlas > Database Access > usuario > Edit password; Network Access para IPs | No arranca / sin usuarios, cuotas ni pagos |
+| **Telegram / BotFather** | cuenta de Telegram de Emilio (número/usuario dueño: unknown) | unknown | `@flightalertpro_bot` | BotFather `/mybots` | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` | BotFather > /mybots > API Token > Revoke | Bot mudo; Stars no funciona; links de vuelta al chat rotos |
+| **Travelpayouts** | tanquer9@gmail.com (login: unknown) | unknown | marker **793462**; programa Aviasales | https://app.travelpayouts.com | `TRAVELPAYOUTS_TOKEN`, `TRAVELPAYOUTS_MARKER`, (opcional `TRAVELPAYOUTS_MARKET`) | Profile > API token | Búsquedas vacías; sin marker no hay comisión |
+| **Stripe (live)** | cuenta "Ranuk-IT-Solutions" (IT); email/login: unknown | unknown | producto `prod_VTgn4uyWUsgzqJ`; precio EUR €4,50/mes inclusive `price_1USjQH2OfOTndIPlfZg7rjFx` (`STRIPE_PRICE_EUR`), precio USD 5,00/mes `price_1USjQH2OfOTndIPly4qsla08` (`STRIPE_PRICE_USD`) | https://dashboard.stripe.com | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET_LIVE`, `STRIPE_PRICE_EUR`, `STRIPE_PRICE_USD`, `STRIPE_TAX_ENABLED` | Developers > API keys (roll); Webhooks > endpoint > Roll secret | Sin checkout EUR/USD; webhooks rechazados → Pro no se activa |
+| **Stripe Tax** | misma cuenta | — | registro IVA Italia/OSS; Price EUR `tax_behavior=inclusive` | https://dashboard.stripe.com/settings/tax | — | — | Checkout EUR no calcula IVA |
+| **Mercado Pago** | email/login: unknown | unknown | app id en el panel, no en el repo | https://www.mercadopago.com.ar/developers/panel/app | `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET` | Tus integraciones > app > Credenciales de producción / Webhooks > firma | Sin pago en ARS |
+| **dolarapi.com** | sin cuenta (API pública) | n/a | `GET https://dolarapi.com/v1/dolares/oficial` | — | — | — | Se usa la última cotización guardada; precio ARS desactualizado |
+| **geoip-lite** | librería local | n/a | base incluida en el paquete npm | — | — | actualizar dependencia | País mal detectado → moneda por defecto |
+
+### Webhooks
+
+| Proveedor | URL | Eventos |
+|---|---|---|
+| Stripe (live) | `{PUBLIC_BASE_URL}/webhooks/stripe` | `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.deleted` |
+| Mercado Pago | `{PUBLIC_BASE_URL}/webhooks/mp` | `payment`, `subscription_preapproval` |
+
+## 2. Variables de entorno
+
+| Variable | Para qué | Secreta | Origen |
+|---|---|---|---|
+| `TELEGRAM_BOT_TOKEN` | API del bot | sí | BotFather |
+| `TELEGRAM_BOT_USERNAME` | links `t.me/...` | no | BotFather |
+| `TELEGRAM_POLLING` | forzar/apagar polling | no | manual |
+| `MONGODB_URI` | base de datos | sí | Atlas > Connect |
+| `TRAVELPAYOUTS_TOKEN` | API de precios | sí | Travelpayouts > Profile |
+| `TRAVELPAYOUTS_MARKER` | afiliado en deep links | no | Travelpayouts (793462) |
+| `TRAVELPAYOUTS_MARKET` | mercado del deep link (opcional, PR #5) | no | manual |
+| `STRIPE_SECRET_KEY` | API Stripe | sí | Stripe > API keys |
+| `STRIPE_WEBHOOK_SECRET` | firma webhook test | sí | Stripe (test) |
+| `STRIPE_WEBHOOK_SECRET_LIVE` | firma webhook live | sí | Stripe > Webhooks |
+| `STRIPE_PRICE_EUR` / `STRIPE_PRICE_USD` | precios mensuales | no | Stripe > Productos |
+| `STRIPE_TAX_ENABLED` | Tax en USD | no | manual |
+| `MP_ACCESS_TOKEN` | API Mercado Pago | sí | MP > Credenciales |
+| `MP_WEBHOOK_SECRET` | firma webhook MP | sí | MP > Webhooks |
+| `STARS_PAYLOAD_SECRET` | firma del payload de Stars | sí | generado (aleatorio 32 bytes) |
+| `DEVICE_COOKIE_SECRET` | firma de cookie de prueba por dispositivo | sí | generado |
+| `PAYMENTS_MODE` | `test` / `live` | no | manual |
+| `PUBLIC_BASE_URL` | origen público (sin `/` final) | no | Render URL |
+| `OWNER_TELEGRAM_IDS` | dueños: sin cuota, avisos de cobro | no | Telegram |
+| `PUBLIC_KILL_SWITCH` | `on` = mantenimiento | no | manual |
+| `FEATURE_SEARCH`, `FEATURE_ALERTS`, `FEATURE_PAYMENTS_STARS`, `FEATURE_PAYMENTS_MP`, `FEATURE_PAYMENTS_STRIPE` | flags (hoy en `true`) | no | manual |
+| `FEATURE_CHANNELS` | fase 2 (apagado) | no | manual |
+| `PORT`, `NODE_ENV` | runtime | no | Render |
+
+## 3. Respaldo de secretos
+
+Llavero **login** del MBP, contraseñas genéricas, servicio `flight-alert-public/<VAR>`, cuenta `emilio`. Guardadas el 21/10/2026:
+`TELEGRAM_BOT_TOKEN`, `MONGODB_URI`, `TRAVELPAYOUTS_TOKEN`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET_LIVE`, `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET`, `DEVICE_COOKIE_SECRET`, `STARS_PAYLOAD_SECRET`.
+Al rotar un secreto, actualizar Render **y** el llavero (`security add-generic-password -U ...` leyendo de stdin, nunca en la línea de comandos).
+
+## 4. Cómo se conecta todo
+
+1. **/start**: Telegram entrega el mensaje; el proceso en Render lo toma por polling (node-telegram-bot-api), Express sólo sirve web y webhooks. El usuario se crea/actualiza en Mongo (`User`, `Entitlement`).
+2. **Búsqueda**: `runSearch` verifica flags, anti-spam (10 s), cuota (10/mes, ART) y duplicados de 24 h; pide `/v2/prices/month-matrix` a Travelpayouts en EUR, filtra fecha exacta y frescura ≤7 días. Sólo una búsqueda con resultados descuenta cuota. Respuesta: precio "visto hace X h" + deep link Aviasales `ORIGEN DDMM DESTINO [DDMM] 1` con `marker=793462`, `currency=eur`.
+3. **Pago web**: `/pro` (país por geoip-lite + elección) → `POST /pro/checkout` → Stripe Checkout (EUR/USD) o preapproval MP (ARS) → el proveedor llama al webhook → se valida la firma → `activatePro` (idempotente por `provider+ref`, colección `Payment`) → `Entitlement.plan=pro`, `proUntil` +30 d → `/pro/listo` da el link `t.me/<bot>?start=link_<código>` que vincula el chat con el pago → aviso a `OWNER_TELEGRAM_IDS` en live.
+4. **Stars**: dentro del bot, invoice XTR de 250 ⭐ con payload firmado (`STARS_PAYLOAD_SECRET`) → `pre_checkout_query` → `successful_payment` → `activatePro`.
+5. **ARS**: cron 10:00 consulta dolarapi (oficial, venta), guarda la cotización y ajusta el monto de las suscripciones MP.
+6. **Alertas**: rutas en `Route`; cron 21:00 (America/Argentina/*, UTC-3) arma el informe y lo manda; cron horario vence pruebas/Pro y pausa alertas.
+7. **Keepalive**: el LaunchAgent del MBP pega a `/health` cada 10 min para que el plan Free no duerma. Si el MBP está apagado, el servicio duerme.
+
+```mermaid
+sequenceDiagram
+  participant U as Usuario
+  participant W as Web /pro
+  participant A as App (Render)
+  participant P as Stripe / MP
+  participant D as Mongo
+  participant T as Telegram
+  U->>W: elige moneda
+  W->>A: POST /pro/checkout
+  A->>P: crea sesión / preapproval
+  P-->>U: página de pago
+  P->>A: webhook firmado
+  A->>D: Payment + Entitlement pro (+30 d)
+  A-->>U: /pro/listo → t.me/bot?start=link_x
+  U->>T: /start link_x
+  T->>A: update
+  A->>D: vincula chat
+  A->>T: "Listo, vinculé este chat"
+```
+
+```mermaid
+flowchart LR
+  C[cron 21:00 ART] --> R[Rutas activas en Mongo]
+  R --> TP[Travelpayouts caché]
+  TP --> F[filtra frescas, ordena]
+  F --> M[mensaje por usuario con deep links]
+  M --> T[Telegram]
+  H[cron horario] --> E[vence prueba / Pro] --> P[pausa alertas + aviso]
+```
+
+## 5. Runbooks
+
+**Go-live (cobros reales)**: seguir `docs/GO_LIVE.md`. Resumen: claves live en Render, `PAYMENTS_MODE=live`, webhook live con los 4 eventos, Stripe Tax activo, deploy, ver `payments: live` en el log, un pago real mínimo y su reembolso (lo hace Emilio).
+
+**Rollback**: Render > Deploys > deploy anterior > "Rollback", o `git revert` del merge en `main` (redeploy automático). Las variables no se revierten solas.
+
+**Kill switch**: `PUBLIC_KILL_SWITCH=on` → el bot contesta "mantenimiento", sin crons. Para apagar una parte: poner en `off` el `FEATURE_*` correspondiente (búsqueda, alertas, Stars, MP, Stripe). Save only + Manual Deploy.
+
+**Reembolsos**: Stripe > Pagos > Reembolsar (y cancelar la suscripción); MP > Actividad > Devolver + cancelar preapproval; Stars: `refundStarPayment` desde la Bot API con el `telegram_payment_charge_id`. Después, bajar el plan (`downgrade`) si corresponde.
+
+**Restaurar el servicio**: crear un Web Service Docker en Render desde `RanuK12/flight-alert-public` (`main`), región Frankfurt, cargar las variables desde el llavero, `PUBLIC_BASE_URL` nuevo, actualizar las URLs de webhook en Stripe y MP, revisar `/health`, y `launchctl kickstart -k gui/$(id -u)/com.ranuk.fap-keepalive` apuntando a la URL nueva.
+
+**Restaurar la base**: Atlas > cluster > Backup (si el tier lo incluye: unknown) o `mongorestore` desde un `mongodump`. Si el usuario de DB cambia, actualizar `MONGODB_URI` en Render y en el llavero.

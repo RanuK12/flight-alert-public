@@ -8,6 +8,11 @@ const clock = require('../utils/clock');
 const samplePrice = require('../services/samplePrice');
 
 const BASE = 'https://api.travelpayouts.com';
+// La misma moneda y el mismo mercado van en el link (src/bot/deepLinks.js).
+const CURRENCY = 'eur';
+function market() {
+  return String(process.env.TRAVELPAYOUTS_MARKET || '').trim().toLowerCase();
+}
 
 function enabled() {
   return Boolean(process.env.TRAVELPAYOUTS_TOKEN);
@@ -16,7 +21,12 @@ function enabled() {
 async function get(path, params) {
   if (!enabled()) return [];
   const res = await axios.get(`${BASE}${path}`, {
-    params: { ...params, token: process.env.TRAVELPAYOUTS_TOKEN, currency: 'eur' },
+    params: {
+      ...params,
+      token: process.env.TRAVELPAYOUTS_TOKEN,
+      currency: CURRENCY,
+      ...(market() ? { market: market() } : {}),
+    },
     timeout: 8000,
     headers: { 'X-Access-Token': process.env.TRAVELPAYOUTS_TOKEN },
   });
@@ -65,4 +75,4 @@ async function search(query) {
   return rows;
 }
 
-module.exports = { enabled, search, get, mapRow };
+module.exports = { enabled, search, get, mapRow, market, CURRENCY };
