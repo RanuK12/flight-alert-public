@@ -3,6 +3,9 @@
 jest.mock('../src/database', () => ({ health: () => ({ ok: true, db: 'up' }), col: () => ({}), open: () => {}, connect: async () => {} }));
 
 const { createApp } = require('../src/app');
+const rateLimit = require('../src/services/rateLimit');
+
+beforeEach(() => rateLimit.reset());
 
 let server;
 let base;
