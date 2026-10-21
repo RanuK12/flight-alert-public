@@ -411,8 +411,8 @@ test('la IP sale del trust proxy y el geo no usa headers del cliente', async () 
   expect(src.includes('geoip-lite')).toBe(true);
 
   let last = null;
-  for (let i = 1; i <= 21; i += 1) {
-    last = await get(app, '/', { 'x-forwarded-for': `203.0.113.${i}, 198.51.100.20` });
+  for (let i = 1; i <= 121; i += 1) { // páginas: 120 por minuto
+    last = await get(app, '/', { 'x-forwarded-for': `203.0.113.${i % 250}, 198.51.100.20` });
   }
   expect(last.status).toBe(429);
 });
