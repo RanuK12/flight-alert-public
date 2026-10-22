@@ -50,24 +50,26 @@ function onOff(body) {
 }
 
 async function counts() {
-  const now = clock.now().getTime();
-  const ents = await col('Entitlement').find({}).lean();
-  let pro = 0;
-  let trial = 0;
-  for (const e of ents) {
-    const proLive = e.plan === 'pro' && ((e.proUntil && new Date(e.proUntil).getTime() > now)
-      || (e.graceUntil && new Date(e.graceUntil).getTime() > now));
-    if (proLive || e.plan === 'owner') pro += 1;
-    else if (e.plan === 'trial' && e.trialEndsAt && new Date(e.trialEndsAt).getTime() > now) trial += 1;
-  }
+  const nowIso = clock.now().toISOString();
+  const E = col('Entitlement');
+  const pro = await E.countDocuments({
+    $or: [
+      { plan: 'owner' },
+      { plan: 'pro', proUntil: { $gt: nowIso } },
+      { plan: 'pro', graceUntil: { $gt: nowIso } },
+    ],
+  });
+  const trial = await E.countDocuments({ plan: 'trial', trialEndsAt: { $gt: nowIso } });
   const users = await col('User').countDocuments({});
-  const total = Math.max(users, ents.length);
-  const since = art.startOfArtDay(clock.now()).getTime();
-  const pays = await col('Payment').find({}).lean();
-  const today = { stripe: 0, mp: 0, stars: 0 };
-  for (const p of pays) {
-    const t = new Date(p.paidAt || p.createdAt || 0).getTime();
-    if (t >= since && p.status !== 'refunded') today[p.provider] = (today[p.provider] || 0) + 1;
+  const total = Math.max(users, await E.countDocuments({}));
+  const sinceIso = art.startOfArtDay(clock.now()).toISOString();
+  const today = {};
+  for (const provider of ['stripe', 'mp', 'stars']) {
+    today[provider] = await col('Payment').countDocuments({
+      provider,
+      status: { $ne: 'refunded' },
+      $or: [{ paidAt: { $gte: sinceIso } }, { paidAt: { $exists: false }, createdAt: { $gte: sinceIso } }],
+    });
   }
   return { users: { total, free: total - pro, pro, trial }, paymentsToday: today };
 }
@@ -124,7 +126,8 @@ function router({ clientIp, priceCheck }) {
   });
 
   r.get('/logs', (req, res) => {
-    const n = Number(req.query.n) || 200;
+    const LOGS_MAX = 500;
+    const n = Math.min(LOGS_MAX, Math.max(1, Math.floor(Number(req.query.n)) || 200));
     res.json({ ok: true, lines: logger.recent(n) });
   });
 

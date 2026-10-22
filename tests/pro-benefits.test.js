@@ -237,3 +237,27 @@ test('el precio de muestra sobrevive un reinicio (Mongo)', async () => {
   await samplePrice.load();
   expect(samplePrice.current()).toMatchObject({ origin: 'EZE', destination: 'MAD', price: 455 });
 });
+
+describe('alerta instantánea: dedup y outbox', () => {
+  const route = (id) => col('Route').create({
+    telegramUserId: String(id), telegramChatId: String(id), origin: 'EZE', destination: 'MAD',
+    tripType: 'oneway', outboundDate: '2026-12-10', returnDate: null, priceThreshold: 500, paused: false,
+  });
+  test('banda de precio ±1 % (mín. 1)', () => {
+    expect(instant.priceBand(480)).toEqual({ $gte: 475.2, $lte: 484.8 });
+    expect(instant.priceBand(50)).toEqual({ $gte: 49, $lte: 51 });
+  });
+
+  test('se registra antes de enviar; si el envío falla queda failed y no cuenta', async () => {
+    at('2026-10-21T15:00:00.000Z');
+    await makePro('1'); await route('1');
+    const order = [];
+    const origCreate = col('Notification').create.bind(col('Notification'));
+    jest.spyOn(col('Notification'), 'create').mockImplementation(async (d) => { order.push('record'); return origCreate(d); });
+    notifier.send.mockImplementationOnce(async () => { order.push('send'); throw new Error('tg down'); });
+    expect((await instant.run({})).sent).toBe(0);
+    expect(order).toEqual(['record', 'send']);
+    const rows = await col('Notification').find({ kind: 'instant' }).lean();
+    expect(rows.map((r) => r.status)).toEqual(['failed']);
+  });
+});

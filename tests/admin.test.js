@@ -113,3 +113,28 @@ test('logs recientes sin secretos', async () => {
   expect(text).not.toMatch(/ana@example.com|ABCdefGHI|abcdefghij12345/);
   expect(text).not.toContain(TOKEN);
 });
+
+test('logs: n tiene tope de 500', async () => {
+  const spy = jest.spyOn(logger, 'recent');
+  await call('/admin/logs?n=999999');
+  await call('/admin/logs?n=-5');
+  expect(spy.mock.calls.map((c) => c[0])).toEqual([500, 1]);
+  spy.mockRestore();
+});
+
+test('counts usa countDocuments (no carga colecciones)', async () => {
+  const { counts } = require('../src/web/admin');
+  const now = clock.now();
+  const later = new Date(now.getTime() + 86400000).toISOString();
+  await col('Entitlement').create({ telegramUserId: '1', plan: 'pro', proUntil: later });
+  await col('Entitlement').create({ telegramUserId: '2', plan: 'trial', trialEndsAt: later });
+  await col('Payment').create({ provider: 'stars', status: 'paid', paidAt: now.toISOString() });
+  await col('Payment').create({ provider: 'stripe', status: 'refunded', paidAt: now.toISOString() });
+  const E = col('Entitlement');
+  const spy = jest.spyOn(Object.getPrototypeOf(E), 'find');
+  const c = await counts();
+  expect(spy).not.toHaveBeenCalled();
+  spy.mockRestore();
+  expect(c.users).toMatchObject({ pro: 1, trial: 1 });
+  expect(c.paymentsToday).toEqual({ stripe: 0, mp: 0, stars: 1 });
+});

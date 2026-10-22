@@ -18,6 +18,14 @@ function num(name, def) {
 
 const cooldownMs = () => num('INSTANT_ALERTS_COOLDOWN_HOURS', 12) * art.HOUR_MS;
 const maxPerDay = () => num('INSTANT_ALERTS_MAX_PER_DAY', 5);
+// Banda de precio para dedup: mismo aviso si el precio está dentro de ±este % (mín. 1 unidad).
+const dedupBandPct = () => num('INSTANT_ALERTS_DEDUP_BAND_PCT', 1);
+
+/** Rango de precios que cuenta como "el mismo aviso" (precio ± banda). */
+function priceBand(price) {
+  const d = Math.max(1, Math.round(Number(price) * dedupBandPct()) / 100);
+  return { $gte: Number(price) - d, $lte: Number(price) + d };
+}
 
 function groupKey(r) {
   return [r.origin, r.destination, r.outboundDate, r.returnDate || ''].join('|');
@@ -83,19 +91,21 @@ async function run(bot, opts = {}) {
         origin: best.origin,
         destination: best.destination,
         departureDate: best.departureDate,
-        price: best.price,
+        returnDate: best.returnDate || null,
+        price: priceBand(best.price),
+        status: { $ne: 'failed' },
       });
       if (dup) continue;
       const today = await col('Notification').countDocuments({
         telegramUserId: route.telegramUserId,
         kind: 'instant',
         sentAtIso: { $gt: dayStart },
+        status: { $ne: 'failed' },
       });
       if (today >= maxPerDay()) continue;
-      await notifier.send(bot, route.telegramChatId, messageFor(route, best, now), {
-        reply_markup: { inline_keyboard: [[{ text: 'Ver en Aviasales', url: bookingUrl(best) }]] },
-      });
-      await col('Notification').create({
+      // Outbox: se registra ANTES de mandar. Si el proceso se cae después del envío,
+      // el registro 'pending' ya bloquea un segundo aviso (at-most-once).
+      const row = await col('Notification').create({
         telegramUserId: route.telegramUserId,
         origin: best.origin,
         destination: best.destination,
@@ -108,7 +118,19 @@ async function run(bot, opts = {}) {
         foundAt: best.foundAt,
         sentAtIso: now.toISOString(),
         kind: 'instant',
+        status: 'pending',
       });
+      const rowId = row && row._id;
+      try {
+        await notifier.send(bot, route.telegramChatId, messageFor(route, best, now), {
+          reply_markup: { inline_keyboard: [[{ text: 'Ver en Aviasales', url: bookingUrl(best) }]] },
+        });
+      } catch (err) {
+        logger.warn('send', { error: err.message });
+        if (rowId) await col('Notification').updateOne({ _id: rowId }, { $set: { status: 'failed' } });
+        continue;
+      }
+      if (rowId) await col('Notification').updateOne({ _id: rowId }, { $set: { status: 'sent' } });
       await col('Route').updateOne(
         { _id: route._id },
         { $set: { instantLastAt: now.toISOString(), lastPriceEur: best.price, foundAt: best.foundAt } },
@@ -119,4 +141,4 @@ async function run(bot, opts = {}) {
   return { groups: groups.size, calls, sent };
 }
 
-module.exports = { run, groupKey, messageFor };
+module.exports = { run, groupKey, messageFor, priceBand };
