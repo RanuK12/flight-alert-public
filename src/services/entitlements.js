@@ -6,7 +6,8 @@ const flags = require('../config/flags');
 const logger = require('../utils/logger').child('entitlements');
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const TRIAL_MS = 7 * DAY_MS;
+const TRIAL_DAYS = 7;
+const TRIAL_MS = TRIAL_DAYS * DAY_MS;
 const GRACE_MS = 3 * DAY_MS;
 const PRO_MS = 30 * DAY_MS;
 const SEARCH_CAP = 10;
@@ -301,6 +302,7 @@ module.exports = {
   reserveProSearch,
   releaseProSearch,
   SEARCH_CAP,
+  TRIAL_DAYS,
   DAY_MS,
   ensure,
   peek,
