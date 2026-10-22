@@ -23,7 +23,7 @@ const { ORIGINS, DESTINATIONS } = require('../src/config/airports');
 const { createApp } = require('../src/app');
 const { renderSampleCard, criticalCss, PRIVACY } = require('../src/web/landing');
 
-const EMPTY_CARD = '<article class="price-card" id="sample-card" data-state="empty"><div class="price-card__header"><p class="route-chip"><abbr title="Ezeiza, Buenos Aires">EZE</abbr> → <abbr title="Madrid">MAD</abbr></p></div><div class="popular-routes-preview"><span class="route-pill is-active"><abbr title="Ezeiza, Buenos Aires">EZE</abbr> → <abbr title="Madrid">MAD</abbr></span><span class="route-pill"><abbr title="Ezeiza, Buenos Aires">EZE</abbr> → <abbr title="Barcelona">BCN</abbr></span><span class="route-pill"><abbr title="Córdoba">COR</abbr> → <abbr title="Fiumicino, Roma">FCO</abbr></span></div><p class="price-card__when">Próximas tarifas monitoreadas</p><div class="price-card__price-row"><p class="price-card__amount"><span class="skeleton-shimmer skeleton-amount"></span></p><svg class="sparkline" viewBox="0 0 100 24" aria-hidden="true" focusable="false"><path d="M2 18 L24 16 L48 19 L72 8 L96 4" fill="none" stroke="#64ffda" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="96" cy="4" r="3" fill="#64ffda"/></svg></div><p class="price-card__words">Revisamos precios cada pocas horas</p><p class="seen"><svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#i-clock"></use></svg> <span class="seen__text">revisamos precios cada pocas horas</span></p><svg class="route-draw" viewBox="0 0 320 80" aria-hidden="true" focusable="false"><path pathLength="1" d="M8 64C70 64 90 16 160 16s90 48 152 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><p class="price-card__source">Precio en caché de Travelpayouts</p><a class="btn" href="https://t.me/flightalertpro_bot?start=landing_hero"><svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#i-tg"></use></svg>Abrir en Telegram</a></article>';
+const EMPTY_CARD = "<article class=\"price-card\" id=\"sample-card\" data-state=\"empty\"><div class=\"popular-routes-preview\"><span class=\"route-pill is-active\"><abbr title=\"Ezeiza, Buenos Aires\">EZE</abbr> \u2192 <abbr title=\"Madrid\">MAD</abbr></span><span class=\"route-pill\"><abbr title=\"Ezeiza, Buenos Aires\">EZE</abbr> \u2192 <abbr title=\"Barcelona\">BCN</abbr></span><span class=\"route-pill\"><abbr title=\"C\u00f3rdoba\">COR</abbr> \u2192 <abbr title=\"Fiumicino, Roma\">FCO</abbr></span></div><p class=\"price-card__when\">Pr\u00f3ximas tarifas monitoreadas</p><div class=\"price-card__price-row\"><p class=\"price-card__amount\"><span class=\"price-card__empty\">Sin precio reciente para esta ruta</span></p></div><p class=\"seen\"><svg width=\"16\" height=\"16\" aria-hidden=\"true\" focusable=\"false\"><use href=\"#i-clock\"></use></svg> <span class=\"seen__text\">Precios revisados cada 2\u20133 h</span></p><svg class=\"route-draw\" viewBox=\"0 0 320 80\" aria-hidden=\"true\" focusable=\"false\"><path pathLength=\"1\" d=\"M8 64C70 64 90 16 160 16s90 48 152 8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg><p class=\"price-card__source\">Precio en cach\u00e9 de Travelpayouts</p><a class=\"btn\" href=\"https://t.me/flightalertpro_bot?start=landing_hero\"><svg width=\"16\" height=\"16\" aria-hidden=\"true\" focusable=\"false\"><use href=\"#i-tg\"></use></svg>Abrir en Telegram</a></article>";
 
 const DAY = 24 * 60 * 60 * 1000;
 const HOUR = 60 * 60 * 1000;
@@ -103,7 +103,7 @@ afterEach(() => cleanEnv());
 
 test('snapshot de la card vacía, sin precio inventado', () => {
   expect(renderSampleCard(null, 'es')).toBe(EMPTY_CARD);
-  expect(EMPTY_CARD).not.toContain('Sin precio reciente');
+  expect(EMPTY_CARD).toContain('Sin precio reciente para esta ruta'); // review PRISM P1
   expect(EMPTY_CARD).not.toContain('data-value');
   expect(EMPTY_CARD).toContain('EZE');
   expect(EMPTY_CARD).toContain('MAD');
@@ -130,7 +130,7 @@ test('la landing en español sale del config, con privacidad y sin promesas de m
   expect(html).toContain('lang="es"');
   expect(html).toContain('Vuelos baratos a Europa, sin pasarte el día buscando');
   expect(html).toContain('Abrir en Telegram');
-  expect(html).toContain('1 búsqueda gratis · 7 días de prueba de la alerta diaria');
+  expect(html).toContain('1 búsqueda gratis y después 10 por mes. Sin tarjeta.');
   expect(html).toContain(PRIVACY);
   expect(html).toContain('https://tp-em.com/NTg4ODIz.js?t=588823');
   expect(html).toContain('https://t.me/flightalertpro_bot?start=landing_hero');
@@ -168,7 +168,7 @@ test('inglés por Accept-Language y por /en, español forzado en /es', async () 
   expect(en).toContain('rel="canonical" href="/en"');
   expect(en).toContain('Cheap flights to Europe, without spending all day searching');
   expect(en).toContain('Open in Telegram');
-  expect(en).toContain('1 free search · 7-day trial of the daily alert');
+  expect(en).toContain('1 free search, then 10 a month. No card.');
   expect(en).toContain('4.50 euros, VAT included.');
   expect(en).toContain(PRIVACY);
   expect(en).toContain('Write to the bot');
@@ -372,4 +372,19 @@ test('fotos propias en webp, < 200 KB y con créditos', () => {
     expect(fs.statSync(f).size).toBeLessThan(200 * 1024);
     expect(credits).toContain(`public/${n}.webp`);
   }
+});
+
+
+test('review PRISM: 31 destinos con chips, moneda en radiogroup, fuentes propias, sin toggle de tema', () => {
+  const { renderLanding } = require('../src/web/landing');
+  const html = renderLanding({ lang: 'es' });
+  expect((html.match(/class="dest-mini[ "]/g) || []).length).toBe(31);
+  expect(html).toContain('name="dest-region"');
+  expect(html).toContain('Ver los 31 destinos');
+  expect(html).toMatch(/role="radiogroup"[^>]*class="ccy-group"/);
+  expect((html.match(/name="ccy"/g) || []).length).toBe(4);
+  expect(html).not.toContain('<select');
+  expect(html).toContain('/public/fonts/inter-latin-wght-normal.woff2');
+  expect(html).not.toMatch(/<button[^>]*id="theme-toggle"/);
+  expect(html).not.toContain('cada pocas horas');
 });

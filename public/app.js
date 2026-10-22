@@ -98,7 +98,11 @@
         else node.removeAttribute('aria-current');
       });
     }
-    country.addEventListener('change', function () { showRegion(country.value); });
+    country.addEventListener('change', function (e) {
+      if (!e.target || e.target.name !== 'ccy') return;
+      var go = function () { showRegion(e.target.value); };
+      if (document.startViewTransition && !reduceMotion()) document.startViewTransition(go); else go();
+    });
   }
 
   document.querySelectorAll('[data-copy]').forEach(function (btn) {
@@ -249,5 +253,32 @@
       if (ticking) return; ticking = true;
       requestAnimationFrame(function () { header.classList.toggle('is-scrolled', window.scrollY > 8); ticking = false; });
     }, { passive: true });
+  }
+
+  // P1.3: filtro de destinos por región y "Ver los 31".
+  var list = document.getElementById('dest-all');
+  var more = document.querySelector('.dest-toggle');
+  if (list) {
+    var applyFilter = function (region) {
+      list.setAttribute('data-region', region);
+      list.querySelectorAll('.dest-mini').forEach(function (li) {
+        li.hidden = region !== 'all' && li.getAttribute('data-region') !== region;
+      });
+      if (more) more.hidden = region !== 'all';
+    };
+    document.querySelectorAll('input[name="dest-region"]').forEach(function (r) {
+      r.addEventListener('change', function () {
+        var go = function () { applyFilter(r.value); };
+        if (document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.startViewTransition(go); else go();
+      });
+    });
+  }
+  if (more && list) {
+    more.addEventListener('click', function () {
+      var open = more.getAttribute('aria-expanded') !== 'true';
+      more.setAttribute('aria-expanded', String(open));
+      list.setAttribute('data-collapsed', String(!open));
+      more.textContent = more.getAttribute(open ? 'data-less' : 'data-more');
+    });
   }
 })();

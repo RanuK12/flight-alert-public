@@ -155,23 +155,24 @@ function renderSampleCard(sample, lang) {
   const when = row ? esc(row.departureDate) : (lang === 'en' ? 'Upcoming monitored fares' : 'Próximas tarifas monitoreadas');
   const amount = row
     ? `<span class="js-price" data-value="${row.price}">${row.price}</span> <span class="price-card__ccy">${esc(row.currency)}</span>`
-    : '<span class="skeleton-shimmer skeleton-amount"></span>';
-  const words = row ? esc(fareWords(row, lang)) : (lang === 'en' ? 'We check prices every few hours' : 'Revisamos precios cada pocas horas');
-  const seen = row ? esc(lang === 'en' ? `seen ${row.seenHours} h ago` : row.seen) : (lang === 'en' ? 'we check prices every few hours' : 'revisamos precios cada pocas horas');
+    : `<span class="price-card__empty">${lang === 'en' ? 'No recent price for this route' : 'Sin precio reciente para esta ruta'}</span>`;
+  const words = row ? esc(fareWords(row, lang)) : '';
+  const seen = row
+    ? esc(lang === 'en' ? `seen ${row.seenHours} h ago` : row.seen)
+    : (lang === 'en' ? 'Prices checked every 2–3 h' : 'Precios revisados cada 2–3 h');
   const href = row ? `${BOT_URL}?start=${row.origin}-${row.destination}` : tg('hero');
   const popularPreview = !row
     ? `<div class="popular-routes-preview"><span class="route-pill is-active">${abbr('EZE', lang)} → ${abbr('MAD', lang)}</span><span class="route-pill">${abbr('EZE', lang)} → ${abbr('BCN', lang)}</span><span class="route-pill">${abbr('COR', lang)} → ${abbr('FCO', lang)}</span></div>`
     : '';
 
   return `<article class="price-card" id="sample-card" data-state="${state}">`
-    + `<div class="price-card__header"><p class="route-chip">${route}</p></div>`
+    + (row ? `<div class="price-card__header"><p class="route-chip">${route}</p></div>` : '')
     + popularPreview
     + `<p class="price-card__when">${when}</p>`
     + '<div class="price-card__price-row">'
     + `<p class="price-card__amount">${amount}</p>`
-    + '<svg class="sparkline" viewBox="0 0 100 24" aria-hidden="true" focusable="false"><path d="M2 18 L24 16 L48 19 L72 8 L96 4" fill="none" stroke="#64ffda" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="96" cy="4" r="3" fill="#64ffda"/></svg>'
     + '</div>'
-    + `<p class="price-card__words">${words}</p>`
+    + (words ? `<p class="price-card__words">${words}</p>` : '')
     + `<p class="seen">${icon('i-clock')} <span class="seen__text">${seen}</span></p>`
     + '<svg class="route-draw" viewBox="0 0 320 80" aria-hidden="true" focusable="false"><path pathLength="1" d="M8 64C70 64 90 16 160 16s90 48 152 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
     + `<p class="price-card__source">${esc(t.cacheLabel)}</p>`
@@ -206,7 +207,7 @@ function copy(lang) {
       langLabel: 'ES',
       h1: 'Cheap flights to Europe, without spending all day searching',
       eyebrow: 'Argentina ⇄ Europe',
-      micro: '1 free search · 7-day trial of the daily alert',
+      micro: '1 free search, then 10 a month. No card.',
       priceFoot: 'Cached prices, checked every 2–3 h. The final price is confirmed by the airline or agency. Some links are affiliate links.',
       sub: 'We message you on Telegram when the price of your route drops. Prices checked every 2–3 h.',
       ctaHero: 'Open in Telegram',
@@ -225,7 +226,7 @@ function copy(lang) {
       howTitle: 'How it works',
       steps: [
         ['Choose your route', 'Pick your departure airport in Argentina and your European destination.', 'i-search'],
-        ['Set your target price', 'Tell the bot your maximum budget. We check prices every few hours.', 'i-sliders'],
+        ['Set your target price', 'Tell the bot your maximum budget. It writes when a fare fits.', 'i-sliders'],
         ['Alerts when prices drop', 'When a fare you follow drops, you get a Telegram message with the booking link.', 'i-zap'],
       ],
       copyStart: 'Copy /start',
@@ -306,7 +307,7 @@ function copy(lang) {
     langLabel: 'EN',
     h1: 'Vuelos baratos a Europa, sin pasarte el día buscando',
     eyebrow: 'Argentina ⇄ Europa',
-    micro: '1 búsqueda gratis · 7 días de prueba de la alerta diaria',
+    micro: '1 búsqueda gratis y después 10 por mes. Sin tarjeta.',
     priceFoot: 'Precios en caché, revisados cada 2–3 h. El precio final lo confirma la aerolínea o la agencia. Algunos enlaces son de afiliado.',
     sub: 'Te avisamos por Telegram cuando baja el precio de tu ruta. Precios revisados cada 2–3 h.',
     ctaHero: 'Abrir en Telegram',
@@ -325,7 +326,7 @@ function copy(lang) {
     howTitle: 'Cómo funciona',
     steps: [
       ['Elegís la ruta', 'Elegís de dónde salís en Argentina y adónde querés ir en Europa.', 'i-search'],
-      ['Fijás tu precio máximo', 'Le indicás al bot cuánto estás dispuesto a pagar. Revisamos precios cada pocas horas.', 'i-sliders'],
+      ['Fijás tu precio máximo', 'Le indicás al bot cuánto estás dispuesto a pagar. Te escribe cuando una tarifa entra.', 'i-sliders'],
       ['Te avisa cuando baja', 'Cuando baja una tarifa que seguís, te llega un mensaje a Telegram con el link para reservar.', 'i-zap'],
     ],
     copyStart: 'Copiar /start',
@@ -410,6 +411,7 @@ function priceBlocks(lang, region, ars) {
     ['ar', arsInner],
     ['eu', `<p class="plan__figure">${esc(t.euFigure)}</p><p class="plan__words">${esc(t.euWords)}</p>`],
     ['other', `<p class="plan__figure">${esc(t.usdFigure)}</p><p class="plan__words">${esc(t.usdWords)}</p>`],
+    ['stars', `<p class="plan__figure">250 ⭐</p><p class="plan__words">${lang === 'en' ? '250 Telegram Stars for 30 days, paid inside the bot.' : '250 estrellas de Telegram por 30 días, se paga en el bot.'}</p>`],
   ];
   return blocks.map(([id, inner]) => {
     const hidden = id === region ? '' : ' hidden';
@@ -464,6 +466,47 @@ function abs(base, urlPath) {
   return root ? root + urlPath : urlPath;
 }
 
+
+const REGIONS = [
+  ['es', 'España', 'Spain', ['MAD', 'BCN', 'SVQ', 'VLC', 'BIO']],
+  ['it', 'Italia', 'Italy', ['FCO', 'MXP', 'NAP', 'VCE', 'BGY']],
+  ['fr', 'Francia', 'France', ['CDG', 'ORY', 'NCE', 'LYS']],
+  ['uk', 'Reino Unido e Irlanda', 'UK & Ireland', ['LHR', 'LGW', 'STN', 'DUB']],
+  ['de', 'Alemania', 'Germany', ['FRA', 'MUC', 'BER', 'DUS', 'HAM']],
+  ['pt', 'Portugal', 'Portugal', ['LIS', 'OPO']],
+  ['other', 'Benelux y más', 'Benelux & more', ['AMS', 'BRU', 'VIE', 'ZRH', 'ATH', 'IST']],
+];
+const COUNTRY = {
+  es: { es: 'España', it: 'Italia', fr: 'Francia', uk: 'Reino Unido', de: 'Alemania', pt: 'Portugal' },
+  en: { es: 'Spain', it: 'Italy', fr: 'France', uk: 'United Kingdom', de: 'Germany', pt: 'Portugal' },
+};
+const OTHER_COUNTRY = {
+  es: { DUB: 'Irlanda', AMS: 'Países Bajos', BRU: 'Bélgica', VIE: 'Austria', ZRH: 'Suiza', ATH: 'Grecia', IST: 'Turquía' },
+  en: { DUB: 'Ireland', AMS: 'Netherlands', BRU: 'Belgium', VIE: 'Austria', ZRH: 'Switzerland', ATH: 'Greece', IST: 'Türkiye' },
+};
+
+/** P1.3: los 31 destinos con filtro por región (radios). Sin precio inventado: solo ciudad, país e IATA. */
+function allDestinations(lang) {
+  const en = lang === 'en';
+  const chips = [['all', en ? 'All' : 'Todos']].concat(REGIONS.map(([id, es, eng]) => [id, en ? eng : es]))
+    .map(([id, label], i) => `<label class="chip"><input type="radio" name="dest-region" value="${id}"${i === 0 ? ' checked' : ''}><span>${esc(label)}</span></label>`).join('');
+  let n = 0;
+  const cards = REGIONS.flatMap(([id, , , codes]) => codes.map((code) => {
+    n += 1;
+    const country = OTHER_COUNTRY[lang][code] || COUNTRY[lang][id] || '';
+    const extra = n > 8 ? ' dest-more' : '';
+    return `<li class="dest-mini${extra}" data-region="${id}"><a href="${BOT_URL}?start=EZE-${code}">`
+      + `<span class="dest-mini__city">${esc(city(code, lang))}</span>`
+      + `<span class="dest-mini__country">${esc(country)}</span>`
+      + `<span class="dest-mini__iata">${code}</span><span class="dest-mini__arrow" aria-hidden="true">→</span></a></li>`;
+  })).join('');
+  return '<div class="destinations">'
+    + `<fieldset class="chips"><legend class="sr-only">${en ? 'Filter by region' : 'Filtrar por región'}</legend><div role="radiogroup" class="chip-row" aria-label="${en ? 'Region' : 'Región'}">${chips}</div></fieldset>`
+    + `<ul class="dest-all" id="dest-all" data-collapsed="true">${cards}</ul>`
+    + `<button type="button" class="btn btn--ghost dest-toggle" aria-expanded="false" aria-controls="dest-all" data-more="${en ? `See all ${n} destinations` : `Ver los ${n} destinos`}" data-less="${en ? 'Show fewer' : 'Ver menos'}">${en ? `See all ${n} destinations` : `Ver los ${n} destinos`}</button>`
+    + '</div>';
+}
+
 function destinationCards(lang) {
   return POPULAR_DESTINATIONS.map((d) => {
     const info = lang === 'en' ? d.en : d.es;
@@ -499,9 +542,8 @@ function renderLanding(ctx = {}) {
   const homeEn = abs(ctx.base, '/en');
   const switchHref = lang === 'en' ? '/es' : '/en';
   const wordmark = lang === 'en' ? '/en' : '/es';
-  const options = [['ar', t.optAr], ['eu', t.optEu], ['other', t.optOther]]
-    .map(([id, label]) => `<option value="${id}"${id === region ? ' selected' : ''}>${esc(label)}</option>`)
-    .join('');
+  const ccy = [['ar', 'ARS'], ['eu', 'EUR'], ['other', 'USD'], ['stars', 'Stars']];
+  const options = ccy.map(([id, label]) => `<label class="ccy-opt"><input type="radio" name="ccy" value="${id}"${id === region ? ' checked' : ''}><span>${label}</span></label>`).join('');
   const steps = t.steps.map((step, index) => {
     const copyBtn = index === 0
       ? `<button type="button" class="btn btn--ghost" data-copy="/start" data-copied="${esc(t.copied)}">${esc(t.copyStart)}</button><p id="copy-status" aria-live="polite"></p>`
@@ -541,6 +583,7 @@ function renderLanding(ctx = {}) {
     + `<meta name="twitter:image" content="${esc(image)}">`
     + `<script${nonce}>(function(){try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}document.documentElement.classList.add("js");})();</script>`
     + `<style${nonce}>${criticalCss()}</style>`
+    + '<link rel="preload" href="/public/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>'
     + `<link rel="preload" href="${cssHref}" as="style">`
     + `<link rel="stylesheet" href="${cssHref}">`
     + `<script type="application/ld+json"${nonce}>${jsonLd(lang, ars)}</script>`
@@ -555,31 +598,29 @@ function renderLanding(ctx = {}) {
     + `<a href="#como">${esc(t.howTitle)}</a>`
     + `<a href="#precios">${esc(t.pricesLink)}</a>`
     + `<a class="btn btn--ghost nav-tg-btn" href="${tg('header')}">${esc(t.openTelegram)}</a>`
-    + `<button type="button" id="theme-toggle" data-mode="system" data-prefix="${esc(t.themePrefix)}" data-label-system="${esc(t.themeSystem)}" data-label-light="${esc(t.themeLight)}" data-label-dark="${esc(t.themeDark)}" aria-label="${esc(t.themePrefix)}: ${esc(t.themeSystem)}">${esc(t.themeSystem)}</button>`
     + `<a class="lang-link" href="${switchHref}" hreflang="${lang === 'en' ? 'es' : 'en'}">${esc(t.langLabel)}</a>`
     + '</nav></div></header>'
     + '<main id="contenido" tabindex="-1">'
     + '<section class="hero section" aria-labelledby="titulo">'
-    + '<div class="hero-transatlantic" aria-hidden="true">'
-    + '<svg class="hero-route" viewBox="0 0 600 240" focusable="false">'
-    + '<defs><linearGradient id="trail" x1="0" x2="1"><stop offset="0" stop-color="#64ffda" stop-opacity="0"/><stop offset="1" stop-color="#64ffda"/></linearGradient></defs>'
-    + '<path id="arc" d="M40 200 Q300 -20 560 200" fill="none" stroke="url(#trail)" stroke-width="2" stroke-dasharray="4 8" stroke-linecap="round"/>'
-    + '<circle cx="40" cy="200" r="5" class="pin"/><circle cx="560" cy="200" r="5" class="pin"/>'
-    + '<g class="plane"><path d="M12 0 L-8 -7 L-4 0 L-8 7 Z" fill="#64ffda"/>'
+    + '<div class="wrap hero-grid">'
+    + '<div class="hero-band" aria-hidden="true">'
+    + '<svg class="hero-route" viewBox="0 0 600 120" preserveAspectRatio="xMidYMid meet" focusable="false">'
+    + '<defs><linearGradient id="trail" x1="0" x2="1"><stop offset="0" stop-color="#64ffda" stop-opacity=".15"/><stop offset="1" stop-color="#64ffda"/></linearGradient></defs>'
+    + '<path id="arc" d="M20 104 Q300 -36 580 104" fill="none" stroke="url(#trail)" stroke-width="2" stroke-dasharray="4 8" stroke-linecap="round"/>'
+    + '<circle cx="20" cy="104" r="6" class="pin"/><circle cx="580" cy="104" r="6" class="pin"/>'
+    + '<g class="plane"><path d="M14 0 L-9 -8 L-4 0 L-9 8 Z" fill="#64ffda"/>'
     + '<animateMotion dur="6s" repeatCount="indefinite" rotate="auto" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines=".45 0 .55 1"><mpath href="#arc"/></animateMotion></g>'
-    + '</svg></div>'
-    + `<p class="hero-route-labels" aria-hidden="true"><span>COR / EZE</span><span>MAD</span></p>`
-    + '<div class="wrap hero-grid"><div>'
+    + '</svg>'
+    + '<p class="hero-route-labels"><span>COR / EZE</span><span>MAD</span></p></div>'
+    + '<div class="hero-copy">'
     + `<p class="eyebrow">${esc(t.eyebrow)}</p>`
     + `<h1 id="titulo">${esc(t.h1)}</h1>`
     + `<p class="lede">${esc(t.sub)}</p>`
     + `<div class="actions"><a class="btn btn--primary" href="${tg('hero')}">${icon('i-tg')}${esc(t.ctaHero)}</a>`
     + `<a class="btn btn--ghost" href="#precios">${esc(t.seePrices)}</a></div>`
     + `<p class="micro-proof">${esc(t.micro)}</p>`
-    + `<p class="fine">${esc(t.quota)}</p>`
     + `<h2>${esc(t.benefitsTitle)}</h2><ul class="benefits">${benefits}</ul>`
     + '</div><div class="hero-visual">'
-    + renderSampleCard(ctx.sample, lang)
     + `<figure class="tg-phone-mockup"><figcaption class="sr-only">${lang === 'en' ? 'Example Flight Alert message on Telegram' : 'Ejemplo de alerta de Flight Alert en Telegram'}</figcaption>`
     + '<div class="tg-phone-shell"><div class="tg-header-bar">'
     + '<span class="tg-back-arrow">‹</span>'
@@ -611,7 +652,8 @@ function renderLanding(ctx = {}) {
     + '</div></section>'
     + '<section class="section reveal" id="destinos" aria-labelledby="destinos-titulo"><div class="wrap">'
     + `<div class="section-head"><span class="section-kicker">${lang === 'en' ? 'Explore' : 'Explorar'}</span><h2 id="destinos-titulo">${esc(t.destinationsTitle)}</h2><p class="section-sub">${esc(t.destinationsSub)}</p></div>`
-    + `<div class="dest-gallery">${destinationCards(lang)}</div>`
+    + `<div class="dest-top"><div class="dest-gallery">${destinationCards(lang)}</div>${renderSampleCard(ctx.sample, lang)}</div>`
+    + allDestinations(lang)
     + '</div></section>'
     + '<section class="section reveal" id="rutas" aria-labelledby="rutas-titulo"><div class="wrap">'
     + `<div class="section-head"><span class="section-kicker">${lang === 'en' ? 'Network' : 'Red'}</span><h2 id="rutas-titulo">${esc(t.routesTitle)}</h2></div>`
@@ -646,8 +688,7 @@ function renderLanding(ctx = {}) {
     + `<div class="plan-raw-items" hidden><ul>${t.proItems.map((item) => `<li>${esc(item)}</li>`).join('')}</ul><p>${esc(t.trial)}</p><p>${esc(t.stars)}</p></div>`
     + `<a class="btn btn--primary" href="/pro">${esc(t.proBtn)}</a>`
     + '</article></div>'
-    + `<label class="country-pick" for="country-preview">${esc(t.countryLabel)}`
-    + `<select id="country-preview" data-detected="${region}">${options}</select></label>`
+    + `<fieldset class="ccy-pick" id="country-preview" data-detected="${region}"><legend>${lang === 'en' ? 'Currency' : 'Moneda'}</legend><div role="radiogroup" aria-label="${lang === 'en' ? 'Currency' : 'Moneda'}" class="ccy-group">${options}</div></fieldset>`
     + `<p class="fine">${esc(t.previewNote)}</p>`
     + `<p>${esc(t.payNote)}</p>`
     + `<p>${esc(t.cancelNote)}</p>`
