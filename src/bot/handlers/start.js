@@ -33,6 +33,10 @@ function register(bot) {
     await bot.sendMessage(msg.chat.id, 'Listo, cancelé lo que estábamos haciendo.');
   });
 
+  bot.onText(/^\/help(?:@\w+)?$/, async (msg) => {
+    await bot.sendMessage(msg.chat.id, copy.help, { disable_web_page_preview: true });
+  });
+
   bot.onText(/^\/terms(?:@\w+)?$/, async (msg) => {
     await bot.sendMessage(msg.chat.id, copy.terms);
   });

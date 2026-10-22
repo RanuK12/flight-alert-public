@@ -130,6 +130,7 @@ function startBot() {
     { command: 'mis_alertas', description: 'Ver alertas' },
     { command: 'informe', description: 'Informe de hoy' },
     { command: 'pro', description: 'Pasarte a Pro' },
+    { command: 'help', description: 'Ayuda' },
     { command: 'terms', description: 'Condiciones' },
     { command: 'paysupport', description: 'Ayuda con un pago' },
     { command: 'cancel', description: 'Cancelar' },

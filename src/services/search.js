@@ -54,14 +54,18 @@ async function runSearch(id, query) {
     if (rateLimit.limited('pro-min', String(id), caps.perMin, 60 * 1000)) {
       return { status: 429, text: copy.proCapMinute, charged: false, proCap: 'minute' };
     }
-    if (!(await entitlements.proDayOk(id))) {
+    if (!(await entitlements.reserveProSearch(id))) {
       return { status: 429, text: copy.proCapDay(caps.perDay), charged: false, proCap: 'day' };
     }
-    const results = sortFlights(await travelpayouts.search(query));
-    if (results.length) {
-      await entitlements.countProSearch(id);
-      await remember(id, query);
+    let results;
+    try {
+      results = sortFlights(await travelpayouts.search(query));
+    } catch (err) {
+      await entitlements.releaseProSearch(id);
+      throw err;
     }
+    if (results.length) await remember(id, query);
+    else await entitlements.releaseProSearch(id);
     return { status: 200, results, charged: false, pro: true };
   }
   if (!owner) {

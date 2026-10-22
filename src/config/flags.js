@@ -15,7 +15,12 @@ function on(name) {
   return v === 'on' || v === '1' || v === 'true' || v === 'yes';
 }
 
+function runtime(key) {
+  try { return require('../services/runtimeFlags').get(key); } catch (_e) { return null; }
+}
+
 function kill() {
+  if (runtime('kill') === 'on') return true;
   return String(process.env.PUBLIC_KILL_SWITCH || '').trim().toLowerCase() === 'on';
 }
 
@@ -48,5 +53,10 @@ module.exports = {
   mp: () => on('FEATURE_PAYMENTS_MP'),
   stripe: () => on('FEATURE_PAYMENTS_STRIPE'),
   channels: () => on('FEATURE_CHANNELS'),
-  instantAlerts: () => on('FEATURE_INSTANT_ALERTS'),
+  instantAlerts: () => {
+    const o = runtime('instantAlerts');
+    if (o === 'on') return true;
+    if (o === 'off') return false;
+    return on('FEATURE_INSTANT_ALERTS');
+  },
 };

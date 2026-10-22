@@ -18,6 +18,14 @@ function num(name, def) {
 
 const cooldownMs = () => num('INSTANT_ALERTS_COOLDOWN_HOURS', 12) * art.HOUR_MS;
 const maxPerDay = () => num('INSTANT_ALERTS_MAX_PER_DAY', 5);
+// Banda de precio para dedup: mismo aviso si el precio está dentro de ±este % (mín. 1 unidad).
+const dedupBandPct = () => num('INSTANT_ALERTS_DEDUP_BAND_PCT', 1);
+
+/** Rango de precios que cuenta como "el mismo aviso" (precio ± banda). */
+function priceBand(price) {
+  const d = Math.max(1, Math.round(Number(price) * dedupBandPct()) / 100);
+  return { $gte: Number(price) - d, $lte: Number(price) + d };
+}
 
 function groupKey(r) {
   return [r.origin, r.destination, r.outboundDate, r.returnDate || ''].join('|');
@@ -36,10 +44,11 @@ function messageFor(route, flight, now) {
  * Revisa las alertas activas de usuarios Pro. Una sola consulta a Travelpayouts por ruta+fechas,
  * aunque varias alertas la compartan. Avisa si el precio está en o debajo del techo.
  */
-async function run(bot) {
+async function run(bot, opts = {}) {
   if (flags.kill() || !flags.instantAlerts()) return { skipped: true };
   const now = clock.now();
-  if (art.isQuiet(now)) return { quiet: true };
+  // Forzado desde /admin: revisa igual, pero no manda nada en horario de silencio.
+  if (art.isQuiet(now)) return { quiet: true, forced: Boolean(opts.force) };
   const routes = (await col('Route').find({ paused: false }).lean())
     .filter((r) => Number(r.priceThreshold) > 0);
   const proCache = new Map();
@@ -82,19 +91,21 @@ async function run(bot) {
         origin: best.origin,
         destination: best.destination,
         departureDate: best.departureDate,
-        price: best.price,
+        returnDate: best.returnDate || null,
+        price: priceBand(best.price),
+        status: { $ne: 'failed' },
       });
       if (dup) continue;
       const today = await col('Notification').countDocuments({
         telegramUserId: route.telegramUserId,
         kind: 'instant',
         sentAtIso: { $gt: dayStart },
+        status: { $ne: 'failed' },
       });
       if (today >= maxPerDay()) continue;
-      await notifier.send(bot, route.telegramChatId, messageFor(route, best, now), {
-        reply_markup: { inline_keyboard: [[{ text: 'Ver en Aviasales', url: bookingUrl(best) }]] },
-      });
-      await col('Notification').create({
+      // Outbox: se registra ANTES de mandar. Si el proceso se cae después del envío,
+      // el registro 'pending' ya bloquea un segundo aviso (at-most-once).
+      const row = await col('Notification').create({
         telegramUserId: route.telegramUserId,
         origin: best.origin,
         destination: best.destination,
@@ -107,7 +118,19 @@ async function run(bot) {
         foundAt: best.foundAt,
         sentAtIso: now.toISOString(),
         kind: 'instant',
+        status: 'pending',
       });
+      const rowId = row && row._id;
+      try {
+        await notifier.send(bot, route.telegramChatId, messageFor(route, best, now), {
+          reply_markup: { inline_keyboard: [[{ text: 'Ver en Aviasales', url: bookingUrl(best) }]] },
+        });
+      } catch (err) {
+        logger.warn('send', { error: err.message });
+        if (rowId) await col('Notification').updateOne({ _id: rowId }, { $set: { status: 'failed' } });
+        continue;
+      }
+      if (rowId) await col('Notification').updateOne({ _id: rowId }, { $set: { status: 'sent' } });
       await col('Route').updateOne(
         { _id: route._id },
         { $set: { instantLastAt: now.toISOString(), lastPriceEur: best.price, foundAt: best.foundAt } },
@@ -118,4 +141,4 @@ async function run(bot) {
   return { groups: groups.size, calls, sent };
 }
 
-module.exports = { run, groupKey, messageFor };
+module.exports = { run, groupKey, messageFor, priceBand };

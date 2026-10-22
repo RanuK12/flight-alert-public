@@ -36,6 +36,8 @@ services:
         sync: false
       - key: FEATURE_CHANNELS
         sync: false
+      - key: ADMIN_TOKEN
+        sync: false
       - key: FEATURE_INSTANT_ALERTS
         sync: false
       - key: PRO_SEARCH_PER_MIN
