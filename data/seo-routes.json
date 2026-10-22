@@ -1,0 +1,922 @@
+[
+  {
+    "ruta": "Madrid → París",
+    "origen_iata": "MAD",
+    "destino_iata": "CDG",
+    "por_que": "Es la escapada corta más buscada desde Barajas: puente, trabajo y conexión europea en un solo salto.",
+    "es": {
+      "title": "Vuelos baratos Madrid-París | Flight Alert",
+      "meta_description": "Madrid-París sin adivinanzas: mejor época, CDG u Orly y unas 2 h 10 min de directo. Si baja a {PRECIO}, Flight Alert te avisa por Telegram.",
+      "h1": "Vuelos de Madrid a París",
+      "intro": "París es la escapada corta desde Madrid. Abril, mayo, septiembre y octubre van mejor que agosto o Navidad, cuando los asientos se van antes. Sales de Barajas (MAD). Lo habitual es Charles de Gaulle (CDG); Orly (ORY) queda mejor para el sur y a veces tiene la tarifa baja. El directo ronda las 2 h 10 min y no cambias de hora. Para pagar menos, mira martes o miércoles y compara los dos aeropuertos. Flight Alert te escribe por Telegram si aparece un buen precio: {PRECIO}. Gratis: 10 búsquedas al mes. Pro es ilimitado y avisa al momento.",
+      "faq": [
+        {
+          "q": "¿Cuánto dura el vuelo de Madrid a París?",
+          "a": "El directo entre Barajas (MAD) y París suele durar unas 2 h 10 min. Una escala lo deja fácil en más de medio día de puerta a puerta."
+        },
+        {
+          "q": "¿CDG u Orly?",
+          "a": "Charles de Gaulle (CDG) es la llegada habitual y la mejor si sigues en avión. Orly (ORY) puede salir mejor de precio y queda más cómodo para el sur de la ciudad. Compara los dos antes de decidir."
+        },
+        {
+          "q": "¿Cómo me avisa Flight Alert si baja el precio?",
+          "a": "Buscas Madrid-París en el bot de Telegram. En gratis tienes 10 búsquedas al mes. Con Pro, la vigilancia es ilimitada y el aviso es instantáneo cuando aparece una tarifa como {PRECIO}. El precio final lo confirma la aerolínea al pagar."
+        }
+      ]
+    },
+    "en": {
+      "title": "Cheap flights Madrid to Paris | Flight Alert",
+      "meta_description": "Madrid to Paris, plainly: best time to go, CDG or Orly, about 2 h 10 min nonstop. If the fare drops to {PRECIO}, Flight Alert pings you on Telegram.",
+      "h1": "Flights from Madrid to Paris",
+      "intro": "Paris is the short break from Madrid. April, May, September and October beat August and Christmas, when the better seats go first. You leave Barajas (MAD). Most flights use Charles de Gaulle (CDG). Orly (ORY) suits the south of the city and sometimes holds the lower fare. Nonstop is about 2 h 10 min, with no time change. To pay less, try Tuesday or Wednesday and compare both airports. Flight Alert messages you on Telegram when a good fare shows up: {PRECIO}. Free: 10 searches a month. Pro is unlimited and alerts you instantly.",
+      "faq": [
+        {
+          "q": "How long is the flight from Madrid to Paris?",
+          "a": "Nonstop between Barajas (MAD) and Paris is about 2 h 10 min. A connection can turn it into half a day door to door."
+        },
+        {
+          "q": "CDG or Orly?",
+          "a": "Charles de Gaulle (CDG) is the usual arrival and the better one if you have a connection. Orly (ORY) can be cheaper and sits closer to the south of the city. Check both."
+        },
+        {
+          "q": "How does Flight Alert tell me if the fare drops?",
+          "a": "Search Madrid-Paris in the Telegram bot. Free includes 10 searches a month. Pro is unlimited and pings you the moment a fare like {PRECIO} shows up. The airline confirms the final price when you pay."
+        }
+      ]
+    }
+  },
+  {
+    "ruta": "Madrid → Roma",
+    "origen_iata": "MAD",
+    "destino_iata": "FCO",
+    "por_que": "City break clásico todo el año, con Fiumicino de referencia y Ciampino como alternativa low cost.",
+    "es": {
+      "title": "Vuelos baratos Madrid-Roma | Flight Alert",
+      "meta_description": "Madrid-Roma: primavera u otoño, Fiumicino o Ciampino y unas 2 h 25 min de directo. Flight Alert te avisa por Telegram si cae a {PRECIO}.",
+      "h1": "Vuelos de Madrid a Roma",
+      "intro": "Roma funciona desde Madrid si evitas agosto y Semana Santa, cuando la ciudad y el avión se llenan a la vez. Marzo, abril, mayo y octubre dan mejor paseo. Sales de Barajas (MAD). Fiumicino (FCO) tiene tren a Termini. Ciampino (CIA) es el low cost y el traslado al centro es más largo. El directo a FCO ronda las 2 h 25 min y no hay cambio de hora. Para pagar menos, sal entre semana y compara los dos aeropuertos con el bus ya contado. Flight Alert te escribe por Telegram si aparece un buen precio: {PRECIO}. Gratis: 10 búsquedas al mes. Pro es ilimitado y avisa al momento.",
+      "faq": [
+        {
+          "q": "¿Cuánto dura Madrid-Roma?",
+          "a": "El directo de Barajas (MAD) a Fiumicino (FCO) suele durar unas 2 h 25 min. Suma más tiempo si aterrizas en Ciampino y cruzas la ciudad."
+        },
+        {
+          "q": "¿Fiumicino o Ciampino?",
+          "a": "Fiumicino (FCO) tiene tren directo a Roma Termini y es la llegada cómoda. Ciampino (CIA) a veces es más barato, pero el bus al centro se come parte del ahorro. Mira el precio ya con el traslado."
+        },
+        {
+          "q": "¿Cuándo suele haber tarifa más baja?",
+          "a": "Fuera de agosto, Semana Santa y los puentes, y saliendo entre semana. El bot no promete un calendario mágico: vigila y te avisa si ve {PRECIO}. Confirma siempre en la página de la aerolínea."
+        }
+      ]
+    },
+    "en": {
+      "title": "Cheap flights Madrid to Rome | Flight Alert",
+      "meta_description": "Madrid to Rome: spring or autumn, Fiumicino or Ciampino, about 2 h 25 min nonstop. Flight Alert messages you on Telegram if it falls to {PRECIO}.",
+      "h1": "Flights from Madrid to Rome",
+      "intro": "Rome works from Madrid if you skip August and Easter, when the city and the flights fill up together. March, April, May and October are better for walking. You leave Barajas (MAD). Fiumicino (FCO) has a train to Termini. Ciampino (CIA) is the low-cost airport and the ride in is longer. Nonstop to FCO is about 2 h 25 min, with no time change. To pay less, fly midweek and compare both airports with the bus included. Flight Alert messages you on Telegram when a good fare shows up: {PRECIO}. Free: 10 searches a month. Pro is unlimited and alerts you instantly.",
+      "faq": [
+        {
+          "q": "How long is Madrid to Rome?",
+          "a": "Nonstop from Barajas (MAD) to Fiumicino (FCO) is about 2 h 25 min. Add time if you land at Ciampino and cross the city."
+        },
+        {
+          "q": "Fiumicino or Ciampino?",
+          "a": "Fiumicino (FCO) has a direct train to Roma Termini and is the easy arrival. Ciampino (CIA) can be cheaper, but the bus into town eats part of the saving. Compare the fare with the transfer."
+        },
+        {
+          "q": "When is the fare usually lower?",
+          "a": "Outside August, Easter and long weekends, on a midweek departure. The bot does not promise a magic calendar: it watches and pings you if it sees {PRECIO}. Always confirm on the airline's site."
+        }
+      ]
+    }
+  },
+  {
+    "ruta": "Madrid → Lisboa",
+    "origen_iata": "MAD",
+    "destino_iata": "LIS",
+    "por_que": "El salto más corto entre dos capitales ibéricas y una de las búsquedas de fin de semana más estables.",
+    "es": {
+      "title": "Vuelos baratos Madrid-Lisboa | Flight Alert",
+      "meta_description": "Madrid-Lisboa en poco más de 1 h 20 min, con Lisboa una hora menos. Mejor en primavera u otoño. Si baja a {PRECIO}, te avisamos por Telegram.",
+      "h1": "Vuelos de Madrid a Lisboa",
+      "intro": "Lisboa es el fin de semana fácil desde Madrid: vuelo corto y ciudad andable. Abril, mayo, septiembre y octubre son más amables que agosto o Navidad. Sales de Barajas (MAD) y llegas a Humberto Delgado (LIS), con metro al centro. El directo suele durar 1 h 20 min o 1 h 25 min. Allí es una hora menos todo el año. Para pagar menos, evita el viernes por la tarde y el domingo por la noche. Flight Alert te escribe por Telegram si aparece un buen precio: {PRECIO}. Gratis: 10 búsquedas al mes. Pro es ilimitado y avisa al momento.",
+      "faq": [
+        {
+          "q": "¿Cuánto se tarda de Madrid a Lisboa?",
+          "a": "El directo de Barajas (MAD) a Humberto Delgado (LIS) suele durar entre 1 h 20 min y 1 h 25 min. En reloj local pierdes una hora: Portugal va siempre una hora por detrás de España."
+        },
+        {
+          "q": "¿El aeropuerto queda lejos?",
+          "a": "LIS está al norte de Lisboa y el metro (línea roja) llega al centro sin coche. Un vuelo temprano te deja media mañana útil."
+        },
+        {
+          "q": "¿Qué días suelen salir mejor?",
+          "a": "Martes, miércoles y sábados de mañana suelen estar más tranquilos que el viernes tarde o el domingo noche. El bot te avisa si ve {PRECIO}. La aerolínea pone el precio definitivo."
+        }
+      ]
+    },
+    "en": {
+      "title": "Cheap flights Madrid to Lisbon | Flight Alert",
+      "meta_description": "Madrid to Lisbon in about 1 h 25 min, and Lisbon is one hour behind. Best in spring or autumn. If it drops to {PRECIO}, we ping you on Telegram.",
+      "h1": "Flights from Madrid to Lisbon",
+      "intro": "Lisbon is the easy weekend from Madrid: a short flight and a walkable city. April, May, September and October are kinder than August or Christmas. You leave Barajas (MAD) and land at Humberto Delgado (LIS), with a metro to the center. Nonstop usually takes 1 h 20 min to 1 h 25 min. Local time is one hour behind Spain all year. To pay less, skip Friday evening and Sunday night. Flight Alert messages you on Telegram when a good fare shows up: {PRECIO}. Free: 10 searches a month. Pro is unlimited and alerts you instantly.",
+      "faq": [
+        {
+          "q": "How long is Madrid to Lisbon?",
+          "a": "Nonstop from Barajas (MAD) to Humberto Delgado (LIS) usually takes 1 h 20 min to 1 h 25 min. On the clock you lose an hour: Portugal stays one hour behind Spain all year."
+        },
+        {
+          "q": "Is the airport far?",
+          "a": "LIS sits north of Lisbon and the metro (red line) reaches the center without a car. An early landing still leaves you half a morning."
+        },
+        {
+          "q": "Which days are usually better?",
+          "a": "Tuesday, Wednesday and Saturday morning are calmer than Friday evening or Sunday night. The bot pings you if it sees {PRECIO}. The airline sets the final price."
+        }
+      ]
+    }
+  },
+  {
+    "ruta": "Madrid → Londres",
+    "origen_iata": "MAD",
+    "destino_iata": "LHR",
+    "por_que": "Principal puerta de negocios y de turismo a Reino Unido; Heathrow es la referencia y Gatwick a veces baja el precio.",
+    "es": {
+      "title": "Vuelos baratos Madrid-Londres | Flight Alert",
+      "meta_description": "Madrid-Londres: Heathrow, Gatwick o Stansted, unas 2 h 25 min y una hora menos en el reloj. Si cae a {PRECIO}, Flight Alert te escribe.",
+      "h1": "Vuelos de Madrid a Londres",
+      "intro": "Londres se busca desde Madrid por trabajo y por ocio, y el precio cambia según el aeropuerto. Mayo, junio y septiembre son meses cómodos. Julio, agosto y Navidad se ponen caros. Sales de Barajas (MAD). Heathrow (LHR) enlaza con el centro por la Elizabeth line. Gatwick (LGW) y Stansted (STN) a veces salen más baratos y quedan más lejos. El directo a LHR ronda las 2 h 25 min. En Londres es siempre una hora menos. Suma el tren al billete. Flight Alert te escribe por Telegram si aparece un buen precio: {PRECIO}. Gratis: 10 búsquedas al mes. Pro es ilimitado y avisa al momento.",
+      "faq": [
+        {
+          "q": "¿Cuánto dura Madrid-Londres?",
+          "a": "El directo de Barajas (MAD) a Heathrow (LHR) suele durar unas 2 h 25 min. Londres va una hora por detrás de España, en invierno y en verano."
+        },
+        {
+          "q": "¿Qué aeropuerto de Londres conviene?",
+          "a": "Heathrow (LHR) es el más conectado con el centro. Gatwick (LGW) y Stansted (STN) pueden salir más baratos y quedan más lejos. Elige con el tren ya contado."
+        },
+        {
+          "q": "¿El bot cubre solo Heathrow?",
+          "a": "Puedes vigilar la ruta Madrid-Londres y comparar el aeropuerto que te encaje. Si aparece una tarifa como {PRECIO}, Pro te avisa al momento. Gratis incluye 10 búsquedas al mes. Confirma el precio en la aerolínea."
+        }
+      ]
+    },
+    "en": {
+      "title": "Cheap flights Madrid to London | Flight Alert",
+      "meta_description": "Madrid to London: Heathrow, Gatwick or Stansted, about 2 h 25 min, one hour behind. If it falls to {PRECIO}, Flight Alert writes you.",
+      "h1": "Flights from Madrid to London",
+      "intro": "London is a Madrid search for work and for pleasure, and the fare moves with the airport. May, June and September are comfortable. July, August and Christmas get expensive. You leave Barajas (MAD). Heathrow (LHR) links to the center on the Elizabeth line. Gatwick (LGW) and Stansted (STN) can be cheaper and sit farther out. Nonstop to LHR is about 2 h 25 min. London is always one hour behind Spain. Add the train to the ticket. Flight Alert messages you on Telegram when a good fare shows up: {PRECIO}. Free: 10 searches a month. Pro is unlimited and alerts you instantly.",
+      "faq": [
+        {
+          "q": "How long is Madrid to London?",
+          "a": "Nonstop from Barajas (MAD) to Heathrow (LHR) is about 2 h 25 min. London stays one hour behind Spain, winter and summer."
+        },
+        {
+          "q": "Which London airport should I use?",
+          "a": "Heathrow (LHR) is the best connected to the center. Gatwick (LGW) and Stansted (STN) can be cheaper and sit farther out. Decide with the train fare included."
+        },
+        {
+          "q": "Does the bot only watch Heathrow?",
+          "a": "You can watch Madrid-London and compare the airport that suits you. If a fare like {PRECIO} appears, Pro pings you at once. Free includes 10 searches a month. Confirm the price with the airline."
+        }
+      ]
+    }
+  },
+  {
+    "ruta": "Barcelona → París",
+    "origen_iata": "BCN",
+    "destino_iata": "CDG",
+    "por_que": "Segunda gran búsqueda de París en España: El Prat tiene directo corto y mucha tarifa de ocio.",
+    "es": {
+      "title": "Vuelos baratos Barcelona-París | Flight Alert",
+      "meta_description": "Barcelona-París desde El Prat en unas 2 h. Compara CDG y Orly y evita el viernes. Si baja a {PRECIO}, te avisamos por Telegram.",
+      "h1": "Vuelos de Barcelona a París",
+      "intro": "Desde Barcelona, París es una escapada de mañana. Mayo, junio, septiembre y octubre se disfrutan mejor que agosto. Sales de El Prat (BCN), casi siempre por la T1. En París, Charles de Gaulle (CDG) concentra las conexiones y Orly (ORY) puede quedar mejor si duermes al sur. El directo ronda las 2 h y no cambias de hora. Para pagar menos, evita el viernes y compara CDG con ORY. Flight Alert te escribe por Telegram si aparece un buen precio: {PRECIO}. Gratis: 10 búsquedas al mes. Pro es ilimitado y avisa al momento.",
+      "faq": [
+        {
+          "q": "¿Cuánto dura Barcelona-París?",
+          "a": "El directo desde El Prat (BCN) hasta París suele durar unas 2 h. No hay cambio de hora."
+        },
+        {
+          "q": "¿Desde qué terminal salgo en Barcelona?",
+          "a": "La mayoría de vuelos a París salen de la T1 de El Prat (BCN). Llega con margen: el control y el tren entre terminales se comen un rato si vas justo."
+        },
+        {
+          "q": "¿Merece la pena Orly?",
+          "a": "A veces sí, si el hotel está al sur o la tarifa es claramente menor. CDG compensa si enlazas otro vuelo. El bot te avisa cuando ve {PRECIO}; tú eliges el aeropuerto."
+        }
+      ]
+    },
+    "en": {
+      "title": "Cheap flights Barcelona to Paris | Flight Alert",
+      "meta_description": "Barcelona to Paris from El Prat in about 2 hours. Compare CDG and Orly and skip Friday. If it drops to {PRECIO}, we message you on Telegram.",
+      "h1": "Flights from Barcelona to Paris",
+      "intro": "From Barcelona, Paris is a morning-out trip. May, June, September and October are easier than August. You leave El Prat (BCN), usually from Terminal 1. In Paris, Charles de Gaulle (CDG) takes the connections and Orly (ORY) can suit you if you sleep in the south. Nonstop is about 2 hours, with no time change. To pay less, skip Friday and compare CDG with ORY. Flight Alert messages you on Telegram when a good fare shows up: {PRECIO}. Free: 10 searches a month. Pro is unlimited and alerts you instantly.",
+      "faq": [
+        {
+          "q": "How long is Barcelona to Paris?",
+          "a": "Nonstop from El Prat (BCN) to Paris is about 2 hours. There is no time change."
+        },
+        {
+          "q": "Which terminal do I leave from in Barcelona?",
+          "a": "Most Paris flights leave from Terminal 1 at El Prat (BCN). Give yourself time: security and the terminal shuttle eat a while if you cut it fine."
+        },
+        {
+          "q": "Is Orly worth it?",
+          "a": "Sometimes, if your hotel is in the south or the fare is clearly lower. CDG wins if you connect onward. The bot pings you when it sees {PRECIO}; you pick the airport."
+        }
+      ]
+    }
+  },
+  {
+    "ruta": "Barcelona → Roma",
+    "origen_iata": "BCN",
+    "destino_iata": "FCO",
+    "por_que": "Escapada mediterránea muy buscada desde Cataluña, corta y con alternativa low cost en Ciampino.",
+    "es": {
+      "title": "Vuelos baratos Barcelona-Roma | Flight Alert",
+      "meta_description": "Barcelona-Roma en unas 2 h. Fiumicino o Ciampino, mejor fuera de agosto. Flight Alert te avisa por Telegram si llega a {PRECIO}.",
+      "h1": "Vuelos de Barcelona a Roma",
+      "intro": "Barcelona-Roma se pone difícil en agosto y en Semana Santa. Para pasear, apunta a abril, mayo u octubre. Sales de El Prat (BCN) y lo normal es llegar a Fiumicino (FCO), con tren a Termini. Ciampino (CIA) sale en tarifas low cost y queda peor de noche. El directo ronda las 2 h, sin cambio de hora. Para pagar menos, sal miércoles o jueves y cuenta el traslado de CIA. Flight Alert te escribe por Telegram si aparece un buen precio: {PRECIO}. Gratis: 10 búsquedas al mes. Pro es ilimitado y avisa al momento.",
+      "faq": [
+        {
+          "q": "¿Cuánto dura el vuelo Barcelona-Roma?",
+          "a": "El directo de El Prat (BCN) a Fiumicino (FCO) suele durar unas 2 h. No cambias de hora."
+        },
+        {
+          "q": "¿Me deja el tren en el centro?",
+          "a": "Desde Fiumicino (FCO) hay tren a Roma Termini. Desde Ciampino (CIA) dependes de bus o coche, y de noche hay menos frecuencia. Elige con la hora de llegada delante."
+        },
+        {
+          "q": "¿Agosto es mala idea?",
+          "a": "La ciudad y los vuelos se llenan, así que las tarifas buenas escasean. Si tienes que ir, vigila entre semana. El bot avisa si ve {PRECIO}."
+        }
+      ]
+    },
+    "en": {
+      "title": "Cheap flights Barcelona to Rome | Flight Alert",
+      "meta_description": "Barcelona to Rome in about 2 hours. Fiumicino or Ciampino, better outside August. Flight Alert pings you on Telegram if it hits {PRECIO}.",
+      "h1": "Flights from Barcelona to Rome",
+      "intro": "Barcelona to Rome gets difficult in August and at Easter. For walking, aim at April, May or October. You leave El Prat (BCN) and normally land at Fiumicino (FCO), with a train to Termini. Ciampino (CIA) shows up on low-cost fares and is awkward at night. Nonstop is about 2 hours, with no time change. To pay less, leave on Wednesday or Thursday and price the CIA transfer. Flight Alert messages you on Telegram when a good fare shows up: {PRECIO}. Free: 10 searches a month. Pro is unlimited and alerts you instantly.",
+      "faq": [
+        {
+          "q": "How long is Barcelona to Rome?",
+          "a": "Nonstop from El Prat (BCN) to Fiumicino (FCO) is about 2 hours. You do not change time zones."
+        },
+        {
+          "q": "Does the train reach the center?",
+          "a": "From Fiumicino (FCO) a train runs to Roma Termini. From Ciampino (CIA) you need a bus or a car, and nights are thinner. Choose with your landing time in mind."
+        },
+        {
+          "q": "Is August a bad idea?",
+          "a": "The city and the flights fill up, so good fares get scarce. If you have to go, watch midweek. The bot pings you if it sees {PRECIO}."
+        }
+      ]
+    }
+  },
+  {
+    "ruta": "Madrid → Ámsterdam",
+    "origen_iata": "MAD",
+    "destino_iata": "AMS",
+    "por_que": "City break muy buscado y hub útil: Schiphol concentra tanto la escapada como el enlace.",
+    "es": {
+      "title": "Vuelos baratos Madrid-Ámsterdam | Flight Alert",
+      "meta_description": "Madrid-Ámsterdam en unas 2 h 40 min a Schiphol. Mejor en mayo o septiembre. Si baja a {PRECIO}, Flight Alert te avisa por Telegram.",
+      "h1": "Vuelos de Madrid a Ámsterdam",
+      "intro": "Ámsterdam se busca desde Madrid por la ciudad y porque Schiphol sirve de puente al norte. Mayo y septiembre son meses redondos. Abril, con los tulipanes, se encarece. Sales de Barajas (MAD) y llegas a Schiphol (AMS). Un tren corto te deja en Amsterdam Centraal. El directo ronda las 2 h 40 min, sin cambio de hora. Para pagar menos, evita el viernes y mira si la maleta va incluida. Flight Alert te escribe por Telegram si aparece un buen precio: {PRECIO}. Gratis: 10 búsquedas al mes. Pro es ilimitado y avisa al momento.",
+      "faq": [
+        {
+          "q": "¿Cuánto dura Madrid-Ámsterdam?",
+          "a": "El directo de Barajas (MAD) a Schiphol (AMS) suele durar unas 2 h 40 min. No hay cambio de hora."
+        },
+        {
+          "q": "¿Schiphol queda lejos del centro?",
+          "a": "No para lo que es un hub grande. El tren a Amsterdam Centraal es corto y frecuente. De noche, confirma que tu llegada aún lo coge."
+        },
+        {
+          "q": "¿Cuándo se pone cara la ruta?",
+          "a": "En el pico de tulipanes de abril, en verano y en los puentes. El resto del año el bot puede pillarla en {PRECIO}. Confirma el precio antes de pagar."
+        }
+      ]
+    },
+    "en": {
+      "title": "Cheap flights Madrid to Amsterdam | Flight Alert",
+      "meta_description": "Madrid to Amsterdam in about 2 h 40 min to Schiphol. Better in May or September. If it drops to {PRECIO}, Flight Alert pings you on Telegram.",
+      "h1": "Flights from Madrid to Amsterdam",
+      "intro": "Amsterdam is a Madrid search for the city and because Schiphol is a bridge north. May and September are the easy months. April, with the tulips, gets pricey. You leave Barajas (MAD) and land at Schiphol (AMS). A short train drops you at Amsterdam Centraal. Nonstop is about 2 h 40 min, with no time change. To pay less, skip Friday and check whether a bag is included. Flight Alert messages you on Telegram when a good fare shows up: {PRECIO}. Free: 10 searches a month. Pro is unlimited and alerts you instantly.",
+      "faq": [
+        {
+          "q": "How long is Madrid to Amsterdam?",
+          "a": "Nonstop from Barajas (MAD) to Schiphol (AMS) is about 2 h 40 min. There is no time change."
+        },
+        {
+          "q": "Is Schiphol far from the center?",
+          "a": "Not for a big hub. The train to Amsterdam Centraal is short and frequent. At night, check that your landing still catches it."
+        },
+        {
+          "q": "When does this route get expensive?",
+          "a": "During the April tulip peak, in summer and on long weekends. The rest of the year the bot can catch it at {PRECIO}. Confirm the price before you pay."
+        }
+      ]
+    }
+  },
+  {
+    "ruta": "Madrid → Milán",
+    "origen_iata": "MAD",
+    "destino_iata": "MXP",
+    "por_que": "Mezcla ocio y trabajo hacia el norte de Italia; Malpensa es el largo radio y Bérgamo la vía low cost.",
+    "es": {
+      "title": "Vuelos baratos Madrid-Milán | Flight Alert",
+      "meta_description": "Madrid-Milán en unas 2 h 15 min. Malpensa, Linate o Bérgamo no son el mismo viaje. Si baja a {PRECIO}, te avisamos por Telegram.",
+      "h1": "Vuelos de Madrid a Milán",
+      "intro": "Milán se viaja por ferias, compras y como base del norte de Italia. Abril, mayo, septiembre y octubre esquivan el agosto cerrado y el invierno húmedo. Sales de Barajas (MAD). Malpensa (MXP) es el aeropuerto grande y queda lejos: cuenta el tren. Linate (LIN) está más cerca y tiene menos vuelos. Bérgamo (BGY) es la pista low cost, también fuera de la ciudad. El directo a MXP ronda las 2 h 15 min. Compara los tres con el traslado incluido. Flight Alert te escribe por Telegram si aparece un buen precio: {PRECIO}. Gratis: 10 búsquedas al mes. Pro es ilimitado y avisa al momento.",
+      "faq": [
+        {
+          "q": "¿Cuánto dura Madrid-Milán?",
+          "a": "El directo de Barajas (MAD) a Malpensa (MXP) suele durar unas 2 h 15 min. Después suma el tren: Malpensa no está al lado del Duomo."
+        },
+        {
+          "q": "¿Malpensa, Linate o Bérgamo?",
+          "a": "Malpensa (MXP) tiene más vuelos y queda lejos. Linate (LIN) es el cómodo para la ciudad. Bérgamo (BGY) puede ser más barato y el bus al centro se come tiempo. Compara con el traslado puesto."
+        },
+        {
+          "q": "¿Agosto compensa?",
+          "a": "Muchos milaneses se van y algunas tiendas cierran, así que no siempre es la ganga que parece. Si vas por feria, reserva cuando salga el aviso. El bot marca {PRECIO}."
+        }
+      ]
+    },
+    "en": {
+      "title": "Cheap flights Madrid to Milan | Flight Alert",
+      "meta_description": "Madrid to Milan in about 2 h 15 min. Malpensa, Linate and Bergamo are not the same trip. If it drops to {PRECIO}, we message you on Telegram.",
+      "h1": "Flights from Madrid to Milan",
+      "intro": "Milan is a trip for fairs, shopping and a base in northern Italy. April, May, September and October dodge the August shutdown and the damp winter. You leave Barajas (MAD). Malpensa (MXP) is the big airport and it is far: budget the train. Linate (LIN) is closer and has fewer flights. Bergamo (BGY) is the low-cost runway, also outside the city. Nonstop to MXP is about 2 h 15 min. Compare all three with the transfer included. Flight Alert messages you on Telegram when a good fare shows up: {PRECIO}. Free: 10 searches a month. Pro is unlimited and alerts you instantly.",
+      "faq": [
+        {
+          "q": "How long is Madrid to Milan?",
+          "a": "Nonstop from Barajas (MAD) to Malpensa (MXP) is about 2 h 15 min. Then add the train: Malpensa is not next to the Duomo."
+        },
+        {
+          "q": "Malpensa, Linate or Bergamo?",
+          "a": "Malpensa (MXP) has more flights and sits far out. Linate (LIN) is the handy one for the city. Bergamo (BGY) can be cheaper, and the bus into town takes time. Compare with the transfer included."
+        },
+        {
+          "q": "Is August a bargain?",
+          "a": "Many Milanese leave and some shops close, so it is not always the deal it looks like. If you are going for a fair, book when the alert fires. The bot flags {PRECIO}."
+        }
+      ]
+    }
+  },
+  {
+    "ruta": "Málaga → Londres",
+    "origen_iata": "AGP",
+    "destino_iata": "LGW",
+    "por_que": "Uno de los mayores flujos de ocio de la Costa del Sol, con Gatwick como llegada habitual y no Heathrow.",
+    "es": {
+      "title": "Vuelos baratos Málaga-Londres | Flight Alert",
+      "meta_description": "Málaga-Londres Gatwick en unas 2 h 55 min. Evita las vacaciones escolares de verano. Si baja a {PRECIO}, Flight Alert te avisa.",
+      "h1": "Vuelos de Málaga a Londres",
+      "intro": "Málaga-Londres es ruta de ocio: familia o un puente en la ciudad. El precio sube en las vacaciones escolares del Reino Unido, sobre todo en julio, agosto y Navidad. Mayo, junio y septiembre suelen ser más respirables. Sales de Málaga (AGP). La llegada habitual es Gatwick (LGW), no Heathrow, con tren a Victoria o London Bridge. El directo suele durar unas 2 h 55 min y en Londres es una hora menos. Cuenta ese tren en el precio. Flight Alert te escribe por Telegram si aparece un buen precio: {PRECIO}. Gratis: 10 búsquedas al mes. Pro es ilimitado y avisa al momento.",
+      "faq": [
+        {
+          "q": "¿Cuánto dura Málaga-Londres?",
+          "a": "El directo de Málaga (AGP) a Gatwick (LGW) suele durar unas 2 h 55 min. Londres va una hora por detrás de España."
+        },
+        {
+          "q": "¿Llego a Heathrow?",
+          "a": "En esta ruta lo normal es Gatwick (LGW). Heathrow es otro viaje, a menudo con escala o desde otro aeropuerto español. No des por hecho el tren de Heathrow si tu billete dice LGW."
+        },
+        {
+          "q": "¿Por qué en agosto está tan pedido?",
+          "a": "Coinciden las vacaciones escolares británicas y el verano en la Costa del Sol. Si puedes moverte a junio o septiembre, vigila esa fecha. El bot avisa con {PRECIO}."
+        }
+      ]
+    },
+    "en": {
+      "title": "Cheap flights Malaga to London | Flight Alert",
+      "meta_description": "Malaga to London Gatwick in about 2 h 55 min. Skip the summer school holidays. If it drops to {PRECIO}, Flight Alert pings you.",
+      "h1": "Flights from Malaga to London",
+      "intro": "Malaga to London is a leisure route: family or a long weekend in the city. Fares jump in UK school holidays, especially July, August and Christmas. May, June and September are usually easier. You leave Malaga (AGP). The usual landing is Gatwick (LGW), not Heathrow, with trains to Victoria or London Bridge. Nonstop is about 2 h 55 min, and London is one hour behind. Add that train to the fare. Flight Alert messages you on Telegram when a good fare shows up: {PRECIO}. Free: 10 searches a month. Pro is unlimited and alerts you instantly.",
+      "faq": [
+        {
+          "q": "How long is Malaga to London?",
+          "a": "Nonstop from Malaga (AGP) to Gatwick (LGW) is about 2 h 55 min. London is one hour behind Spain."
+        },
+        {
+          "q": "Do I land at Heathrow?",
+          "a": "On this route the usual airport is Gatwick (LGW). Heathrow is a different trip, often with a connection or from another Spanish airport. Do not assume the Heathrow train if your ticket says LGW."
+        },
+        {
+          "q": "Why is August so busy?",
+          "a": "British school holidays and the Costa del Sol summer land together. If you can move to June or September, watch that date. The bot flags {PRECIO}."
+        }
+      ]
+    }
+  },
+  {
+    "ruta": "Madrid → Berlín",
+    "origen_iata": "MAD",
+    "destino_iata": "BER",
+    "por_que": "Escapada urbana en alza desde Madrid, con un solo aeropuerto en la ciudad y demanda clara en puentes.",
+    "es": {
+      "title": "Vuelos baratos Madrid-Berlín | Flight Alert",
+      "meta_description": "Madrid-Berlín en unas 3 h a Brandeburgo. Mejor en mayo, junio o septiembre. Si el precio cae a {PRECIO}, te escribimos por Telegram.",
+      "h1": "Vuelos de Madrid a Berlín",
+      "intro": "Berlín es una escapada habitual desde Madrid, con un solo aeropuerto. Mayo, junio y septiembre tienen día largo. Diciembre se pone caro por los mercados. Sales de Barajas (MAD) y aterrizas en Brandeburgo (BER), al sur, con cercanías al centro. El directo ronda las 3 h, sin cambio de hora. Para pagar menos, evita el viernes y busca una llegada de mañana. Flight Alert te escribe por Telegram si aparece un buen precio: {PRECIO}. Gratis: 10 búsquedas al mes. Pro es ilimitado y avisa al momento.",
+      "faq": [
+        {
+          "q": "¿Cuánto dura Madrid-Berlín?",
+          "a": "El directo de Barajas (MAD) a Berlín-Brandeburgo (BER) suele durar unas 3 h. No cambias de hora."
+        },
+        {
+          "q": "¿Hay más de un aeropuerto en Berlín?",
+          "a": "No para esta ruta. Brandeburgo (BER) es el aeropuerto de la ciudad. El tren de cercanías te acerca al centro; de noche mira el último enlace."
+        },
+        {
+          "q": "¿Los mercados de Navidad encarecen el vuelo?",
+          "a": "Sí, diciembre se pide mucho. Si te vale mayo o septiembre, suele haber más donde elegir. El bot te escribe si ve {PRECIO}."
+        }
+      ]
+    },
+    "en": {
+      "title": "Cheap flights Madrid to Berlin | Flight Alert",
+      "meta_description": "Madrid to Berlin in about 3 hours to Brandenburg. Better in May, June or September. If the fare falls to {PRECIO}, we message you on Telegram.",
+      "h1": "Flights from Madrid to Berlin",
+      "intro": "Berlin is a regular break from Madrid, with a single airport. May, June and September bring long days. December gets expensive because of the markets. You leave Barajas (MAD) and land at Brandenburg (BER), to the south, with a suburban train to the center. Nonstop is about 3 hours, with no time change. To pay less, skip Friday and look for a morning arrival. Flight Alert messages you on Telegram when a good fare shows up: {PRECIO}. Free: 10 searches a month. Pro is unlimited and alerts you instantly.",
+      "faq": [
+        {
+          "q": "How long is Madrid to Berlin?",
+          "a": "Nonstop from Barajas (MAD) to Berlin Brandenburg (BER) is about 3 hours. You do not change time zones."
+        },
+        {
+          "q": "Does Berlin have more than one airport?",
+          "a": "Not for this trip. Brandenburg (BER) is the city airport. The S-Bahn brings you toward the center; at night, check the last connection."
+        },
+        {
+          "q": "Do Christmas markets push the fare up?",
+          "a": "Yes, December is heavily booked. If May or September works, you usually have more to choose from. The bot writes you if it sees {PRECIO}."
+        }
+      ]
+    }
+  },
+  {
+    "ruta": "Barcelona → Ámsterdam",
+    "origen_iata": "BCN",
+    "destino_iata": "AMS",
+    "por_que": "Ruta corta muy usada para puentes desde El Prat y para seguir viaje vía Schiphol.",
+    "es": {
+      "title": "Vuelos baratos Barcelona-Ámsterdam | Flight Alert",
+      "meta_description": "Barcelona-Ámsterdam en unas 2 h 20 min a Schiphol. Evita abril y el viernes. Si baja a {PRECIO}, Flight Alert te avisa por Telegram.",
+      "h1": "Vuelos de Barcelona a Ámsterdam",
+      "intro": "Desde Barcelona, Ámsterdam es un puente corto. Abril se llena por los tulipanes. Mayo tardío y septiembre van más sueltos. Sales de El Prat (BCN), en general por la T1, y llegas a Schiphol (AMS). El tren al centro es corto. El directo ronda las 2 h 20 min y no cambias de hora. Para pagar menos, sal entre semana y comprueba si la maleta va incluida. Flight Alert te escribe por Telegram si aparece un buen precio: {PRECIO}. Gratis: 10 búsquedas al mes. Pro es ilimitado y avisa al momento.",
+      "faq": [
+        {
+          "q": "¿Cuánto dura Barcelona-Ámsterdam?",
+          "a": "El directo de El Prat (BCN) a Schiphol (AMS) suele durar unas 2 h 20 min. No hay cambio de hora."
+        },
+        {
+          "q": "¿Abril es buen mes?",
+          "a": "Es el más bonito para los campos de flores y también de los más pedidos. Si te da igual el tulipán, mayo o septiembre suelen ir más sueltos."
+        },
+        {
+          "q": "¿Cómo entero de una bajada?",
+          "a": "Dejas la ruta en el bot de Telegram. Pro avisa al momento si aparece {PRECIO}. Gratis incluye 10 búsquedas al mes. El precio de pago es el de la aerolínea."
+        }
+      ]
+    },
+    "en": {
+      "title": "Cheap flights Barcelona to Amsterdam | Flight Alert",
+      "meta_description": "Barcelona to Amsterdam in about 2 h 20 min to Schiphol. Skip peak April and Friday. If it drops to {PRECIO}, Flight Alert pings you on Telegram.",
+      "h1": "Flights from Barcelona to Amsterdam",
+      "intro": "From Barcelona, Amsterdam is a short break. April fills up for the tulips. Late May and September are looser. You leave El Prat (BCN), usually Terminal 1, and land at Schiphol (AMS). The train to the center is short. Nonstop is about 2 h 20 min, with no time change. To pay less, fly midweek and check whether a bag is included. Flight Alert messages you on Telegram when a good fare shows up: {PRECIO}. Free: 10 searches a month. Pro is unlimited and alerts you instantly.",
+      "faq": [
+        {
+          "q": "How long is Barcelona to Amsterdam?",
+          "a": "Nonstop from El Prat (BCN) to Schiphol (AMS) is about 2 h 20 min. There is no time change."
+        },
+        {
+          "q": "Is April a good month?",
+          "a": "It is the prettiest month for the flower fields and one of the busiest. If you can skip the tulips, May or September are usually looser."
+        },
+        {
+          "q": "How do I hear about a drop?",
+          "a": "Save the route in the Telegram bot. Pro pings you at once if {PRECIO} appears. Free includes 10 searches a month. The price you pay is the airline's."
+        }
+      ]
+    }
+  },
+  {
+    "ruta": "Madrid → Oporto",
+    "origen_iata": "MAD",
+    "destino_iata": "OPO",
+    "por_que": "Alternativa corta a Lisboa, con ciudad de fin de semana y aeropuerto enlazado por metro.",
+    "es": {
+      "title": "Vuelos baratos Madrid-Oporto | Flight Alert",
+      "meta_description": "Madrid-Oporto en poco más de 1 h 15 min. El metro llega al aeropuerto. Si la tarifa cae a {PRECIO}, te avisamos por Telegram.",
+      "h1": "Vuelos de Madrid a Oporto",
+      "intro": "Oporto es la otra escapada portuguesa desde Madrid: más pequeña que Lisboa y muy andable. Abril, mayo, septiembre y octubre son meses amables. En junio, São João pide más el avión. Sales de Barajas (MAD) y llegas a Sá Carneiro (OPO). El metro, en la línea violeta, baja al centro. El directo suele durar 1 h 15 min o 1 h 25 min. Allí es una hora menos. Evita el viernes por la tarde. Flight Alert te escribe por Telegram si aparece un buen precio: {PRECIO}. Gratis: 10 búsquedas al mes. Pro es ilimitado y avisa al momento.",
+      "faq": [
+        {
+          "q": "¿Cuánto dura Madrid-Oporto?",
+          "a": "El directo de Barajas (MAD) a Sá Carneiro (OPO) suele durar entre 1 h 15 min y 1 h 25 min. El reloj local va una hora por detrás de España."
+        },
+        {
+          "q": "¿Cómo llego al centro?",
+          "a": "El metro (línea violeta) sale del aeropuerto y baja hacia la ciudad. De noche, mira el último tren antes de dar por hecho que está corriendo."
+        },
+        {
+          "q": "¿Es más barato que Lisboa?",
+          "a": "No siempre. Son rutas distintas y cada una tiene su tarifa. Vigila las dos si te da igual la ciudad. El bot avisa con {PRECIO} en la que estés siguiendo."
+        }
+      ]
+    },
+    "en": {
+      "title": "Cheap flights Madrid to Porto | Flight Alert",
+      "meta_description": "Madrid to Porto in a little over 1 h 15 min. The metro reaches the airport. If the fare falls to {PRECIO}, we ping you on Telegram.",
+      "h1": "Flights from Madrid to Porto",
+      "intro": "Porto is the other Portuguese break from Madrid: smaller than Lisbon and very walkable. April, May, September and October are kind months. In June, São João makes the plane busier. You leave Barajas (MAD) and land at Sá Carneiro (OPO). The violet metro line runs toward the center. Nonstop usually takes 1 h 15 min to 1 h 25 min. Porto is one hour behind. Skip Friday evening. Flight Alert messages you on Telegram when a good fare shows up: {PRECIO}. Free: 10 searches a month. Pro is unlimited and alerts you instantly.",
+      "faq": [
+        {
+          "q": "How long is Madrid to Porto?",
+          "a": "Nonstop from Barajas (MAD) to Sá Carneiro (OPO) usually takes 1 h 15 min to 1 h 25 min. Local time is one hour behind Spain."
+        },
+        {
+          "q": "How do I reach the center?",
+          "a": "The metro (violet line) leaves the airport and runs toward the city. At night, check the last train before you assume it is running."
+        },
+        {
+          "q": "Is it cheaper than Lisbon?",
+          "a": "Not always. They are different routes and each has its own fare. Watch both if either city works. The bot flags {PRECIO} on the one you are following."
+        }
+      ]
+    }
+  },
+  {
+    "ruta": "Madrid → Buenos Aires",
+    "origen_iata": "MAD",
+    "destino_iata": "EZE",
+    "por_que": "Gran largo radio España-Cono Sur: visitas familiares y turismo, con Ezeiza como único aeropuerto internacional.",
+    "es": {
+      "title": "Vuelos baratos Madrid-Buenos Aires | Flight Alert",
+      "meta_description": "Madrid-Buenos Aires: directo de unas 12 h 45 min a Ezeiza, no a Aeroparque. Si baja a {PRECIO}, Flight Alert te avisa por Telegram.",
+      "h1": "Vuelos de Madrid a Buenos Aires",
+      "intro": "Buenos Aires pide un día de margen: el vuelo se come la jornada. Allí el verano va de diciembre a febrero y, junto con julio y agosto en España, es cuando más se pide. Sales de Barajas (MAD), casi siempre de noche, y llegas a Ezeiza (EZE). No esperes Aeroparque (AEP): es otro aeropuerto. La ida directa ronda las 12 h 45 min. La vuelta suele ser más corta por el viento. En invierno Madrid va unas 4 horas por delante; en verano, unas 5. Mueve la fecha y evita Navidad. Flight Alert te escribe por Telegram si aparece un buen precio: {PRECIO}. Gratis: 10 búsquedas al mes. Pro es ilimitado y avisa al momento.",
+      "faq": [
+        {
+          "q": "¿Cuánto dura Madrid-Buenos Aires?",
+          "a": "La ida directa de Barajas (MAD) a Ezeiza (EZE) ronda las 12 h 45 min. La vuelta suele durar menos porque el viento empuja hacia Europa."
+        },
+        {
+          "q": "¿Llego a Aeroparque o a Ezeiza?",
+          "a": "Los vuelos desde Madrid llegan a Ezeiza (EZE), a las afueras. Aeroparque (AEP) está más cerca del centro y no es la puerta de este vuelo. Cuenta taxi, bus o transfer."
+        },
+        {
+          "q": "¿Qué meses se ponen caros?",
+          "a": "Diciembre a febrero allí, y julio y agosto aquí, más Navidad y Reyes. Si puedes mover la fecha unos días, el bot te avisa al ver {PRECIO}. Confirma en la aerolínea."
+        }
+      ]
+    },
+    "en": {
+      "title": "Cheap flights Madrid to Buenos Aires | Flight Alert",
+      "meta_description": "Madrid to Buenos Aires: about 12 h 45 min nonstop to Ezeiza, not Aeroparque. If it drops to {PRECIO}, Flight Alert pings you on Telegram.",
+      "h1": "Flights from Madrid to Buenos Aires",
+      "intro": "Buenos Aires needs a buffer day: the flight eats one. Summer there runs from December to February and, with July and August in Spain, that is when seats go first. You leave Barajas (MAD), almost always at night, and land at Ezeiza (EZE). Do not expect Aeroparque (AEP): it is a different airport. The outbound nonstop is about 12 h 45 min. The return is usually shorter because of the wind. In winter Madrid is about 4 hours ahead; in summer, about 5. Shift the date and skip Christmas. Flight Alert messages you on Telegram when a good fare shows up: {PRECIO}. Free: 10 searches a month. Pro is unlimited and alerts you instantly.",
+      "faq": [
+        {
+          "q": "How long is Madrid to Buenos Aires?",
+          "a": "The outbound nonstop from Barajas (MAD) to Ezeiza (EZE) is about 12 h 45 min. The return is usually shorter because the wind pushes toward Europe."
+        },
+        {
+          "q": "Do I land at Aeroparque or Ezeiza?",
+          "a": "Flights from Madrid land at Ezeiza (EZE), outside the city. Aeroparque (AEP) is closer to the center and is not the gate for this flight. Plan a taxi, bus or transfer."
+        },
+        {
+          "q": "Which months get expensive?",
+          "a": "December to February there, and July and August here, plus Christmas and New Year. If you can shift a few days, the bot pings you when it sees {PRECIO}. Confirm with the airline."
+        }
+      ]
+    }
+  },
+  {
+    "ruta": "Madrid → Ciudad de México",
+    "origen_iata": "MAD",
+    "destino_iata": "MEX",
+    "por_que": "Mayor metrópoli de habla hispana al otro lado del Atlántico, con flujo constante de visitas y turismo.",
+    "es": {
+      "title": "Vuelos baratos Madrid-Ciudad de México | Flight Alert",
+      "meta_description": "Madrid-Ciudad de México en unas 12 h 15 min al AICM, no a Santa Lucía. Si baja a {PRECIO}, te avisamos por Telegram.",
+      "h1": "Vuelos de Madrid a Ciudad de México",
+      "intro": "Ciudad de México pide margen por el horario y la altitud. Se llena en Semana Santa, julio, agosto y diciembre. Sales de Barajas (MAD) y llegas al Benito Juárez (MEX), en el valle. No lo confundas con el Felipe Ángeles (NLU), mucho más lejos, salvo que el billete lo diga. El directo ronda las 12 h 15 min. España va 7 horas por delante en invierno y 8 en verano. El primer día, ve lento: la altura se nota. Sal entre semana y evita el puente de diciembre. Flight Alert te escribe por Telegram si aparece un buen precio: {PRECIO}. Gratis: 10 búsquedas al mes. Pro es ilimitado y avisa al momento.",
+      "faq": [
+        {
+          "q": "¿Cuánto dura Madrid-Ciudad de México?",
+          "a": "El directo de Barajas (MAD) al Benito Juárez (MEX) suele durar unas 12 h 15 min. España va 7 horas por delante en invierno y 8 en verano."
+        },
+        {
+          "q": "¿A qué aeropuerto llego?",
+          "a": "Al AICM, Benito Juárez (MEX), en el valle. El Felipe Ángeles (NLU) es otro aeropuerto, más lejos. Entra en el centro con tiempo: el tráfico puede alargar mucho el traslado."
+        },
+        {
+          "q": "¿La altitud afecta?",
+          "a": "La ciudad está a más de 2.000 metros. El primer día conviene ir lento. Para el billete, el bot avisa si ve {PRECIO}; el cuerpo no se arregla con una tarifa."
+        }
+      ]
+    },
+    "en": {
+      "title": "Cheap flights Madrid to Mexico City | Flight Alert",
+      "meta_description": "Madrid to Mexico City in about 12 h 15 min to AICM, not Santa Lucía. If it drops to {PRECIO}, we message you on Telegram.",
+      "h1": "Flights from Madrid to Mexico City",
+      "intro": "Mexico City needs slack for the clock and the altitude. It fills up at Easter, in July, August and December. You leave Barajas (MAD) and land at Benito Juárez (MEX), in the valley. Do not confuse it with Felipe Ángeles (NLU), much farther out, unless the ticket says so. Nonstop is about 12 h 15 min. Spain is 7 hours ahead in winter and 8 in summer. Keep the first day light: the altitude shows. Fly midweek and skip the December holiday. Flight Alert messages you on Telegram when a good fare shows up: {PRECIO}. Free: 10 searches a month. Pro is unlimited and alerts you instantly.",
+      "faq": [
+        {
+          "q": "How long is Madrid to Mexico City?",
+          "a": "Nonstop from Barajas (MAD) to Benito Juárez (MEX) is about 12 h 15 min. Spain is 7 hours ahead in winter and 8 in summer."
+        },
+        {
+          "q": "Which airport do I land at?",
+          "a": "AICM, Benito Juárez (MEX), in the valley. Felipe Ángeles (NLU) is a different airport, farther out. Allow time into the center: traffic can stretch the ride."
+        },
+        {
+          "q": "Does the altitude matter?",
+          "a": "The city sits above 2,000 meters. Keep the first day light. For the ticket, the bot pings you if it sees {PRECIO}. A fare will not fix the altitude."
+        }
+      ]
+    }
+  },
+  {
+    "ruta": "Madrid → Bogotá",
+    "origen_iata": "MAD",
+    "destino_iata": "BOG",
+    "por_que": "Principal puerta de Colombia desde España y hub andino para quien sigue a otras ciudades del país.",
+    "es": {
+      "title": "Vuelos baratos Madrid-Bogotá | Flight Alert",
+      "meta_description": "Madrid-Bogotá en unas 10 h 30 min a El Dorado. Ojo con la altura. Si el precio baja a {PRECIO}, Flight Alert te avisa por Telegram.",
+      "h1": "Vuelos de Madrid a Bogotá",
+      "intro": "Bogotá es la puerta de Colombia desde Madrid y el enlace hacia Medellín, Cartagena o Cali. Se llena en Semana Santa, en el verano español y en diciembre. Sales de Barajas (MAD) y llegas a El Dorado (BOG). El directo ronda las 10 h 30 min. España va 6 horas por delante en invierno y 7 en verano. La ciudad está a unos 2.600 metros: agua y poco plan el primer día. No armes una conexión interna justa y sal entre semana. Flight Alert te escribe por Telegram si aparece un buen precio: {PRECIO}. Gratis: 10 búsquedas al mes. Pro es ilimitado y avisa al momento.",
+      "faq": [
+        {
+          "q": "¿Cuánto dura Madrid-Bogotá?",
+          "a": "El directo de Barajas (MAD) a El Dorado (BOG) suele durar unas 10 h 30 min. En invierno España va 6 horas por delante; en verano, 7."
+        },
+        {
+          "q": "¿El aeropuerto queda en la ciudad?",
+          "a": "El Dorado (BOG) está al oeste de Bogotá. Hay bus, taxi oficial y transfer. El tráfico manda: no cuentes un traslado corto en hora punta."
+        },
+        {
+          "q": "¿Puedo seguir a otra ciudad el mismo día?",
+          "a": "Sí, pero deja margen. Una conexión justa después de 10 h y de la altura sale cara en estrés. El bot vigila el tramo Madrid-Bogotá y avisa con {PRECIO}."
+        }
+      ]
+    },
+    "en": {
+      "title": "Cheap flights Madrid to Bogotá | Flight Alert",
+      "meta_description": "Madrid to Bogotá in about 10 h 30 min to El Dorado. Watch the altitude. If the fare drops to {PRECIO}, Flight Alert pings you on Telegram.",
+      "h1": "Flights from Madrid to Bogotá",
+      "intro": "Bogotá is the door to Colombia from Madrid and the link on to Medellín, Cartagena or Cali. It fills up at Easter, in the Spanish summer and in December. You leave Barajas (MAD) and land at El Dorado (BOG). Nonstop is about 10 h 30 min. Spain is 6 hours ahead in winter and 7 in summer. The city sits at about 2,600 meters: water and a light plan on day one. Do not book a tight domestic connection, and fly midweek. Flight Alert messages you on Telegram when a good fare shows up: {PRECIO}. Free: 10 searches a month. Pro is unlimited and alerts you instantly.",
+      "faq": [
+        {
+          "q": "How long is Madrid to Bogotá?",
+          "a": "Nonstop from Barajas (MAD) to El Dorado (BOG) is about 10 h 30 min. In winter Spain is 6 hours ahead; in summer, 7."
+        },
+        {
+          "q": "Is the airport in the city?",
+          "a": "El Dorado (BOG) is west of Bogotá. There is a bus, an official taxi and transfers. Traffic rules: do not budget a short ride at rush hour."
+        },
+        {
+          "q": "Can I fly on to another city the same day?",
+          "a": "Yes, but leave a gap. A tight connection after 10 hours and the altitude costs you in stress. The bot watches Madrid-Bogotá and flags {PRECIO}."
+        }
+      ]
+    }
+  },
+  {
+    "ruta": "Madrid → Lima",
+    "origen_iata": "MAD",
+    "destino_iata": "LIM",
+    "por_que": "Puerta del Pacífico sur desde España, muy buscada por turismo y por visitas, con invierno de garúa entre mayo y octubre.",
+    "es": {
+      "title": "Vuelos baratos Madrid-Lima | Flight Alert",
+      "meta_description": "Madrid-Lima en unas 12 h a Jorge Chávez. El invierno allí es nublado, de mayo a octubre. Si baja a {PRECIO}, te avisamos.",
+      "h1": "Vuelos de Madrid a Lima",
+      "intro": "Lima mezcla ciudad, comida y la salida hacia Cusco. De mayo a octubre hay garúa y cielo gris. De diciembre a abril hay más sol y más demanda. Sales de Barajas (MAD) y llegas a Jorge Chávez (LIM), en el Callao, no en Miraflores. El traslado es en coche y el tráfico pesa. El directo ronda las 12 h. España va 6 horas por delante en invierno y 7 en verano. No enlaces Cusco el mismo día sin margen. Flight Alert te escribe por Telegram si aparece un buen precio: {PRECIO}. Gratis: 10 búsquedas al mes. Pro es ilimitado y avisa al momento.",
+      "faq": [
+        {
+          "q": "¿Cuánto dura Madrid-Lima?",
+          "a": "El directo de Barajas (MAD) a Jorge Chávez (LIM) suele durar unas 12 h. España va 6 horas por delante en invierno y 7 en verano."
+        },
+        {
+          "q": "¿El aeropuerto está en Lima?",
+          "a": "Está en el Callao, al noroeste. Miraflores y Barranco quedan al sur y el coche puede tardar bastante. No cuentes un traslado de diez minutos."
+        },
+        {
+          "q": "¿Cuándo hace mejor tiempo?",
+          "a": "De diciembre a abril hay más sol, y también más gente. De mayo a octubre el cielo está gris. El bot no elige el clima: avisa si el vuelo baja a {PRECIO}."
+        }
+      ]
+    },
+    "en": {
+      "title": "Cheap flights Madrid to Lima | Flight Alert",
+      "meta_description": "Madrid to Lima in about 12 hours to Jorge Chávez. Local winter is cloudy, May to October. If it drops to {PRECIO}, we ping you.",
+      "h1": "Flights from Madrid to Lima",
+      "intro": "Lima mixes the city, the food and the road on to Cusco. From May to October there is garúa and a grey sky. From December to April there is more sun and more demand. You leave Barajas (MAD) and land at Jorge Chávez (LIM), in Callao, not in Miraflores. The ride is by car and traffic matters. Nonstop is about 12 hours. Spain is 6 hours ahead in winter and 7 in summer. Do not connect to Cusco the same day with no buffer. Flight Alert messages you on Telegram when a good fare shows up: {PRECIO}. Free: 10 searches a month. Pro is unlimited and alerts you instantly.",
+      "faq": [
+        {
+          "q": "How long is Madrid to Lima?",
+          "a": "Nonstop from Barajas (MAD) to Jorge Chávez (LIM) is about 12 hours. Spain is 6 hours ahead in winter and 7 in summer."
+        },
+        {
+          "q": "Is the airport in Lima?",
+          "a": "It is in Callao, to the northwest. Miraflores and Barranco are to the south and the car can take a while. Do not budget a ten-minute transfer."
+        },
+        {
+          "q": "When is the weather better?",
+          "a": "December to April is sunnier, and busier. May to October the sky is grey. The bot does not pick the weather: it pings you if the flight drops to {PRECIO}."
+        }
+      ]
+    }
+  },
+  {
+    "ruta": "Madrid → São Paulo",
+    "origen_iata": "MAD",
+    "destino_iata": "GRU",
+    "por_que": "Capital de negocios de Sudamérica y llegada internacional real: Guarulhos, no Congonhas.",
+    "es": {
+      "title": "Vuelos baratos Madrid-São Paulo | Flight Alert",
+      "meta_description": "Madrid-São Paulo en unas 10 h 45 min a Guarulhos, no a Congonhas. Si baja a {PRECIO}, Flight Alert te avisa por Telegram.",
+      "h1": "Vuelos de Madrid a São Paulo",
+      "intro": "São Paulo se vuela por trabajo, por familia y como puerta de Brasil. La demanda sube de diciembre a marzo, en carnaval y en el verano español. Sales de Barajas (MAD) y llegas a Guarulhos (GRU), lejos de Paulista. Congonhas (CGH) está más cerca y no es esta llegada. El directo ronda las 10 h 45 min. España va 4 horas por delante en invierno y 5 en verano. No cuentes un traslado rápido en hora punta y aparta la semana de carnaval. Flight Alert te escribe por Telegram si aparece un buen precio: {PRECIO}. Gratis: 10 búsquedas al mes. Pro es ilimitado y avisa al momento.",
+      "faq": [
+        {
+          "q": "¿Cuánto dura Madrid-São Paulo?",
+          "a": "El directo de Barajas (MAD) a Guarulhos (GRU) suele durar unas 10 h 45 min. España va 4 horas por delante en invierno y 5 en verano."
+        },
+        {
+          "q": "¿Guarulhos o Congonhas?",
+          "a": "Desde Madrid se llega a Guarulhos (GRU). Congonhas (CGH) es el aeropuerto cercano al centro y sirve otros vuelos. Del GRU a Paulista cuenta un buen rato de coche o bus."
+        },
+        {
+          "q": "¿Carnaval encarece São Paulo?",
+          "a": "El país entero se mueve y las tarifas se ponen nerviosas, aunque la fiesta grande esté en otras ciudades. Si puedes evitar esa semana, vigílala aparte. El bot avisa con {PRECIO}."
+        }
+      ]
+    },
+    "en": {
+      "title": "Cheap flights Madrid to São Paulo | Flight Alert",
+      "meta_description": "Madrid to São Paulo in about 10 h 45 min to Guarulhos, not Congonhas. If it drops to {PRECIO}, Flight Alert pings you on Telegram.",
+      "h1": "Flights from Madrid to São Paulo",
+      "intro": "São Paulo is flown for work, for family and as a door into Brazil. Demand rises from December to March, at carnival and in the Spanish summer. You leave Barajas (MAD) and land at Guarulhos (GRU), far from Paulista. Congonhas (CGH) is closer and is not this arrival. Nonstop is about 10 h 45 min. Spain is 4 hours ahead in winter and 5 in summer. Do not assume a quick transfer at rush hour, and step around carnival week. Flight Alert messages you on Telegram when a good fare shows up: {PRECIO}. Free: 10 searches a month. Pro is unlimited and alerts you instantly.",
+      "faq": [
+        {
+          "q": "How long is Madrid to São Paulo?",
+          "a": "Nonstop from Barajas (MAD) to Guarulhos (GRU) is about 10 h 45 min. Spain is 4 hours ahead in winter and 5 in summer."
+        },
+        {
+          "q": "Guarulhos or Congonhas?",
+          "a": "Flights from Madrid land at Guarulhos (GRU). Congonhas (CGH) is the close-in airport and serves other flights. From GRU to Paulista, allow a solid car or bus ride."
+        },
+        {
+          "q": "Does carnival make São Paulo expensive?",
+          "a": "The whole country moves and fares get jumpy, even if the big party is in other cities. If you can skip that week, watch it apart. The bot flags {PRECIO}."
+        }
+      ]
+    }
+  },
+  {
+    "ruta": "Madrid → Santiago de Chile",
+    "origen_iata": "MAD",
+    "destino_iata": "SCL",
+    "por_que": "Uno de los vuelos más largos desde Barajas al Cono Sur, con temporada alta invertida respecto a España.",
+    "es": {
+      "title": "Vuelos baratos Madrid-Santiago de Chile | Flight Alert",
+      "meta_description": "Madrid-Santiago: directo de más de 13 h. Allí el verano es de diciembre a marzo. Si baja a {PRECIO}, te avisamos por Telegram.",
+      "h1": "Vuelos de Madrid a Santiago de Chile",
+      "intro": "Santiago es de los vuelos más largos desde Madrid, así que deja un día de colchón. El verano chileno va de diciembre a marzo. Julio es invierno allí y verano aquí, y también se pide. Sales de Barajas (MAD) y llegas a Arturo Merino Benítez (SCL), más cerca de la ciudad de lo que Ezeiza está de Buenos Aires. El directo pasa de 13 h. La diferencia horaria cambia porque Chile mueve el reloj. Evita el 24 de diciembre y no enlaces un vuelo interno el mismo día. Flight Alert te escribe por Telegram si aparece un buen precio: {PRECIO}. Gratis: 10 búsquedas al mes. Pro es ilimitado y avisa al momento.",
+      "faq": [
+        {
+          "q": "¿Cuánto dura Madrid-Santiago?",
+          "a": "El directo de Barajas (MAD) a Arturo Merino Benítez (SCL) pasa de 13 h. Es de los tramos más largos desde Madrid. La vuelta puede variar con el viento."
+        },
+        {
+          "q": "¿Qué hora es en Santiago?",
+          "a": "No es una cifra fija. Chile aplica horario de verano, así que la diferencia con España cambia. Mírala para tus fechas concretas antes de cerrar el hotel."
+        },
+        {
+          "q": "¿Cuándo se llena el avión?",
+          "a": "De diciembre a marzo allí, y en julio desde España. Si mueves la salida unos días, el bot puede pillarla en {PRECIO}. Confirma el precio en la aerolínea."
+        }
+      ]
+    },
+    "en": {
+      "title": "Cheap flights Madrid to Santiago | Flight Alert",
+      "meta_description": "Madrid to Santiago: a nonstop of more than 13 hours. Summer there is December to March. If it drops to {PRECIO}, we message you on Telegram.",
+      "h1": "Flights from Madrid to Santiago",
+      "intro": "Santiago is one of the longest flights from Madrid, so leave a buffer day. The Chilean summer runs from December to March. July is winter there and summer here, and it is busy too. You leave Barajas (MAD) and land at Arturo Merino Benítez (SCL), closer to town than Ezeiza is to Buenos Aires. Nonstop runs past 13 hours. The time gap changes because Chile moves the clock. Skip 24 December and do not connect domestically the same day. Flight Alert messages you on Telegram when a good fare shows up: {PRECIO}. Free: 10 searches a month. Pro is unlimited and alerts you instantly.",
+      "faq": [
+        {
+          "q": "How long is Madrid to Santiago?",
+          "a": "Nonstop from Barajas (MAD) to Arturo Merino Benítez (SCL) runs past 13 hours. It is one of the longest hauls from Madrid. The return can shift with the wind."
+        },
+        {
+          "q": "What time is it in Santiago?",
+          "a": "It is not a fixed gap. Chile uses daylight saving, so the difference with Spain changes. Check it for your exact dates before you lock the hotel."
+        },
+        {
+          "q": "When does the plane fill up?",
+          "a": "December to March there, and July out of Spain. If you shift the departure by a few days, the bot can catch it at {PRECIO}. Confirm the price with the airline."
+        }
+      ]
+    }
+  },
+  {
+    "ruta": "Madrid → Cancún",
+    "origen_iata": "MAD",
+    "destino_iata": "CUN",
+    "por_que": "La playa del Caribe mexicano más buscada desde España, con temporada seca en invierno y huracanes en otoño.",
+    "es": {
+      "title": "Vuelos baratos Madrid-Cancún | Flight Alert",
+      "meta_description": "Madrid-Cancún: el directo, cuando opera, ronda las 11 h. Mejor de diciembre a abril. Si baja a {PRECIO}, te avisamos por Telegram.",
+      "h1": "Vuelos de Madrid a Cancún",
+      "intro": "Cancún es la playa larga desde Madrid. La temporada seca y más pedida va de diciembre a abril. De junio a noviembre es temporada de huracanes, con más riesgo a finales de verano y en otoño. Hay épocas con directo y otras con escala: mira el itinerario, no solo el precio. El aeropuerto es Cancún (CUN). Cuando el directo opera, ronda las 11 h. No usa la hora de Ciudad de México: va 6 horas por detrás de España en invierno y 7 en verano. Evita Navidad y Semana Santa. Flight Alert te escribe por Telegram si aparece un buen precio: {PRECIO}. Gratis: 10 búsquedas al mes. Pro es ilimitado y avisa al momento.",
+      "faq": [
+        {
+          "q": "¿Hay vuelo directo Madrid-Cancún?",
+          "a": "Hay temporadas con directo y otras en las que la ruta hace escala. Cuando el directo opera, ronda las 11 h. Revisa escalas antes de quedarte con la tarifa baja."
+        },
+        {
+          "q": "¿Qué hora es en Cancún?",
+          "a": "No es la de Ciudad de México. Quintana Roo va 6 horas por detrás de España en invierno y 7 en verano."
+        },
+        {
+          "q": "¿Cuándo es mejor ir?",
+          "a": "De diciembre a abril llueve menos y se llena más. El otoño es temporada de huracanes. El bot avisa si ve {PRECIO}; el parte del tiempo lo miras aparte."
+        }
+      ]
+    },
+    "en": {
+      "title": "Cheap flights Madrid to Cancún | Flight Alert",
+      "meta_description": "Madrid to Cancún: nonstop, when it runs, is about 11 hours. Better from December to April. If it drops to {PRECIO}, we ping you on Telegram.",
+      "h1": "Flights from Madrid to Cancún",
+      "intro": "Cancún is the long beach trip from Madrid. The drier, busier season runs from December to April. June to November is hurricane season, with higher risk in late summer and autumn. Some periods have a nonstop and others need a connection: read the itinerary, not only the fare. The airport is Cancún (CUN). When the nonstop runs, it is about 11 hours. It does not use Mexico City time: it is 6 hours behind Spain in winter and 7 in summer. Skip Christmas and Easter. Flight Alert messages you on Telegram when a good fare shows up: {PRECIO}. Free: 10 searches a month. Pro is unlimited and alerts you instantly.",
+      "faq": [
+        {
+          "q": "Is there a nonstop from Madrid to Cancún?",
+          "a": "Some seasons have a nonstop and others need a connection. When the nonstop runs, it is about 11 hours. Check the stops before you take the lower fare."
+        },
+        {
+          "q": "What time is it in Cancún?",
+          "a": "Not Mexico City time. Quintana Roo is 6 hours behind Spain in winter and 7 in summer."
+        },
+        {
+          "q": "When is it better to go?",
+          "a": "December to April is drier and busier. Autumn is hurricane season. The bot pings you if it sees {PRECIO}. Check the weather separately."
+        }
+      ]
+    }
+  },
+  {
+    "ruta": "Madrid → Río de Janeiro",
+    "origen_iata": "MAD",
+    "destino_iata": "GIG",
+    "por_que": "Icono de ocio en Brasil: la llegada internacional es Galeão, no el Santos Dumont del centro.",
+    "es": {
+      "title": "Vuelos baratos Madrid-Río de Janeiro | Flight Alert",
+      "meta_description": "Madrid-Río en unas 10 h 30 min a Galeão, lejos de Ipanema. Mejor de mayo a septiembre. Si baja a {PRECIO}, te avisamos.",
+      "h1": "Vuelos de Madrid a Río de Janeiro",
+      "intro": "Río se busca por la ciudad, no por un aeropuerto céntrico. De diciembre a marzo hace calor y el carnaval dispara la demanda. De mayo a septiembre el calor afloja. Sales de Barajas (MAD) y llegas a Galeão (GIG), lejos de Ipanema. Santos Dumont (SDU) es el aeropuerto del centro y no es esta puerta. El directo ronda las 10 h 30 min. España va 4 horas por delante en invierno y 5 en verano. Cuenta el traslado en el precio y no llegues el viernes de carnaval buscando ganga. Flight Alert te escribe por Telegram si aparece un buen precio: {PRECIO}. Gratis: 10 búsquedas al mes. Pro es ilimitado y avisa al momento.",
+      "faq": [
+        {
+          "q": "¿Cuánto dura Madrid-Río?",
+          "a": "El directo de Barajas (MAD) a Galeão (GIG) suele durar unas 10 h 30 min. España va 4 horas por delante en invierno y 5 en verano."
+        },
+        {
+          "q": "¿Galeão o Santos Dumont?",
+          "a": "Desde Madrid se llega a Galeão (GIG), lejos de la playa. Santos Dumont (SDU) está junto al centro y sirve otros trayectos. Presupuesta taxi o bus hasta Ipanema."
+        },
+        {
+          "q": "¿Carnaval es buen momento para comprar?",
+          "a": "Es buen momento para estar, si ya tienes sitio, y mal momento para cazar una ganga. Vigila fechas de mayo a septiembre si buscas más calma. El bot avisa con {PRECIO}."
+        }
+      ]
+    },
+    "en": {
+      "title": "Cheap flights Madrid to Rio | Flight Alert",
+      "meta_description": "Madrid to Rio in about 10 h 30 min to Galeão, far from Ipanema. Better from May to September. If it drops to {PRECIO}, we ping you.",
+      "h1": "Flights from Madrid to Rio de Janeiro",
+      "intro": "Rio is a search for the city, not for a downtown airport. December to March is hot, and carnival sends demand up. From May to September the heat eases. You leave Barajas (MAD) and land at Galeão (GIG), far from Ipanema. Santos Dumont (SDU) is the downtown airport and is not this gate. Nonstop is about 10 h 30 min. Spain is 4 hours ahead in winter and 5 in summer. Add the transfer to the fare and do not land on carnival Friday hunting a deal. Flight Alert messages you on Telegram when a good fare shows up: {PRECIO}. Free: 10 searches a month. Pro is unlimited and alerts you instantly.",
+      "faq": [
+        {
+          "q": "How long is Madrid to Rio?",
+          "a": "Nonstop from Barajas (MAD) to Galeão (GIG) is about 10 h 30 min. Spain is 4 hours ahead in winter and 5 in summer."
+        },
+        {
+          "q": "Galeão or Santos Dumont?",
+          "a": "Flights from Madrid land at Galeão (GIG), far from the beach. Santos Dumont (SDU) sits by downtown and serves other trips. Budget a taxi or bus to Ipanema."
+        },
+        {
+          "q": "Is carnival a good time to buy?",
+          "a": "It is a good time to be there if you already have a seat, and a bad time to hunt a deal. Watch May to September if you want it quieter. The bot flags {PRECIO}."
+        }
+      ]
+    }
+  }
+]

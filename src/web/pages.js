@@ -16,7 +16,7 @@ function layout(title, body, opts = {}) {
   const nonce = opts.nonce ? ` nonce="${esc(opts.nonce)}"` : '';
   const css = `/assets/styles.${landing.hashes.css}.css`;
   return '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-    + `<title>${title} | Flight Alert</title>`
+    + `<title>${opts.fullTitle ? esc(opts.fullTitle) : `${title} | Flight Alert`}</title>${opts.head || ''}`
     + `<script${nonce}>(function(){try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>`
     + `<style${nonce}>${landing.criticalCss()}</style>`
     + '<link rel="preload" href="/public/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>'
@@ -106,7 +106,7 @@ function pro({ choice = '', ipCountry: geo = '', language = '', nonce = '', ars 
       <button class="btn btn--primary pro-submit" type="submit">${offer.rail === 'mp' ? 'Seguir con Mercado Pago' : 'Seguir con tarjeta'}</button>
     </form>
     <p class="fine">En el bot, Pro se paga solo con estrellas de Telegram. Este sitio no pide datos de tarjeta.</p>
-  `, { nonce, script: PRO_SCRIPT });
+  `, { nonce, script: PRO_SCRIPT, fullTitle: require('./seo').PRO_META.title, head: require('./seo').proHead() });
 }
 
 function listo(url, opts = {}) {
