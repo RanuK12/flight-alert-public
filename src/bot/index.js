@@ -64,10 +64,13 @@ function startBot() {
   if (botInstance) return botInstance;
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) return null;
+  transport.assertConfig(process.env);
   const how = transport.mode(process.env);
   const polling = how === 'polling';
   const bot = new TelegramBot(token, { polling });
   botInstance = bot;
+  bot.on('polling_error', (err) => logger.error('polling', transport.safeError(err, token)));
+  bot.on('webhook_error', (err) => logger.error('webhook', transport.safeError(err, token)));
   install(bot);
 
   startHandler.register(bot);
@@ -131,7 +134,10 @@ function startBot() {
   if (how === 'webhook') {
     transport.registerWebhook(bot, process.env)
       .then(() => logger.info('webhook registrado', { path: transport.WEBHOOK_PATH }))
-      .catch((err) => logger.error('webhook', { message: err && err.message }));
+      .catch((err) => logger.error('webhook', transport.safeError(err)))
+      .then(() => transport.refreshInfo(bot));
+    const tick = setInterval(() => transport.refreshInfo(bot), 5 * 60 * 1000);
+    if (tick.unref) tick.unref();
   }
   logger.info('bot iniciado', { mode: how, polling });
   return bot;

@@ -94,7 +94,9 @@ function createApp() {
 
   app.get('/health', (_req, res) => {
     const status = db.health();
-    res.status(status.ok ? 200 : 503).json({ ok: status.ok, db: status.db });
+    const body = { ok: status.ok, db: status.db, telegram: { mode: transport.mode(process.env) } };
+    if (body.telegram.mode === 'webhook') body.telegram.webhook = transport.webhookInfo();
+    res.status(status.ok ? 200 : 503).json(body);
   });
 
   app.get('/favicon.ico', (_req, res) => res.status(204).end());
