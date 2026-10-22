@@ -246,6 +246,9 @@ async function openGrace(id) {
   // Solo hay gracia si alguna vez pagó (o tiene Pro): un primer cobro fallido no da Pro.
   const cur = await ent().findOne({ telegramUserId });
   if (!cur || !cur.proUntil) return { graceUntil: null, skipped: true };
+  // Trial o comp sin ningún cobro real: no hay gracia.
+  const paid = await payments().findOne({ telegramUserId, status: 'paid' });
+  if (!paid) return { graceUntil: null, skipped: true };
   await ent().updateOne(
     { telegramUserId },
     { $set: { plan: 'pro', graceUntil, expiryNoticeAt: null } },
