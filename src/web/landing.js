@@ -587,7 +587,7 @@ function renderLanding(ctx = {}) {
     + `<link rel="preload" href="${cssHref}" as="style">`
     + `<link rel="stylesheet" href="${cssHref}">`
     + `<script type="application/ld+json"${nonce}>${jsonLd(lang, ars)}</script>`
-    + `${ctx.drive || ''}</head><body>`
+    + `</head><body>`
     + `<a class="skip" href="#contenido">${esc(t.skip)}</a>`
     + sprite
     + '<div id="top-sentinel"></div>'

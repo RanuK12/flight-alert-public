@@ -51,11 +51,10 @@ function securityHeaders(_req, res, next) {
   res.locals.cspNonce = nonce;
   res.set('Content-Security-Policy', [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' https://tp-em.com`,
-    // El script de Travelpayouts inyecta un <style> sin nonce y Google Fonts; con nonce, 'unsafe-inline' se ignora.
+    `script-src 'self' 'nonce-${nonce}'`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "img-src 'self' https://tp-em.com",
-    "connect-src 'self' https://tp-em.com",
+    "img-src 'self'",
+    "connect-src 'self'",
     "font-src 'self' https://fonts.gstatic.com",
     "object-src 'none'",
     "base-uri 'self'",

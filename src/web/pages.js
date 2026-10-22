@@ -4,18 +4,8 @@ const copy = require('../bot/copy');
 const { preselect, currencyFor, EU_COUNTRIES } = require('../services/country');
 const { renderLanding } = require('./landing');
 
-// Travelpayouts Drive. Va en el <head> de todas las páginas públicas.
-const TP_DRIVE = '<script nowprocket data-noptimize="1" data-cfasync="false" data-wpfc-render="false" seraph-accel-crit="1" data-no-defer="1" data-cmp-ab="2">'
-  + '(function () { var script = document.createElement("script"); script.async = 1; script.setAttribute("data-cmp-ab", "2"); script.src = "https://tp-em.com/NTg4ODIz.js?t=588823"; document.head.appendChild(script); })();'
-  + '</script>';
-
-function driveTag(nonce) {
-  if (!nonce) return TP_DRIVE;
-  return TP_DRIVE.replace('<script ', `<script nonce="${nonce}" `);
-}
-
 function layout(title, body, opts = {}) {
-  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title>${driveTag(opts.nonce)}</head><body><main>${body}</main></body></html>`;
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title></head><body><main>${body}</main></body></html>`;
 }
 
 function home(ctx) {
@@ -27,7 +17,6 @@ function home(ctx) {
     sample: opts.sample || null,
     nonce: opts.nonce || '',
     base: opts.base || '',
-    drive: driveTag(opts.nonce),
   });
 }
 

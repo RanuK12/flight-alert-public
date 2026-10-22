@@ -117,8 +117,7 @@ test('la landing en español sale del config, con privacidad y sin promesas de m
   const html = text(res);
   expect(res.status).toBe(200);
   expect(res.headers['content-security-policy']).toContain("default-src 'self'");
-  expect(res.headers['content-security-policy']).toContain('https://tp-em.com');
-  expect(res.headers['content-security-policy']).not.toContain('http://tp-em.com');
+  expect(res.headers['content-security-policy']).not.toContain('tp-em.com');
   expect(html).toContain('rel="canonical" href="/es"');
   expect(html).toContain('hreflang="es" href="/es"');
   expect(html).toContain('hreflang="en" href="/en"');
@@ -132,7 +131,8 @@ test('la landing en español sale del config, con privacidad y sin promesas de m
   expect(html).toContain('Abrir en Telegram');
   expect(html).toContain('1 búsqueda gratis y después 10 por mes. Sin tarjeta.');
   expect(html).toContain(PRIVACY);
-  expect(html).toContain('https://tp-em.com/NTg4ODIz.js?t=588823');
+  expect(html).not.toContain('tp-em.com');
+  expect(html).toContain('Algunos links son de afiliado');
   expect(html).toContain('https://t.me/flightalertpro_bot?start=landing_hero');
   expect(html).toContain('Algunos links son de afiliado');
   expect(html).toContain('Escribinos al bot');
