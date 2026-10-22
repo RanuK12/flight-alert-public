@@ -101,13 +101,15 @@ async function parse(userId, text, opts = {}) {
     const v = validate(r);
     if (v.ok) return { ok: true, source: 'rules', value: v.value };
   }
-  if (!enabled()) return { ok: false, reason: 'disabled' };
   if (!(await allowed(userId, opts.isPro))) return { ok: false, reason: 'not_pro' };
-  const key = normalize(text);
-  if (!key) return { ok: false, reason: 'empty' };
+  if (!enabled()) return { ok: false, reason: 'disabled' };
+  const norm = normalize(text);
+  if (!norm) return { ok: false, reason: 'empty' };
+  // Hoy (UTC) en la clave: fechas relativas ("el viernes que viene") no se cachean entre días.
+  const key = `${today()}|${norm}`;
   if (cache.has(key)) { stats.cacheHits += 1; return { ok: true, source: 'cache', value: { ...cache.get(key) } }; }
   if (!takeQuota(userId)) { stats.capped += 1; return { ok: false, reason: 'daily_cap' }; }
-  const out = await askLlm(key, opts);
+  const out = await askLlm(norm, opts);
   if (!out.ok) return out;
   if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value);
   cache.set(key, out.value);
@@ -123,4 +125,4 @@ function _reset() {
   Object.assign(stats, { calls: 0, tokens: 0, errors: 0, cacheHits: 0, fallbacks: 0, capped: 0, byProvider: {} });
 }
 
-module.exports = { parse, askLlm, enabled, isAdmin, allowed, normalize, health, DAILY_CAP, _reset };
+module.exports = { today, parse, askLlm, enabled, isAdmin, allowed, normalize, health, DAILY_CAP, _reset };
