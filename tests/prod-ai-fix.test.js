@@ -130,7 +130,7 @@ describe('/start, /pro y teclado para Pro/admin', () => {
   test('startup: menu button web_app a baseUrl()/app y comandos ES/EN', async () => {
     const bot = fakeBot();
     await miniapp.setup(bot, {});
-    expect(bot.setChatMenuButton).toHaveBeenCalledWith({ menu_button: { type: 'web_app', text: 'Buscar ✈', web_app: { url: 'https://flightalert.ranuk.dev/app' } } });
+    expect(bot.setChatMenuButton).toHaveBeenCalledWith({ menu_button: JSON.stringify({ type: 'web_app', text: 'Buscar ✈', web_app: { url: 'https://flightalert.ranuk.dev/app' } }) });
     expect(bot.setMyCommands).toHaveBeenCalledWith(expect.arrayContaining([expect.objectContaining({ command: 'start' })]));
     expect(bot.setMyCommands).toHaveBeenCalledWith(expect.any(Array), { language_code: 'en' });
   });

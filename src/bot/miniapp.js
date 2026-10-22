@@ -80,13 +80,13 @@ async function setup(bot, env = process.env) {
   const cmds = commands();
   await bot.setMyCommands(cmds.es).catch(() => {});
   await bot.setMyCommands(cmds.en, { language_code: 'en' }).catch(() => {});
-  await bot.setChatMenuButton({ menu_button: menuButton('es', env) }).catch(() => {});
+  await bot.setChatMenuButton({ menu_button: JSON.stringify(menuButton('es', env)) }).catch((e) => console.error('setChatMenuButton falló', e && e.message));
 }
 
 /** Menú por chat, en el idioma del usuario (se llama en /start). */
 async function chatMenu(bot, chatId, lang, env = process.env) {
   if (!bot.setChatMenuButton) return;
-  await bot.setChatMenuButton({ chat_id: chatId, menu_button: menuButton(lang, env) }).catch(() => {});
+  await bot.setChatMenuButton({ chat_id: chatId, menu_button: JSON.stringify(menuButton(lang, env)) }).catch((e) => console.error('setChatMenuButton falló', e && e.message));
 }
 
 /** Teclado inline mínimo del home: Buscar (web_app si está lista) + Mis alertas + Pro. */
