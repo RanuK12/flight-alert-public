@@ -243,6 +243,9 @@ async function openGrace(id) {
   const telegramUserId = idOf(id);
   const graceUntil = new Date(clock.now().getTime() + GRACE_MS).toISOString();
   await ensure(id);
+  // Solo hay gracia si alguna vez pagó (o tiene Pro): un primer cobro fallido no da Pro.
+  const cur = await ent().findOne({ telegramUserId });
+  if (!cur || !cur.proUntil) return { graceUntil: null, skipped: true };
   await ent().updateOne(
     { telegramUserId },
     { $set: { plan: 'pro', graceUntil, expiryNoticeAt: null } },

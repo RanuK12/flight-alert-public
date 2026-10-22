@@ -140,6 +140,18 @@ test('P11. Stripe rechaza firma o timestamp viejo; el fallo abre gracia y el dí
   const old = await stripePay.handleWebhook({ body: Buffer.from('{}'), headers: { 'stripe-signature': 't' } });
   expect(old.status).toBe(400);
 
+  // Primer cobro fallido sin pago previo: NO da Pro.
+  Stripe.constructEvent.mockImplementationOnce(() => ({
+    type: 'invoice.payment_failed',
+    created: Math.floor(start.getTime() / 1000),
+    data: { object: { id: 'in_0', client_reference_id: 'ref-stripe' } },
+  }));
+  const unpaid = await stripePay.handleWebhook({ body: Buffer.from('{}'), headers: { 'stripe-signature': 't' } });
+  expect(unpaid.grace).toBe(false);
+  const none = await col('Entitlement').findOne({ telegramUserId: '101' });
+  expect(none && none.plan).not.toBe('pro');
+  // Ya había pagado antes: la renovación fallida abre gracia.
+  await col('Entitlement').updateOne({ telegramUserId: '101' }, { $set: { proUntil: new Date(start.getTime() + DAY).toISOString() } });
   Stripe.constructEvent.mockImplementationOnce(() => ({
     type: 'invoice.payment_failed',
     created: Math.floor(start.getTime() / 1000),

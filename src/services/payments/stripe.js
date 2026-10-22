@@ -161,8 +161,8 @@ async function handleWebhook(req) {
     return { status: 200, duplicate: Boolean(result.duplicate) };
   }
   if (event.type === 'invoice.payment_failed') {
-    if (userId) await entitlements.openGrace(userId);
-    return { status: 200, grace: Boolean(userId) };
+    const g = userId ? await entitlements.openGrace(userId) : null;
+    return { status: 200, grace: Boolean(g && g.graceUntil) };
   }
   if (event.type === 'customer.subscription.deleted') {
     if (!userId) {
