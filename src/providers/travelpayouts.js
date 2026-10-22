@@ -75,4 +75,42 @@ async function search(query) {
   return rows;
 }
 
-module.exports = { enabled, search, get, mapRow, market, CURRENCY };
+/**
+ * Búsqueda por rango para el bot (spec UX v1). A diferencia de search(), si la API falla
+ * tira el error para que el bot muestre "Reintentar" y no descuente cuota.
+ * q: { origin, destination, months: ['2026-12'], day: '2026-12-15'|null, from: ISO mínimo,
+ *      oneway: bool, returnDate: ISO|null, stay: n|null }
+ */
+async function searchRange(q) {
+  const origin = String(q.origin || '').toUpperCase();
+  const destination = String(q.destination || '').toUpperCase();
+  if (!pairAllowed(origin, destination)) return [];
+  if (!enabled()) return [];
+  const now = clock.now();
+  const out = [];
+  for (const m of q.months || []) {
+    const payload = await get('/v2/prices/month-matrix', { origin, destination, month: `${m}-01` });
+    for (const row of (payload.rows || []).map(mapRow)) {
+      if (!row.actual || !Number.isFinite(row.price) || row.price <= 0) continue;
+      if (!String(row.departureDate || '').startsWith(m)) continue;
+      if (q.from && row.departureDate < q.from) continue;
+      if (q.day && row.departureDate !== q.day) continue;
+      if (q.oneway) {
+        if (row.returnDate) continue;
+      } else {
+        if (!row.returnDate || row.returnDate <= row.departureDate) continue;
+        if (q.returnDate && row.returnDate !== q.returnDate) continue;
+        if (q.stay) {
+          const nights = Math.round((new Date(`${row.returnDate}T00:00:00Z`) - new Date(`${row.departureDate}T00:00:00Z`)) / 86400000);
+          if (nights !== Number(q.stay)) continue;
+        }
+      }
+      if (!isFresh(row, now)) continue;
+      out.push(row);
+    }
+  }
+  out.forEach((row) => samplePrice.remember(row));
+  return out;
+}
+
+module.exports = { enabled, search, searchRange, get, mapRow, market, CURRENCY };
