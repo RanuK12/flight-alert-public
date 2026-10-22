@@ -7,7 +7,7 @@ Sin valores secretos. Los datos de cuentas son los observados en los dashboards 
 | Servicio | Cuenta / login | 2FA | Identificación | Dashboard | Variables | Dónde rotar | Si falta |
 |---|---|---|---|---|---|---|---|
 | **Render** | emilioranucoli@hotmail.com (método de login: unknown) | unknown | Workspace "My Workspace", proyecto `flight-alert-public`, servicio `srv-dbbt3svf3r2c73bo6o6g`, Docker, Frankfurt, plan **Free**; repo GitHub `RanuK12/flight-alert-public` rama `main` | https://dashboard.render.com/web/srv-dbbt3svf3r2c73bo6o6g | todas (Environment) | Render > Environment > Edit > Save only > Manual Deploy | No hay servicio |
-| **Keepalive MBP** | usuario macOS `emilioranucoli` | n/a | LaunchAgent `com.ranuk.fap-keepalive` (`~/Library/LaunchAgents/com.ranuk.fap-keepalive.plist`), `~/.rkfap/keepalive.sh` cada 600 s, log `~/.rkfap/keepalive.log` | `launchctl list \| grep fap-keepalive` | ninguna | n/a | El plan Free duerme a los 15 min: el bot deja de responder y el cron de las 21:00 no corre |
+| **UptimeRobot** | `emilio@ranuk.dev` | Google | Monitor HTTP `flight-alert-public health` (id 804370220) sobre https://flight-alert-public.onrender.com/health, cada 5 min | https://dashboard.uptimerobot.com/monitors/804370220 | la de Google | n/a | Mantiene despierto el plan Free y avisa por email a `emilio@ranuk.dev` cuando el monitor pasa a Down (sin respuesta 2xx) y cuando vuelve a Up |
 | **MongoDB Atlas** | unknown | unknown | org/proyecto/cluster: unknown (no observados en esta sesión) | https://cloud.mongodb.com | `MONGODB_URI` | Atlas > Database Access > usuario > Edit password; Network Access para IPs | No arranca / sin usuarios, cuotas ni pagos |
 | **Telegram / BotFather** | cuenta de Telegram de Emilio (número/usuario dueño: unknown) | unknown | `@flightalertpro_bot` | BotFather `/mybots` | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME` | BotFather > /mybots > API Token > Revoke | Bot mudo; Stars no funciona; links de vuelta al chat rotos |
 | **Travelpayouts** | tanquer9@gmail.com (login: unknown) | unknown | marker **793462**; programa Aviasales | https://app.travelpayouts.com | `TRAVELPAYOUTS_TOKEN`, `TRAVELPAYOUTS_MARKER`, (opcional `TRAVELPAYOUTS_MARKET`) | Profile > API token | Búsquedas vacías; sin marker no hay comisión |
@@ -66,7 +66,7 @@ Al rotar un secreto, actualizar Render **y** el llavero (`security add-generic-p
 4. **Stars**: dentro del bot, invoice XTR de 250 ⭐ con payload firmado (`STARS_PAYLOAD_SECRET`) → `pre_checkout_query` → `successful_payment` → `activatePro`.
 5. **ARS**: cron 10:00 consulta dolarapi (oficial, venta), guarda la cotización y ajusta el monto de las suscripciones MP.
 6. **Alertas**: rutas en `Route`; cron 21:00 (America/Argentina/*, UTC-3) arma el informe y lo manda; cron horario vence pruebas/Pro y pausa alertas.
-7. **Keepalive**: el LaunchAgent del MBP pega a `/health` cada 10 min para que el plan Free no duerma. Si el MBP está apagado, el servicio duerme.
+7. **Keepalive y monitoreo**: UptimeRobot (cuenta `emilio@ranuk.dev`, login con Google) pide `https://flight-alert-public.onrender.com/health` cada 5 min. Eso evita que el plan Free duerma y, si la respuesta no es 2xx, manda un email a `emilio@ranuk.dev` (y otro cuando se recupera). No depende del MBP. El LaunchAgent viejo `com.ranuk.fap-keepalive` se dio de baja el 22/10/2026; queda solo su log histórico en `~/.rkfap/keepalive.log`.
 
 ```mermaid
 sequenceDiagram
@@ -109,6 +109,6 @@ flowchart LR
 
 **Reembolsos**: Stripe > Pagos > Reembolsar (y cancelar la suscripción); MP > Actividad > Devolver + cancelar preapproval; Stars: `refundStarPayment` desde la Bot API con el `telegram_payment_charge_id`. Después, bajar el plan (`downgrade`) si corresponde.
 
-**Restaurar el servicio**: crear un Web Service Docker en Render desde `RanuK12/flight-alert-public` (`main`), región Frankfurt, cargar las variables desde el llavero, `PUBLIC_BASE_URL` nuevo, actualizar las URLs de webhook en Stripe y MP, revisar `/health`, y `launchctl kickstart -k gui/$(id -u)/com.ranuk.fap-keepalive` apuntando a la URL nueva.
+**Restaurar el servicio**: crear un Web Service Docker en Render desde `RanuK12/flight-alert-public` (`main`), región Frankfurt, cargar las variables desde el llavero, `PUBLIC_BASE_URL` nuevo, actualizar las URLs de webhook en Stripe y MP, revisar `/health`, y cambiar la URL del monitor de UptimeRobot a la nueva.
 
 **Restaurar la base**: Atlas > cluster > Backup (si el tier lo incluye: unknown) o `mongorestore` desde un `mongodump`. Si el usuario de DB cambia, actualizar `MONGODB_URI` en Render y en el llavero.

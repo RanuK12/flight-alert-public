@@ -33,7 +33,7 @@ flowchart LR
   APP -->|invoice XTR| TG
   APP -->|cotización| FX[dolarapi.com]
   APP -->|país por IP| GEO[geoip-lite local]
-  K[MBP keepalive] -->|GET /health c/10 min| APP
+  K[UptimeRobot] -->|GET /health c/5 min| APP
 ```
 
 - `src/app.js`: Express (`trust proxy` 1, límite por IP), webhooks, crons (21:00 informe, cada hora vencimientos, 10:00 cotización).
