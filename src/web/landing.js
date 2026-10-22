@@ -714,7 +714,7 @@ function renderLanding(ctx = {}) {
     + `<a href="#privacidad">${esc(t.privacyLink)}</a>`
     + '</nav>'
     + `<p class="affiliate-notice">${esc(t.priceFoot)}</p>`
-    + '<p class="footer-copy">© 2026 Ranuk IT Solutions · <a href="https://ranuk.dev" target="_blank" rel="noopener">ranuk.dev</a></p>'
+    + `<p class="footer-copy">${lang === 'en' ? 'A product by' : 'Un producto de'} <a href="https://ranuk.dev" rel="noopener">Ranuk IT Solutions</a></p>`
     + '</div></footer>'
     + `<script src="${jsHref}" defer></script>`
     + '</body></html>';

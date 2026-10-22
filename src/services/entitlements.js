@@ -86,6 +86,73 @@ async function canUseAlerts(id) {
   return false;
 }
 
+/** Pro activo (o en gracia) u owner. La prueba no cuenta como Pro. */
+async function isPro(id) {
+  if (flags.isOwner(id)) return true;
+  const doc = await ent().findOne({ telegramUserId: idOf(id) });
+  if (!doc) return false;
+  const t = clock.now().getTime();
+  if (doc.plan === 'owner') return true;
+  if (doc.plan !== 'pro') return false;
+  if (doc.proUntil && new Date(doc.proUntil).getTime() > t) return true;
+  return Boolean(doc.graceUntil && new Date(doc.graceUntil).getTime() > t);
+}
+
+function proCaps() {
+  const n = (k, d) => { const v = Number(process.env[k]); return Number.isFinite(v) && v > 0 ? v : d; };
+  return { perMin: n('PRO_SEARCH_PER_MIN', 10), perDay: n('PRO_SEARCH_PER_DAY', 60) };
+}
+
+/** Tope anti-abuso de Pro: búsquedas exitosas por día (fecha ART), guardado en Mongo. */
+async function proDayOk(id) {
+  const day = require('../utils/art').parts(clock.now()).day;
+  const doc = await ent().findOne({ telegramUserId: idOf(id) });
+  const used = doc && doc.proSearchDay === day ? Number(doc.proSearchesToday) || 0 : 0;
+  return used < proCaps().perDay;
+}
+
+/**
+ * Reserva atómica de una búsqueda Pro del día (fecha ART).
+ * Un $inc condicional (proSearchesToday < tope) evita que dos búsquedas concurrentes pasen el tope;
+ * después se relee el documento para verificar.
+ */
+async function reserveProSearch(id) {
+  const day = require('../utils/art').parts(clock.now()).day;
+  const telegramUserId = idOf(id);
+  const cap = proCaps().perDay;
+  await ensure(id);
+  // Día nuevo: reiniciar el contador en 0 (solo si el día guardado es otro).
+  await ent().updateOne(
+    { telegramUserId, proSearchDay: { $ne: day } },
+    { $set: { proSearchDay: day, proSearchesToday: 0 } },
+  );
+  const r = await ent().updateOne(
+    { telegramUserId, proSearchDay: day, proSearchesToday: { $lt: cap } },
+    { $inc: { proSearchesToday: 1 } },
+  );
+  if (!r.modifiedCount) return false;
+  const doc = await ent().findOne({ telegramUserId });
+  if (!doc || doc.proSearchDay !== day || Number(doc.proSearchesToday) > cap) {
+    await releaseProSearch(id);
+    return false;
+  }
+  return true;
+}
+
+/** Devuelve una reserva (búsqueda sin resultados o fallida). Nunca baja de 0. */
+async function releaseProSearch(id) {
+  const day = require('../utils/art').parts(clock.now()).day;
+  await ent().updateOne(
+    { telegramUserId: idOf(id), proSearchDay: day, proSearchesToday: { $gt: 0 } },
+    { $inc: { proSearchesToday: -1 } },
+  );
+}
+
+/** Compatibilidad: cuenta una búsqueda (sin tope). */
+async function countProSearch(id) {
+  return reserveProSearch(id);
+}
+
 async function startTrial(id, deviceHash) {
   const telegramUserId = idOf(id);
   await ensure(id);
@@ -134,7 +201,7 @@ async function activatePro(id, provider, ref, until) {
       { $set: { telegramUserId, status: 'paid' } },
     );
   } else {
-    await payments().create({ provider, ref, telegramUserId, status: 'paid' });
+    await payments().create({ provider, ref, telegramUserId, status: 'paid', paidAt: clock.now().toISOString() });
   }
   await ensure(id);
   const proUntil = (until instanceof Date ? until : new Date(until)).toISOString();
@@ -227,6 +294,12 @@ function proUntilFromNow() {
 }
 
 module.exports = {
+  isPro,
+  proCaps,
+  proDayOk,
+  countProSearch,
+  reserveProSearch,
+  releaseProSearch,
   SEARCH_CAP,
   DAY_MS,
   ensure,

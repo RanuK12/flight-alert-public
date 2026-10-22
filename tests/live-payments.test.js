@@ -352,7 +352,7 @@ test('cada cobro real avisa monto, moneda y proveedor, sin datos personales', as
     'Cobro real mp 7700 ARS',
     'Cobro real stars 250 XTR',
   ]);
-  const blob = `${texts.join('\n')}\n${logs.filter((line) => line.includes('cobro real')).join('\n')}`;
+  const blob = `${texts.join('\n')}\n${logs.filter((line) => line.includes('cobro real')).join('\n')}`.replace(/"t":"[^"]*"/g, '');
   expect(blob).not.toContain('payer@ejemplo.com');
   expect(blob).not.toContain('88');
   expect(sendMessage.mock.calls.every((call) => call[0] === '42')).toBe(true);

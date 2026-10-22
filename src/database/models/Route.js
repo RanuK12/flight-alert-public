@@ -20,6 +20,7 @@ const schema = new mongoose.Schema({
   durationMin: { type: Number, default: null },
   foundAt: { type: String, default: null },
   hour: { type: String, default: '21:00' },
+  instantLastAt: { type: String, default: null },
 }, { timestamps: true });
 
 module.exports = mongoose.models.Route || mongoose.model('Route', schema);

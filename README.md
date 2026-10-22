@@ -15,7 +15,7 @@ Buscador y alertas de vuelos baratos **Argentina → Europa**, por Telegram (@fl
 | Plan | Qué incluye | Precio |
 |---|---|---|
 | Free | 10 búsquedas por mes (se renuevan el 1° del mes, hora ART); alertas con 7 días de prueba por dispositivo | 0 |
-| Pro (30 días) | Alertas e informe diario sin vencer; búsquedas: mismo tope de 10/mes en el código actual | €4,50 IVA incluido (UE, Stripe) · US$5 (resto, Stripe) · ARS al dólar oficial (Argentina, Mercado Pago) · 250 ⭐ Telegram Stars |
+| Pro (30 días) | Búsquedas sin límite (tope anti-abuso 10/min y 60/día), alerta instantánea cuando el precio llega a tu techo e informe de las 21:00 ART | €4,50 IVA incluido (UE, Stripe) · US$5 (resto, Stripe) · ARS al dólar oficial (Argentina, Mercado Pago) · 250 ⭐ Telegram Stars |
 
 Los IDs de Telegram en `OWNER_TELEGRAM_IDS` no tienen tope.
 
@@ -36,7 +36,7 @@ flowchart LR
   K[MBP keepalive] -->|GET /health c/10 min| APP
 ```
 
-- `src/app.js`: Express (`trust proxy` 1, límite por IP), webhooks, crons (21:00 informe, cada hora vencimientos, 10:00 cotización).
+- `src/app.js`: Express (`trust proxy` 1, límite por IP), webhooks, scheduler interno con lock en Mongo y recuperación (21:00 informe, cada hora vencimientos, 10:00 cotización, alerta instantánea cada 3 h).
 - `src/bot/`: bot (node-telegram-bot-api, polling). `src/providers/travelpayouts.js`: precios. `src/services/payments/`: Stripe, MP, Stars. `src/services/fx.js`: dolarapi. `src/services/country.js`: geoip-lite + elección de moneda.
 - Flags `FEATURE_*` (on/1/true/yes) y `PUBLIC_KILL_SWITCH=on`.
 

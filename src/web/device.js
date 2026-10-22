@@ -43,4 +43,4 @@ function deviceHash(req, res) {
   return sha256(`${token.split('.')[0]}|${ip}|${ua}`);
 }
 
-module.exports = { deviceHash, assertSecret };
+module.exports = { deviceHash, assertSecret, secret };
