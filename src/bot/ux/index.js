@@ -18,6 +18,7 @@ const flow = require('./flow');
 const results = require('./results');
 const places = require('./places');
 const { t, langOf } = require('./i18n');
+const miniapp = require('../miniapp');
 
 const TTL = 30 * 60 * 1000;
 const SEARCH_CAP = 10;
@@ -199,7 +200,7 @@ async function proScreen(bot, ctx, extra) {
   const last = await fx.latest().catch(() => null);
   const ars = last && last.publishedArs ? t(lang, 'proArs', { ars: Number(last.publishedArs).toLocaleString('es-AR') }) : '';
   const base = String(process.env.PUBLIC_BASE_URL || 'https://flight-alert-public.onrender.com').replace(/\/$/, '');
-  const text = [extra, t(lang, 'proTitle'), t(lang, 'proPrices', { ars }), t(lang, 'proHow')].filter(Boolean).join('\n\n');
+  const text = [extra, t(lang, 'proTitle', { drop: t(lang, 'dropNotice') }), t(lang, 'proPrices', { ars }), t(lang, 'proHow')].filter(Boolean).join('\n\n');
   const rows = [[{ text: t(lang, 'payWeb'), url: `${base}/pro?s=${encodeURIComponent(webSession.sign(ctx.userId))}` }]];
   if (flags.stars()) rows.push([{ text: t(lang, 'payStars'), callback_data: cb.encode('p', 'stars') }]);
   await show(bot, ctx.chatId, ctx.mid, text, { inline_keyboard: rows });
@@ -326,6 +327,7 @@ async function onCallback(bot, cq) {
         return true;
       }
     }
+    if (fl === 'o') { await onboarding(bot, ctx, s, fields); return true; }
     if (fl === 'm') { await alerts(bot, ctx, s, fields); return true; }
     if (fl === 'p') {
       if (s === 'stars') await stars.sendInvoice(bot, chatId, ctx.userId);
@@ -362,9 +364,107 @@ function freeVars() {
   return { n: entitlements.SEARCH_CAP, days: entitlements.TRIAL_DAYS };
 }
 
-async function welcome(bot, msg) {
+/** Home: saludo con el teclado persistente de abajo + panel con el teclado inline mínimo. */
+async function home(bot, chatId, lang, text) {
+  await bot.sendMessage(chatId, text || t(lang, 'hello', freeVars()), { reply_markup: miniapp.keyboard(lang) });
+  await bot.sendMessage(chatId, t(lang, 'home'), { reply_markup: miniapp.homeInline(lang, cb.encode) });
+}
+
+/** /start: si el usuario es nuevo, onboarding en 3 toques; si no, home. */
+async function welcome(bot, msg, { isNew = false } = {}) {
   const lang = langOf(msg.from);
-  await bot.sendMessage(msg.chat.id, t(lang, 'hello', freeVars()), { reply_markup: menu(lang) });
+  await miniapp.chatMenu(bot, msg.chat.id, lang);
+  if (isNew) return onboarding(bot, { chatId: msg.chat.id, userId: msg.from.id, lang, mid: null }, 'o1', {});
+  return home(bot, msg.chat.id, lang);
+}
+
+/** Spec v2 P0.2: origen → destino → crear alerta o ver precios. [Saltar] en cada paso va al home. */
+async function onboarding(bot, ctx, s, fields) {
+  const { lang } = ctx;
+  const skip = [{ text: t(lang, 'skip'), callback_data: cb.encode('o', 'sk') }];
+  const btn = (code, step, extra) => ({ text: places.label(code), callback_data: cb.encode('o', step, extra) });
+  if (s === 'o1') {
+    const rows = flow.pairs(places.popular('o').map((c) => btn(c, 'o2', { o: c })));
+    await show(bot, ctx.chatId, ctx.mid, t(lang, 'obHello'), { inline_keyboard: [...rows, skip] });
+    return;
+  }
+  if (s === 'o2' && fields.o) {
+    const rows = flow.pairs(places.popular('d').map((c) => btn(c, 'o3', { o: fields.o, d: c })));
+    rows.push([{ text: t(lang, 'obOther'), callback_data: cb.encode('b', 'nx', { o: fields.o }) }]);
+    await show(bot, ctx.chatId, ctx.mid, t(lang, 'obDest'), { inline_keyboard: [...rows, skip] });
+    return;
+  }
+  if (s === 'o3' && fields.o && fields.d) {
+    const f = { o: fields.o, d: fields.d };
+    await show(bot, ctx.chatId, ctx.mid, t(lang, 'obDone', { o: f.o, d: f.d, days: entitlements.TRIAL_DAYS }), {
+      inline_keyboard: [[
+        { text: t(lang, 'obAlert'), callback_data: cb.encode('o', 'al', f) },
+        { text: t(lang, 'obPrices'), callback_data: cb.encode('o', 'pr', f) },
+      ], skip],
+    });
+    return;
+  }
+  const f = { o: fields.o, d: fields.d, t: '1', m: 'x', f: 'x', w: 'd' };
+  if (s === 'al' && f.o && f.d && !flow.validate(lang, f, clock.now())) {
+    await createAlert(bot, ctx, f);
+    return home(bot, ctx.chatId, lang, t(lang, 'home'));
+  }
+  if (s === 'pr' && f.o && f.d && !flow.validate(lang, f, clock.now())) {
+    await doSearch(bot, ctx, { o: f.o, d: f.d, t: '1', m: 'x', f: 'x' }, 0);
+    return home(bot, ctx.chatId, lang, t(lang, 'home'));
+  }
+  // Saltar (o datos inválidos): al home.
+  if (ctx.mid) await show(bot, ctx.chatId, ctx.mid, t(lang, 'home'));
+  return home(bot, ctx.chatId, lang);
+}
+
+async function help(bot, msg) {
+  const lang = langOf(msg.from);
+  await bot.sendMessage(msg.chat.id, t(lang, 'help'), { reply_markup: miniapp.homeInline(lang, cb.encode) });
+}
+
+async function settings(bot, msg) {
+  const lang = langOf(msg.from);
+  const pro = flags.isOwner(msg.from.id) || await entitlements.isPro(msg.from.id);
+  const text = [
+    t(lang, 'settingsTitle'),
+    t(lang, 'settingsLang'),
+    t(lang, 'settingsPlan', { plan: pro ? t(lang, 'planPro') : t(lang, 'planFree', { n: entitlements.SEARCH_CAP }) }),
+    t(lang, 'settingsReport'),
+    t(lang, 'settingsHint'),
+  ].join('\n');
+  await bot.sendMessage(msg.chat.id, text, { reply_markup: miniapp.keyboard(lang) });
+}
+
+function ctxOf(msg) {
+  return { chatId: msg.chat.id, userId: msg.from.id, lang: langOf(msg.from), mid: null };
+}
+
+/** Un handler por acción: los usan los comandos y los botones del teclado persistente. */
+const HANDLERS = {
+  search: async (bot, msg, args = '') => {
+    const url = miniapp.miniAppUrl();
+    if (url && !String(args).trim()) {
+      const lang = langOf(msg.from);
+      await bot.sendMessage(msg.chat.id, t(lang, 'home'), { reply_markup: { inline_keyboard: [[{ text: t(lang, 'btnSearchApp'), web_app: { url } }]] } });
+      await sessions.clearSession(msg.chat.id);
+      return startFlow(bot, msg, 'b', {});
+    }
+    return startFlow(bot, msg, 'b', shortcut(args));
+  },
+  alerts: (bot, msg) => alerts(bot, ctxOf(msg), 'ls', {}),
+  pro: (bot, msg) => proScreen(bot, ctxOf(msg)),
+  help: (bot, msg) => help(bot, msg),
+  settings: (bot, msg) => settings(bot, msg),
+};
+
+/** Si el texto es un botón del teclado de abajo, corre el mismo handler que el comando. */
+async function onKeyboard(bot, msg) {
+  const action = miniapp.actionFor(msg.text);
+  if (!action) return false;
+  await sessions.clearSession(msg.chat.id);
+  await HANDLERS[action](bot, msg);
+  return action;
 }
 
 async function notUnderstood(bot, msg) {
@@ -372,26 +472,29 @@ async function notUnderstood(bot, msg) {
   await bot.sendMessage(msg.chat.id, t(lang, 'notUnderstood'), { reply_markup: menu(lang) });
 }
 
+/** Comandos (y alias viejos) → acción. /buscar va aparte porque admite argumentos. */
+const COMMAND_ROUTES = [
+  [/^\/(?:alertas|alerts|mis_alertas|my_alerts)(?:@\w+)?$/, 'alerts'],
+  [/^\/pro(?:@\w+)?$/, 'pro'],
+  [/^\/(?:ayuda|help)(?:@\w+)?$/, 'help'],
+  [/^\/(?:ajustes|settings)(?:@\w+)?$/, 'settings'],
+];
+
 function register(bot) {
   bot.onText(/^\/(?:buscar|search)(?:@\w+)?(?:\s+(.*))?$/, async (msg, match) => {
     const args = (match && match[1]) || '';
     if (/\d{4}-\d{2}-\d{2}/.test(args)) return; // formato viejo con fecha exacta: lo atiende handlers/buscar
-    await startFlow(bot, msg, 'b', shortcut(args));
+    await HANDLERS.search(bot, msg, args);
   });
+  for (const [re, action] of COMMAND_ROUTES) bot.onText(re, (msg) => HANDLERS[action](bot, msg));
   bot.onText(/^\/(?:nueva_alerta|new_alert)(?:@\w+)?$/, (msg) => startFlow(bot, msg, 'a'));
-  bot.onText(/^\/(?:mis_alertas|my_alerts)(?:@\w+)?$/, (msg) => alerts(bot, { chatId: msg.chat.id, userId: msg.from.id, lang: langOf(msg.from), mid: null }, 'ls', {}));
   bot.onText(/^\/(?:informe|report)(?:@\w+)?$/, (msg) => report(bot, msg));
-  bot.onText(/^\/pro(?:@\w+)?$/, (msg) => proScreen(bot, { chatId: msg.chat.id, userId: msg.from.id, lang: langOf(msg.from), mid: null }));
 }
 
 function commands() {
-  const { STRINGS } = require('./i18n');
-  return {
-    es: Object.entries(STRINGS.es.cmd).map(([command, description]) => ({ command, description })),
-    en: Object.entries(STRINGS.en.cmd).map(([command, description]) => ({ command, description })),
-  };
+  return miniapp.commands();
 }
 
 module.exports = {
-  register, onCallback, onText, welcome, notUnderstood, startFlow, shortcut, commands, setSleeper, menu, proScreen, alerts, report,
+  register, onCallback, onText, onKeyboard, HANDLERS, COMMAND_ROUTES, onboarding, home, help, settings, welcome, notUnderstood, startFlow, shortcut, commands, setSleeper, menu, proScreen, alerts, report,
 };
