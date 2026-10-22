@@ -150,7 +150,21 @@ test('P11. Stripe rechaza firma o timestamp viejo; el fallo abre gracia y el dí
   expect(unpaid.grace).toBe(false);
   const none = await col('Entitlement').findOne({ telegramUserId: '101' });
   expect(none && none.plan).not.toBe('pro');
+  // Trial (o comp) con proUntil pero sin ningún Payment pagado: NO da gracia.
+  await entitlements.startTrial('101');
+  await col('Entitlement').updateOne({ telegramUserId: '101' }, { $set: { proUntil: new Date(start.getTime() + DAY).toISOString() } });
+  Stripe.constructEvent.mockImplementationOnce(() => ({
+    type: 'invoice.payment_failed',
+    created: Math.floor(start.getTime() / 1000),
+    data: { object: { id: 'in_trial', client_reference_id: 'ref-stripe' } },
+  }));
+  const trialFail = await stripePay.handleWebhook({ body: Buffer.from('{}'), headers: { 'stripe-signature': 't' } });
+  expect(trialFail.grace).toBe(false);
+  const tdoc = await col('Entitlement').findOne({ telegramUserId: '101' });
+  expect(tdoc.graceUntil || null).toBeNull();
+  expect(tdoc.plan).toBe('trial');
   // Ya había pagado antes: la renovación fallida abre gracia.
+  await col('Payment').create({ provider: 'stripe', ref: 'in_prev', telegramUserId: '101', status: 'paid', paidAt: start.toISOString() });
   await col('Entitlement').updateOne({ telegramUserId: '101' }, { $set: { proUntil: new Date(start.getTime() + DAY).toISOString() } });
   Stripe.constructEvent.mockImplementationOnce(() => ({
     type: 'invoice.payment_failed',
