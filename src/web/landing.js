@@ -1,5 +1,7 @@
 'use strict';
 
+const pricing = require('../config/pricing');
+
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -154,15 +156,15 @@ function renderSampleCard(sample, lang) {
   const amount = row
     ? `<span class="js-price" data-value="${row.price}">${row.price}</span> <span class="price-card__ccy">${esc(row.currency)}</span>`
     : '<span class="skeleton-shimmer skeleton-amount"></span>';
-  const words = row ? esc(fareWords(row, lang)) : (lang === 'en' ? 'Monitoring real flights 24/7' : 'Monitoreando vuelos reales 24/7');
-  const seen = row ? esc(lang === 'en' ? `seen ${row.seenHours} h ago` : row.seen) : (lang === 'en' ? 'monitored in real time' : 'monitoreando en tiempo real');
+  const words = row ? esc(fareWords(row, lang)) : (lang === 'en' ? 'We check prices every few hours' : 'Revisamos precios cada pocas horas');
+  const seen = row ? esc(lang === 'en' ? `seen ${row.seenHours} h ago` : row.seen) : (lang === 'en' ? 'we check prices every few hours' : 'revisamos precios cada pocas horas');
   const href = row ? `${BOT_URL}?start=${row.origin}-${row.destination}` : tg('hero');
   const popularPreview = !row
     ? `<div class="popular-routes-preview"><span class="route-pill is-active">${abbr('EZE', lang)} → ${abbr('MAD', lang)}</span><span class="route-pill">${abbr('EZE', lang)} → ${abbr('BCN', lang)}</span><span class="route-pill">${abbr('COR', lang)} → ${abbr('FCO', lang)}</span></div>`
     : '';
 
   return `<article class="price-card" id="sample-card" data-state="${state}">`
-    + `<div class="price-card__header"><p class="route-chip">${route}</p><span class="badge-live"><span class="badge-dot"></span>${lang === 'en' ? 'Live' : 'En vivo'}</span></div>`
+    + `<div class="price-card__header"><p class="route-chip">${route}</p></div>`
     + popularPreview
     + `<p class="price-card__when">${when}</p>`
     + '<div class="price-card__price-row">'
@@ -214,13 +216,13 @@ function copy(lang) {
         'Everything happens in Telegram. There\'s no new app to install and no account to create.',
         'It shows real fares from Travelpayouts searches, each one with a timestamp. These are fares that were found, not promises.',
       ],
-      emptyFare: 'Fare monitoring in real time',
+      emptyFare: 'We check prices every few hours',
       cacheLabel: 'Fare from the Travelpayouts cache',
       proof: 'Powered by Travelpayouts data',
       howTitle: 'How it works',
       steps: [
         ['Choose your route', 'Pick your departure airport in Argentina and your European destination.', 'i-search'],
-        ['Set your target price', 'Tell the bot your maximum budget. It watches fares 24/7 in the background.', 'i-sliders'],
+        ['Set your target price', 'Tell the bot your maximum budget. We check prices every few hours.', 'i-sliders'],
         ['Get alerted instantly', 'Receive direct Telegram alerts the moment prices drop with booking links.', 'i-zap'],
       ],
       copyStart: 'Copy /start',
@@ -238,10 +240,7 @@ function copy(lang) {
       proItems: [
         'Unlimited searches (with fair-use limit)',
         'Instant price drop alert',
-        'Daily digest at 9:00 PM ART',
-        'Daily alert',
-        '9 PM digest',
-        'Searches continue after the monthly cap',
+        'Daily digest at 9 PM Argentina time',
       ],
       trial: 'The 7-day trial covers the alert and the digest, with no card, once. Pro is charged when you pay.',
       proBtn: 'Get Pro',
@@ -254,11 +253,11 @@ function copy(lang) {
       optAr: 'Argentina',
       optEu: 'European Union',
       optOther: 'Rest of the world',
-      arsMissing: 'No BNA dollar rate is available, so there is no peso price to show.',
-      bna: 'at today\'s BNA dollar rate',
-      arsWords: (n) => `${n} Argentine pesos, at today's BNA dollar rate.`,
-      euFigure: '€4.50',
-      euWords: '4.50 euros, VAT included.',
+      arsMissing: 'No official dollar rate is available, so there is no peso price to show.',
+      bna: 'at today\'s official dollar rate',
+      arsWords: (n) => `${n} Argentine pesos, at today's official dollar rate.`,
+      euFigure: `€${pricing.figure(pricing.PRO_EUR_CENTS, 'en')}`,
+      euWords: `${pricing.figure(pricing.PRO_EUR_CENTS, 'en')} euros, VAT included.`,
       usdFigure: 'US$5',
       usdWords: '5 US dollars.',
       destinationsTitle: 'Popular destinations in Europe',
@@ -314,13 +313,13 @@ function copy(lang) {
       'Todo pasa en Telegram. No tenés que instalar ninguna app ni crear una cuenta nueva.',
       'Te muestra precios reales de búsquedas de Travelpayouts, con la fecha de cada dato. Son precios encontrados, no promesas.',
     ],
-    emptyFare: 'Tarifas monitoreadas en tiempo real',
+    emptyFare: 'Revisamos precios cada pocas horas',
     cacheLabel: 'Precio en caché de Travelpayouts',
     proof: 'Datos de Travelpayouts',
     howTitle: 'Cómo funciona',
     steps: [
       ['Elegís la ruta', 'Elegís de dónde salís en Argentina y adónde querés ir en Europa.', 'i-search'],
-      ['Fijás tu precio máximo', 'Le indicás al bot cuánto estás dispuesto a pagar. Monitorea 24/7 sin que hagas nada.', 'i-sliders'],
+      ['Fijás tu precio máximo', 'Le indicás al bot cuánto estás dispuesto a pagar. Revisamos precios cada pocas horas.', 'i-sliders'],
       ['Te avisa al instante', 'Cuando el precio baja, te llega una alerta directa a Telegram con el link para reservar.', 'i-zap'],
     ],
     copyStart: 'Copiar /start',
@@ -339,9 +338,6 @@ function copy(lang) {
       'Búsquedas ilimitadas (con límite de uso justo)',
       'Aviso al instante si baja el precio',
       'Reporte diario a las 21:00 hora Argentina',
-      'Alerta diaria',
-      'Resumen a las 21:00',
-      'Seguís buscando después del cupo del mes',
     ],
     trial: 'La prueba de 7 días cubre la alerta y el reporte, sin tarjeta y una sola vez. Pro se cobra al confirmar el pago.',
     proBtn: 'Quiero Pro',
@@ -354,11 +350,11 @@ function copy(lang) {
     optAr: 'Argentina',
     optEu: 'Unión Europea',
     optOther: 'Resto del mundo',
-    arsMissing: 'Sin cotización del dólar BNA para mostrar el precio en pesos.',
-    bna: 'al dólar BNA de hoy',
-    arsWords: (n) => `${n} pesos argentinos, al dólar BNA de hoy.`,
-    euFigure: '€4,50',
-    euWords: '4,50 euros, IVA incluido.',
+    arsMissing: 'Sin cotización del dólar oficial para mostrar el precio en pesos.',
+    bna: 'al dólar oficial de hoy',
+    arsWords: (n) => `${n} pesos argentinos, al dólar oficial de hoy.`,
+    euFigure: `€${pricing.figure(pricing.PRO_EUR_CENTS, 'es')}`,
+    euWords: `${pricing.figure(pricing.PRO_EUR_CENTS, 'es')} euros, IVA incluido.`,
     usdFigure: 'US$5',
     usdWords: '5 dólares estadounidenses.',
     destinationsTitle: 'Destinos populares en Europa',
@@ -440,12 +436,12 @@ function tabs(lang) {
 function jsonLd(lang, ars) {
   const t = copy(lang);
   const offers = [
-    { '@type': 'Offer', price: '4.50', priceCurrency: 'EUR', description: lang === 'en' ? 'VAT included' : 'IVA incluido' },
+    { '@type': 'Offer', price: pricing.figure(pricing.PRO_EUR_CENTS, 'en'), priceCurrency: 'EUR', description: lang === 'en' ? 'VAT included' : 'IVA incluido' },
     { '@type': 'Offer', price: '5', priceCurrency: 'USD' },
     { '@type': 'Offer', price: '250', priceCurrency: 'XTR', description: 'Telegram Stars' },
   ];
   if (Number.isInteger(ars) && ars > 0) {
-    offers.push({ '@type': 'Offer', price: String(ars), priceCurrency: 'ARS', description: 'BNA' });
+    offers.push({ '@type': 'Offer', price: String(ars), priceCurrency: 'ARS', description: 'Dólar oficial' });
   }
   return JSON.stringify({
     '@context': 'https://schema.org',

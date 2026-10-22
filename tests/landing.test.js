@@ -23,7 +23,7 @@ const { ORIGINS, DESTINATIONS } = require('../src/config/airports');
 const { createApp } = require('../src/app');
 const { renderSampleCard, criticalCss, PRIVACY } = require('../src/web/landing');
 
-const EMPTY_CARD = '<article class="price-card" id="sample-card" data-state="empty"><div class="price-card__header"><p class="route-chip"><abbr title="Ezeiza, Buenos Aires">EZE</abbr> → <abbr title="Madrid">MAD</abbr></p><span class="badge-live"><span class="badge-dot"></span>En vivo</span></div><div class="popular-routes-preview"><span class="route-pill is-active"><abbr title="Ezeiza, Buenos Aires">EZE</abbr> → <abbr title="Madrid">MAD</abbr></span><span class="route-pill"><abbr title="Ezeiza, Buenos Aires">EZE</abbr> → <abbr title="Barcelona">BCN</abbr></span><span class="route-pill"><abbr title="Córdoba">COR</abbr> → <abbr title="Fiumicino, Roma">FCO</abbr></span></div><p class="price-card__when">Próximas tarifas monitoreadas</p><div class="price-card__price-row"><p class="price-card__amount"><span class="skeleton-shimmer skeleton-amount"></span></p><svg class="sparkline" viewBox="0 0 100 24" aria-hidden="true" focusable="false"><path d="M2 18 L24 16 L48 19 L72 8 L96 4" fill="none" stroke="#64ffda" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="96" cy="4" r="3" fill="#64ffda"/></svg></div><p class="price-card__words">Monitoreando vuelos reales 24/7</p><p class="seen"><svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#i-clock"></use></svg> <span class="seen__text">monitoreando en tiempo real</span></p><svg class="route-draw" viewBox="0 0 320 80" aria-hidden="true" focusable="false"><path pathLength="1" d="M8 64C70 64 90 16 160 16s90 48 152 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><p class="price-card__source">Precio en caché de Travelpayouts</p><a class="btn" href="https://t.me/flightalertpro_bot?start=landing_hero"><svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#i-tg"></use></svg>Buscar gratis en Telegram</a></article>';
+const EMPTY_CARD = '<article class="price-card" id="sample-card" data-state="empty"><div class="price-card__header"><p class="route-chip"><abbr title="Ezeiza, Buenos Aires">EZE</abbr> → <abbr title="Madrid">MAD</abbr></p></div><div class="popular-routes-preview"><span class="route-pill is-active"><abbr title="Ezeiza, Buenos Aires">EZE</abbr> → <abbr title="Madrid">MAD</abbr></span><span class="route-pill"><abbr title="Ezeiza, Buenos Aires">EZE</abbr> → <abbr title="Barcelona">BCN</abbr></span><span class="route-pill"><abbr title="Córdoba">COR</abbr> → <abbr title="Fiumicino, Roma">FCO</abbr></span></div><p class="price-card__when">Próximas tarifas monitoreadas</p><div class="price-card__price-row"><p class="price-card__amount"><span class="skeleton-shimmer skeleton-amount"></span></p><svg class="sparkline" viewBox="0 0 100 24" aria-hidden="true" focusable="false"><path d="M2 18 L24 16 L48 19 L72 8 L96 4" fill="none" stroke="#64ffda" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="96" cy="4" r="3" fill="#64ffda"/></svg></div><p class="price-card__words">Revisamos precios cada pocas horas</p><p class="seen"><svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#i-clock"></use></svg> <span class="seen__text">revisamos precios cada pocas horas</span></p><svg class="route-draw" viewBox="0 0 320 80" aria-hidden="true" focusable="false"><path pathLength="1" d="M8 64C70 64 90 16 160 16s90 48 152 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><p class="price-card__source">Precio en caché de Travelpayouts</p><a class="btn" href="https://t.me/flightalertpro_bot?start=landing_hero"><svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#i-tg"></use></svg>Buscar gratis en Telegram</a></article>';
 
 const DAY = 24 * 60 * 60 * 1000;
 const HOUR = 60 * 60 * 1000;
@@ -183,8 +183,8 @@ test('ARS solo con cotización real y el país detectado no cambia el checkout',
   const app = createApp();
   country.setLookup(async () => 'AR');
   const missing = text(await get(app, '/es'));
-  expect(missing).toContain('Sin cotización del dólar BNA para mostrar el precio en pesos.');
-  expect(missing).not.toContain('pesos argentinos, al dólar BNA de hoy');
+  expect(missing).toContain('Sin cotización del dólar oficial para mostrar el precio en pesos.');
+  expect(missing).not.toContain('pesos argentinos, al dólar oficial de hoy');
   expect(missing).toContain('data-price-region="ar" aria-current="true"');
 
   await col('FxRate').create({
@@ -193,8 +193,8 @@ test('ARS solo con cotización real y el país detectado no cambia el checkout',
     at: '2026-10-21T00:00:00.000Z',
   });
   const html = text(await get(app, '/es'));
-  expect(html).toContain('7700 pesos argentinos, al dólar BNA de hoy.');
-  expect(html).toContain('al dólar BNA de hoy');
+  expect(html).toContain('7700 pesos argentinos, al dólar oficial de hoy.');
+  expect(html).toContain('al dólar oficial de hoy');
   expect(html).toContain('"priceCurrency":"ARS"');
   expect(html).toContain('"price":"7700"');
   expect(html).toContain('Este selector solo cambia la vista.');
@@ -328,4 +328,33 @@ test('el kill switch de la home sigue en mantenimiento', async () => {
   const res = await get(app, '/');
   expect(res.status).toBe(503);
   expect(text(res)).toContain('Estamos en mantenimiento, volvé en un rato');
+});
+
+describe('copia honesta y precio desde config', () => {
+  const landing = require('../src/web/landing');
+  const pricing = require('../src/config/pricing');
+  const html = (lang) => {
+    for (const k of ['render', 'page', 'landingHtml']) if (typeof landing[k] === 'function') return String(landing[k]({ lang }));
+    return '';
+  };
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'src', 'web', 'landing.js'), 'utf8');
+  test('sin promesas de "en vivo", "tiempo real" ni 24/7', () => {
+    expect(src).not.toMatch(/En vivo|'Live'|tiempo real|real time|24\/7|badge-live/);
+    expect(src).toMatch(/revisamos precios cada pocas horas/i);
+    expect(src).toMatch(/we check prices every few hours/i);
+  });
+  test('sin BNA en la copia y hora en EN sin ART', () => {
+    expect(src).not.toMatch(/BNA/);
+    expect(src).not.toMatch(/9:00 PM ART/);
+    expect(src).toMatch(/9 PM Argentina time/);
+  });
+  test('sin ítems duplicados de Pro', () => {
+    for (const s of ["'Alerta diaria'", "'Resumen a las 21:00'", 'después del cupo', "'Daily alert'", "'9 PM digest'", 'after the monthly cap']) expect(src).not.toContain(s);
+  });
+  test('el precio en euros sale de config', () => {
+    expect(src).not.toMatch(/4[.,]50/);
+    expect(pricing.figure(pricing.PRO_EUR_CENTS, 'es')).toBe('4,50');
+    expect(pricing.figure(pricing.PRO_EUR_CENTS, 'en')).toBe('4.50');
+    void html;
+  });
 });
