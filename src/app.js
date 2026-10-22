@@ -16,6 +16,7 @@ const { ipCountry, currencyFor } = require('./services/country');
 const fx = require('./services/fx');
 const { compress } = require('./web/compress');
 const landing = require('./web/landing');
+const seo = require('./web/seo');
 const samplePrice = require('./services/samplePrice');
 const mp = require('./services/payments/mp');
 const stripePay = require('./services/payments/stripe');
@@ -102,8 +103,14 @@ function createApp() {
 
   app.get('/favicon.ico', (_req, res) => res.status(204).end());
   app.get('/robots.txt', (_req, res) => {
-    res.type('text/plain').send('User-agent: *\nAllow: /\n');
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.type('text/plain').send(seo.robots());
   });
+  app.get('/sitemap.xml', (_req, res) => {
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.type('application/xml').send(seo.sitemap());
+  });
+  app.use(seo.htmlCache);
 
   app.use((req, res, next) => {
     if (req.path === '/health') return next();
@@ -114,7 +121,7 @@ function createApp() {
     const ip = clientIp(req);
     // Páginas públicas: admiten ráfagas (120/min). El resto sigue estricto (20/min).
     // La Mini App hace varias llamadas por pantalla: mismo cupo que las páginas.
-    const page = (req.method === 'GET' && ['/', '/es', '/en', '/pro', '/pro/listo'].includes(req.path)) || req.path === '/app' || req.path.startsWith('/app/');
+    const page = (req.method === 'GET' && (['/', '/es', '/en', '/pro', '/pro/listo'].includes(req.path) || Boolean(seo.byPath(req.path)))) || req.path === '/app' || req.path.startsWith('/app/');
     const bucket = page ? 'ip-page' : 'ip';
     const limit = page ? 120 : 20;
     if (rateLimit.limited(bucket, String(ip), limit, 60 * 1000)) {
@@ -202,6 +209,15 @@ function createApp() {
   app.get('/', (req, res) => sendLanding(req, res, negotiate(req.headers['accept-language'])));
   app.get('/en', (req, res) => sendLanding(req, res, 'en'));
   app.get('/es', (req, res) => sendLanding(req, res, 'es'));
+
+  app.get(['/vuelos/:slug', '/en/flights/:slug'], async (req, res, next) => {
+    const route = seo.byPath(req.path);
+    if (!route) return next();
+    if (flags.kill()) return res.status(503).type('html').send(pages.maintenance({ nonce: res.locals.cspNonce }));
+    const lang = req.path.startsWith('/en/') ? 'en' : 'es';
+    const price = await seo.cachedPrice(db, route.origen_iata, route.destino_iata);
+    return res.type('html').send(seo.routePage(route, lang, price, res.locals.cspNonce));
+  });
 
   app.get('/pro', async (req, res) => {
     if (flags.kill()) return res.status(503).type('html').send(pages.maintenance({ nonce: res.locals.cspNonce }));

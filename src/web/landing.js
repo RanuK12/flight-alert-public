@@ -648,7 +648,7 @@ function renderLanding(ctx = {}) {
     + `<div class="trust-item">${icon('i-takeoff', 'trust-ico')}<div><strong>${esc(t.trustOrigins)}</strong><span>${esc(t.trustOriginsList)}</span></div></div>`
     + `<div class="trust-item">${icon('i-globe', 'trust-ico')}<div><strong>${esc(t.trustDestinations)}</strong><span>${esc(t.trustDestinationsList)}</span></div></div>`
     + `<div class="trust-item">${icon('i-verified', 'trust-ico')}<div><strong>${esc(t.trustData)}</strong><span>${esc(t.trustDataDesc)}</span></div></div>`
-    + `<div class="trust-item">${icon('i-shield', 'trust-ico')}<div><strong>${esc(t.trustPayments)}</strong><span>${esc(t.trustPaymentsDesc)}</span></div></div>`
+    + `<div class="trust-item">${icon('i-shield', 'trust-ico')}<div><strong>${esc(t.trustPayments)}</strong><span>${esc(require('./payMethods').line(lang))}</span></div></div>`
     + '</div></section>'
     + '<section class="section reveal" id="como" aria-labelledby="como-titulo"><div class="wrap">'
     + `<div class="section-head"><span class="section-kicker">Simple</span><h2 id="como-titulo">${esc(t.howTitle)}</h2></div>`
