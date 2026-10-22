@@ -76,6 +76,7 @@ function createApp() {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
+  app.use(require('./config/site').legacyRedirect);
   app.use(securityHeaders);
   app.use(compress);
 
@@ -239,7 +240,7 @@ function createApp() {
     const geo = await ipCountry(req);
     const offer = currencyFor(choice, geo);
     const hash = deviceHash(req, res);
-    const base = process.env.PUBLIC_BASE_URL || '';
+    const base = require('./config/site').baseUrl();
     try {
       if (offer.rail === 'mp') {
         if (!flags.mp()) return res.status(403).type('text/plain').send('Mercado Pago no está prendido.');

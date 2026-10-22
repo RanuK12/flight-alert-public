@@ -199,7 +199,7 @@ async function proScreen(bot, ctx, extra) {
   }
   const last = await fx.latest().catch(() => null);
   const ars = last && last.publishedArs ? t(lang, 'proArs', { ars: Number(last.publishedArs).toLocaleString('es-AR') }) : '';
-  const base = String(process.env.PUBLIC_BASE_URL || 'https://flight-alert-public.onrender.com').replace(/\/$/, '');
+  const base = require('../../config/site').baseUrl();
   const text = [extra, t(lang, 'proTitle', { drop: t(lang, 'dropNotice') }), t(lang, 'proPrices', { ars }), t(lang, 'proHow')].filter(Boolean).join('\n\n');
   const rows = [[{ text: t(lang, 'payWeb'), url: `${base}/pro?s=${encodeURIComponent(webSession.sign(ctx.userId))}` }]];
   if (flags.stars()) rows.push([{ text: t(lang, 'payStars'), callback_data: cb.encode('p', 'stars') }]);
