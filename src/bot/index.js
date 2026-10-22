@@ -77,9 +77,12 @@ function startBot() {
   buscarHandler.register(bot);
   // UX v1: /buscar, /nueva_alerta, /mis_alertas, /informe y /pro (ES y EN) van por el panel único.
   ux.register(bot);
+  // /admin oculto (no va en setMyCommands): solo ADMIN_TELEGRAM_IDS.
+  require('./admin').register(bot);
 
   bot.on('callback_query', async (cq) => {
     try {
+      if (await require('./admin').onCallback(bot, cq)) return;
       const consumed = (await ux.onCallback(bot, cq)) || (await misAlertasHandler.handleRouteCallback(bot, cq));
       if (!consumed && cq.id) await bot.answerCallbackQuery(cq.id, {}).catch(() => {});
     } catch (err) {

@@ -151,7 +151,8 @@ async function run(bot, opts = {}) {
         sentAtIso: { $gt: dayStart },
         status: { $ne: 'failed' },
       });
-      if (today >= maxPerDay()) continue;
+      const cap = require('../config/flags').isAdmin(route.telegramUserId) ? num('ADMIN_ALERTS_PER_DAY', 500) : maxPerDay();
+      if (today >= cap) continue;
       // Outbox: se registra ANTES de mandar. Si el proceso se cae después del envío,
       // el registro 'pending' ya bloquea un segundo aviso (at-most-once).
       const row = await col('Notification').create({

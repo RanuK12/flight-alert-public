@@ -40,8 +40,29 @@ function isOwner(id) {
   return owners().includes(String(id));
 }
 
+/** Admins: solo desde la env ADMIN_TELEGRAM_IDS (coma). Nunca desde la DB ni el repo. */
+function admins() {
+  return String(process.env.ADMIN_TELEGRAM_IDS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function isAdmin(id) {
+  if (id === undefined || id === null || id === '') return false;
+  return admins().includes(String(id));
+}
+
+/** IDs que no cuentan en métricas ni revenue (admins + owners). */
+function staffIds() {
+  return [...new Set([...admins(), ...owners()])];
+}
+
 module.exports = {
   FEATURES,
+  admins,
+  isAdmin,
+  staffIds,
   on,
   kill,
   any,
