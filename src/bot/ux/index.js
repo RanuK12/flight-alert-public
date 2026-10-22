@@ -52,7 +52,7 @@ async function quotaLine(lang, userId) {
   if (left > 0) return { ok: true, text: t(lang, 'quotaLeft', { n: left }) };
   const x = cal.today();
   const nm = cal.addMonths(x.y, x.m, 1);
-  return { ok: false, text: t(lang, 'quotaOut', { date: cal.shortDate(lang, cal.iso(nm.y, nm.m, 1)) }) };
+  return { ok: false, text: t(lang, 'quotaOut', { n: entitlements.SEARCH_CAP, date: cal.shortDate(lang, cal.iso(nm.y, nm.m, 1)) }) };
 }
 
 async function step(bot, ctx, fl, fields, extra) {
@@ -358,9 +358,13 @@ async function onText(bot, msg) {
   return true;
 }
 
+function freeVars() {
+  return { n: entitlements.SEARCH_CAP, days: entitlements.TRIAL_DAYS };
+}
+
 async function welcome(bot, msg) {
   const lang = langOf(msg.from);
-  await bot.sendMessage(msg.chat.id, t(lang, 'hello'), { reply_markup: menu(lang) });
+  await bot.sendMessage(msg.chat.id, t(lang, 'hello', freeVars()), { reply_markup: menu(lang) });
 }
 
 async function notUnderstood(bot, msg) {
