@@ -7,7 +7,7 @@
   var S = {
     es: {
       search: 'Buscar vuelo', from: 'Desde', to: 'Hasta', swap: 'Invertir origen y destino', swapOff: 'La ruta invertida no está cubierta',
-      oneway: 'Solo ida', round: 'Ida y vuelta', dep: 'Ida', ret: 'Vuelta', pick: 'Elegir', adults: 'adulto(s)', go: 'Buscar', searching: 'Buscando…',
+      oneway: 'Solo ida', round: 'Ida y vuelta', dep: 'Ida', ret: 'Vuelta', pick: 'Elegir', pickDestFirst: 'Elegí destino primero', adults: 'adulto(s)', go: 'Buscar', searching: 'Buscando…',
       notCovered: 'Todavía no cubrimos {c}. Cubrimos:', calFoot: 'Precios vistos en las últimas horas. Pueden cambiar.',
       cheap: 'barato', mid: 'medio', high: 'caro', nodata: 'sin dato', flex: 'Fechas flexibles: cualquier día del mes', seen: 'visto hace {h} h', seenLt: 'visto hace menos de 1 h',
       offer: 'Ver oferta ↗', alertMe: '🔔 Avisarme', cheapest: 'Más barato', fewer: 'Menos escalas', direct: 'Directo', stops: '{n} escala(s)',
@@ -21,7 +21,7 @@
     },
     en: {
       search: 'Search flight', from: 'From', to: 'To', swap: 'Swap origin and destination', swapOff: 'The reversed route is not covered',
-      oneway: 'One-way', round: 'Round trip', dep: 'Depart', ret: 'Return', pick: 'Pick', adults: 'adult(s)', go: 'Search', searching: 'Searching…',
+      oneway: 'One-way', round: 'Round trip', dep: 'Depart', ret: 'Return', pick: 'Pick', pickDestFirst: 'Pick a destination first', adults: 'adult(s)', go: 'Search', searching: 'Searching…',
       notCovered: "We don't cover {c} yet. We cover:", calFoot: 'Prices seen in the last few hours. They may change.',
       cheap: 'cheap', mid: 'average', high: 'expensive', nodata: 'no data', flex: 'Flexible dates: any day of the month', seen: 'seen {h} h ago', seenLt: 'seen less than 1 h ago',
       offer: 'See deal ↗', alertMe: '🔔 Alert me', cheapest: 'Cheapest', fewer: 'Fewest stops', direct: 'Direct', stops: '{n} stop(s)',
@@ -156,7 +156,7 @@
       h('button', { type: 'button', 'aria-pressed': st.t === '2' ? 'true' : 'false', on: { click: function () { st.t = '2'; hap('sel'); render(); } }, text: S.round }));
     root.appendChild(seg);
     var dateBtn = function (label, value, empty) {
-      return h('button', { type: 'button', 'class': 'date' + (empty ? ' empty' : ''), disabled: !(st.o && st.d), on: { click: function () { go(calendarScreen); } } },
+      return h('button', { type: 'button', 'class': 'date' + (empty ? ' empty' : ''), disabled: !(st.o && st.d), 'aria-describedby': (st.o && st.d) ? null : 'date-hint', on: { click: function () { go(calendarScreen); } } },
         h('small', { text: label }), h('strong', { text: value }));
     };
     var depText = st.dep ? (st.flex ? S.months[Number(st.dep.slice(5, 7)) - 1] : dm(st.dep)) : S.pick;
@@ -164,6 +164,7 @@
       dateBtn(S.dep, depText, !st.dep),
       st.t === '2' ? dateBtn(S.ret, st.ret ? dm(st.ret) : (st.flex ? '—' : S.pick), !st.ret) : null);
     root.appendChild(dates);
+    if (!(st.o && st.d)) root.appendChild(h('p', { 'class': 'date-hint', id: 'date-hint', text: S.pickDestFirst }));
     root.appendChild(h('div', { 'class': 'card stepper' },
       h('span', { 'class': 'grow', text: '👤 ' + st.adults + ' ' + S.adults }),
       h('button', { type: 'button', 'aria-label': '−', disabled: st.adults <= 1, on: { click: function () { st.adults--; hap('imp', 'light'); render(); } } }, '−'),
@@ -186,7 +187,7 @@
     root.appendChild(grid);
     root.appendChild(h('div', { 'class': 'legend', 'aria-hidden': 'true' }, ['cheap', 'mid', 'high', 'nodata'].map(function (k) { return h('span', null, h('i', { 'class': 'sw ' + k }), S[k]); })));
     root.appendChild(h('button', { type: 'button', on: { click: function () { st.flex = true; st.dep = y + '-' + String(m).padStart(2, '0') + '-01'; st.ret = null; hap('sel'); back(); } } }, S.flex));
-    root.appendChild(h('p', { 'class': 'muted', text: S.calFoot }));
+    root.appendChild(h('p', { 'class': 'muted cal-foot', text: S.calFoot }));
     var today = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
     var paint = function (days) {
       var by = {}; (days || []).forEach(function (d) { by[d.day] = d; });

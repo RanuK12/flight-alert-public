@@ -365,8 +365,17 @@ function freeVars() {
 }
 
 /** Home: saludo con el teclado persistente de abajo + panel con el teclado inline mínimo. */
-async function home(bot, chatId, lang, text) {
-  await bot.sendMessage(chatId, text || t(lang, 'hello', freeVars()), { reply_markup: miniapp.keyboard(lang) });
+async function greeting(lang, userId) {
+  if (userId != null && await entitlements.isPro(userId)) {
+    const e = await col('Entitlement').findOne({ telegramUserId: String(userId) });
+    if (e && e.proUntil) return t(lang, 'helloPro', { date: cal.shortDate(lang, cal.todayIso(new Date(e.proUntil))) });
+    return t(lang, 'helloProOpen');
+  }
+  return t(lang, 'hello', freeVars());
+}
+
+async function home(bot, chatId, lang, text, userId) {
+  await bot.sendMessage(chatId, text || await greeting(lang, userId), { reply_markup: miniapp.keyboard(lang) });
   await bot.sendMessage(chatId, t(lang, 'home'), { reply_markup: miniapp.homeInline(lang, cb.encode) });
 }
 
@@ -375,7 +384,7 @@ async function welcome(bot, msg, { isNew = false } = {}) {
   const lang = langOf(msg.from);
   await miniapp.chatMenu(bot, msg.chat.id, lang);
   if (isNew) return onboarding(bot, { chatId: msg.chat.id, userId: msg.from.id, lang, mid: null }, 'o1', {});
-  return home(bot, msg.chat.id, lang);
+  return home(bot, msg.chat.id, lang, null, msg.from.id);
 }
 
 /** Spec v2 P0.2: origen → destino → crear alerta o ver precios. [Saltar] en cada paso va al home. */
@@ -415,7 +424,7 @@ async function onboarding(bot, ctx, s, fields) {
   }
   // Saltar (o datos inválidos): al home.
   if (ctx.mid) await show(bot, ctx.chatId, ctx.mid, t(lang, 'home'));
-  return home(bot, ctx.chatId, lang);
+  return home(bot, ctx.chatId, lang, null, ctx.userId);
 }
 
 async function help(bot, msg) {

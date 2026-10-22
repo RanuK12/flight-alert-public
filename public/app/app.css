@@ -76,3 +76,8 @@ input[type=range] { accent-color: var(--accent); width: 100%; }
 .legend .sw { display: inline-block; width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--line); }
 .legend .sw.cheap { background: var(--accent); } .legend .sw.mid { background: var(--navy700); } .legend .sw.high { background: var(--slate500); } .legend .sw.nodata { background: rgba(136, 146, 176, .15); }
 .seen { font-size: 13px; color: var(--hint-strong); margin-top: 4px; }
+/* PRISM P0-2: contraste >= 4.5:1 en light, aun deshabilitado */
+.date:disabled { opacity: 1; }
+.date:disabled small, .date:disabled strong { color: var(--hint-strong); }
+.date-hint, .cal-foot { font-size: 13px; color: var(--hint-strong); margin: -4px 0 12px; }
+.cal-foot { margin: 8px 0 0; }
