@@ -22,6 +22,7 @@ const link = require('./services/payments/link');
 const { runDailyDigest } = require('./services/dailyReport');
 const { expire } = require('./services/entitlements');
 const { startBot, getBot } = require('./bot');
+const transport = require('./bot/transport');
 const stars = require('./services/payments/stars');
 
 function clientIp(req) {
@@ -255,6 +256,8 @@ function createApp() {
     const created = await link.createLink(hash);
     res.type('html').send(pages.listo(created.url, { nonce: res.locals.cspNonce }));
   });
+
+  app.post(transport.WEBHOOK_PATH, transport.webhookHandler(getBot));
 
   app.post('/webhooks/mp', async (req, res) => {
     try {
