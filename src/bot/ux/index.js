@@ -1,5 +1,7 @@
 'use strict';
 
+const webSession = require('../../web/webSession');
+
 /** Controlador del panel único (spec UX v1). Un mensaje por flujo que se edita en cada paso. */
 const clock = require('../../utils/clock');
 const logger = require('../../utils/logger').child('ux');
@@ -198,7 +200,7 @@ async function proScreen(bot, ctx, extra) {
   const ars = last && last.publishedArs ? t(lang, 'proArs', { ars: Number(last.publishedArs).toLocaleString('es-AR') }) : '';
   const base = String(process.env.PUBLIC_BASE_URL || 'https://flight-alert-public.onrender.com').replace(/\/$/, '');
   const text = [extra, t(lang, 'proTitle'), t(lang, 'proPrices', { ars }), t(lang, 'proHow')].filter(Boolean).join('\n\n');
-  const rows = [[{ text: t(lang, 'payWeb'), url: `${base}/pro` }]];
+  const rows = [[{ text: t(lang, 'payWeb'), url: `${base}/pro?s=${encodeURIComponent(webSession.sign(ctx.userId))}` }]];
   if (flags.stars()) rows.push([{ text: t(lang, 'payStars'), callback_data: cb.encode('p', 'stars') }]);
   await show(bot, ctx.chatId, ctx.mid, text, { inline_keyboard: rows });
   return null;

@@ -9,6 +9,7 @@ const db = require('./database');
 const rateLimit = require('./services/rateLimit');
 const pages = require('./web/pages');
 const { deviceHash, assertSecret: assertDeviceSecret } = require('./web/device');
+const webSession = require('./web/webSession');
 const { assertConfigured } = require('./services/payments/mode');
 const { ipCountry, currencyFor } = require('./services/country');
 const fx = require('./services/fx');
@@ -162,6 +163,13 @@ function createApp() {
 
   app.get('/pro', async (req, res) => {
     if (flags.kill()) return res.status(503).type('html').send(pages.maintenance({ nonce: res.locals.cspNonce }));
+    // Botón del bot: ?s=<token firmado>. Se pasa a cookie HttpOnly y se saca de la URL.
+    if (req.query && req.query.s) {
+      const token = String(req.query.s);
+      if (webSession.verify(token)) webSession.setCookie(res, token);
+      const rest = req.query.pais ? `?pais=${encodeURIComponent(String(req.query.pais))}` : '';
+      return res.redirect(303, `/pro${rest}`);
+    }
     deviceHash(req, res);
     const geo = await ipCountry(req);
     const choice = req.query && req.query.pais ? String(req.query.pais) : '';
@@ -198,6 +206,7 @@ function createApp() {
         }
         const externalReference = await link.newReference('mp', {
           webUserKey: hash,
+          telegramUserId: webSession.fromRequest(req),
           amount,
           currency: 'ARS',
         });
@@ -214,6 +223,7 @@ function createApp() {
       if (!flags.stripe()) return res.status(403).type('text/plain').send('La tarjeta no está prendida.');
       const externalReference = await link.newReference('stripe', {
         webUserKey: hash,
+        telegramUserId: webSession.fromRequest(req),
         currency: offer.currency,
       });
       const session = await stripePay.createCheckout({
