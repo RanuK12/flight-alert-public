@@ -18,7 +18,7 @@ function scrub(line) {
 }
 
 function remember(line) {
-  RING.push(scrub(line));
+  RING.push(line);
   if (RING.length > RING_MAX) RING.shift();
 }
 
@@ -34,9 +34,10 @@ function emit(level, scope, msg, meta) {
     msg,
     ...(meta ? redact(meta) : {}),
   });
-  remember(line);
-  if (level === 'warn' || level === 'error') console.error(line);
-  else console.log(line);
+  const safe = scrub(line);
+  remember(safe);
+  if (level === 'warn' || level === 'error') console.error(safe);
+  else console.log(safe);
 }
 
 function child(scope) {

@@ -138,3 +138,10 @@ curl -s -H "Authorization: Bearer $TOKEN" https://flight-alert-public.onrender.c
 **Restaurar el servicio**: crear un Web Service Docker en Render desde `RanuK12/flight-alert-public` (`main`), región Frankfurt, cargar las variables desde el llavero, `PUBLIC_BASE_URL` nuevo, actualizar las URLs de webhook en Stripe y MP, revisar `/health`, y cambiar la URL del monitor de UptimeRobot a la nueva.
 
 **Restaurar la base**: Atlas > cluster > Backup (si el tier lo incluye: unknown) o `mongorestore` desde un `mongodump`. Si el usuario de DB cambia, actualizar `MONGODB_URI` en Render y en el llavero.
+
+## Telegram: webhook en producción
+
+- Con `TELEGRAM_WEBHOOK_SECRET` y `PUBLIC_BASE_URL` el bot no hace polling: al arrancar llama `setWebhook` a `/webhooks/telegram` con `secret_token`, y la ruta rechaza (401) todo update sin el header `X-Telegram-Bot-Api-Secret-Token` correcto.
+- Así dos instancias durante un deploy o restart no se pisan (los 409 "terminated by other getUpdates" del 22/10).
+- Sin el secreto (local) sigue el polling; `TELEGRAM_POLLING=false` lo apaga.
+- Activar: cargar el secreto en Render con "Save only" y después deploy manual. Para volver a polling: borrar la variable y llamar `deleteWebhook`.

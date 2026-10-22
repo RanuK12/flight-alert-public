@@ -22,6 +22,7 @@ const link = require('./services/payments/link');
 const { runDailyDigest } = require('./services/dailyReport');
 const { expire } = require('./services/entitlements');
 const { startBot, getBot } = require('./bot');
+const transport = require('./bot/transport');
 const stars = require('./services/payments/stars');
 
 function clientIp(req) {
@@ -93,7 +94,9 @@ function createApp() {
 
   app.get('/health', (_req, res) => {
     const status = db.health();
-    res.status(status.ok ? 200 : 503).json({ ok: status.ok, db: status.db });
+    const body = { ok: status.ok, db: status.db, telegram: { mode: transport.mode(process.env) } };
+    if (body.telegram.mode === 'webhook') body.telegram.webhook = transport.webhookInfo();
+    res.status(status.ok ? 200 : 503).json(body);
   });
 
   app.get('/favicon.ico', (_req, res) => res.status(204).end());
@@ -255,6 +258,8 @@ function createApp() {
     const created = await link.createLink(hash);
     res.type('html').send(pages.listo(created.url, { nonce: res.locals.cspNonce }));
   });
+
+  app.post(transport.WEBHOOK_PATH, transport.webhookHandler(getBot));
 
   app.post('/webhooks/mp', async (req, res) => {
     try {
