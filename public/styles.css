@@ -99,13 +99,15 @@ a:hover{color:var(--mint)}
 @media (max-width:640px){
   .nav .nav-tg-btn{display:none}
 }
-#theme-toggle{
-  min-height:38px; min-width:38px; padding:0 var(--s2); border-radius:var(--radius-pill);
-  border:1px solid var(--border); background:var(--surface); color:var(--text-2);
-  font:inherit; font-size:var(--fs-xs); cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
-  transition:all var(--dur-1) var(--ease);
+.theme-pick{display:inline-flex; gap:2px; padding:2px; border:1px solid var(--border); border-radius:var(--radius-pill); background:var(--surface)}
+.theme-opt{
+  min-height:44px; min-width:44px; padding:0; border:0; border-radius:var(--radius-pill);
+  background:transparent; color:var(--text-2); font:inherit; font-size:var(--fs-sm); cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center; transition:all var(--dur-1) var(--ease);
 }
-#theme-toggle:hover{border-color:var(--mint); color:var(--text)}
+.theme-opt:hover{color:var(--text)}
+.theme-opt[aria-pressed="true"]{background:var(--mint); color:var(--bg)}
+.theme-opt:focus-visible{outline:2px solid var(--mint); outline-offset:2px}
 .lang-link{font-family:var(--mono); font-weight:600; font-size:var(--fs-xs); padding:0 var(--s1)}
 .btn{
   display:inline-flex; align-items:center; justify-content:center; gap:var(--s2);

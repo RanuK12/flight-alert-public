@@ -386,6 +386,9 @@ test('review PRISM: 31 destinos con chips, moneda en radiogroup, fuentes propias
   expect(html).not.toContain('<select');
   expect(html).toContain('/public/fonts/inter-latin-wght-normal.woff2');
   expect(html).not.toMatch(/<button[^>]*id="theme-toggle"/);
+  expect(html).toMatch(/id="theme-pick" role="group" aria-label="Tema"/);
+  expect((html.match(/class="theme-opt" data-mode="(system|light|dark)" aria-pressed="(true|false)"/g) || []).length).toBe(3);
+  expect(html).toContain('<span class="sr-only">Sistema</span>');
   expect(html).not.toContain('cada pocas horas');
 });
 

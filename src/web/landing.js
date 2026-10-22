@@ -598,6 +598,9 @@ function renderLanding(ctx = {}) {
     + `<a href="#como">${esc(t.howTitle)}</a>`
     + `<a href="#precios">${esc(t.pricesLink)}</a>`
     + `<a class="btn btn--ghost nav-tg-btn" href="${tg('header')}">${esc(t.openTelegram)}</a>`
+    + `<div class="theme-pick" id="theme-pick" role="group" aria-label="${esc(t.themePrefix)}">`
+    + [['system', '◐', t.themeSystem], ['light', '☀', t.themeLight], ['dark', '☾', t.themeDark]].map(([m, icon, label]) => `<button type="button" class="theme-opt" data-mode="${m}" aria-pressed="${m === 'system'}" title="${esc(label)}"><span aria-hidden="true">${icon}</span><span class="sr-only">${esc(label)}</span></button>`).join('')
+    + '</div>'
     + `<a class="lang-link" href="${switchHref}" hreflang="${lang === 'en' ? 'es' : 'en'}">${esc(t.langLabel)}</a>`
     + '</nav></div></header>'
     + '<main id="contenido" tabindex="-1">'
