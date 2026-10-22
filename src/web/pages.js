@@ -5,6 +5,7 @@ const { preselect, currencyFor, EU_COUNTRIES } = require('../services/country');
 const { renderLanding } = require('./landing');
 
 const pricing = require('../config/pricing');
+const entitlements = require('../services/entitlements');
 const landing = require('./landing');
 
 function esc(v) {
@@ -105,7 +106,8 @@ function pro({ choice = '', ipCountry: geo = '', language = '', nonce = '', ars 
       <p class="form-error" id="pro-email-error" role="alert" hidden>Escribí un email válido, por ejemplo nombre@dominio.com.</p>
       <button class="btn btn--primary pro-submit" type="submit">${offer.rail === 'mp' ? 'Seguir con Mercado Pago' : 'Seguir con tarjeta'}</button>
     </form>
-    <p class="fine">En el bot, Pro se paga solo con estrellas de Telegram. Este sitio no pide datos de tarjeta.</p>
+    <p class="fine">Medios de pago: ${esc(require('./payMethods').line('es'))}.</p>
+    <p class="fine">Prueba de Pro: ${entitlements.TRIAL_DAYS} días gratis, una vez por cuenta, desde el bot.</p>
   `, { nonce, script: PRO_SCRIPT, fullTitle: require('./seo').PRO_META.title, head: require('./seo').proHead() });
 }
 

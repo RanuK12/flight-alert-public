@@ -120,3 +120,27 @@ test('htmlCache: público en HTML, nunca en /admin, /app/api, /webhooks ni check
   expect(run('POST', '/pro/checkout')).toBeUndefined();
   expect(run('GET', '/es', true)).toBeUndefined();
 });
+
+test('medios de pago salen de los flags, iguales en landing y /pro', async () => {
+  process.env.FEATURE_PAYMENTS_STRIPE = 'on';
+  process.env.FEATURE_PAYMENTS_STARS = 'on';
+  const pro = await get(createApp(), '/pro');
+  expect(pro.body).toContain('Medios de pago: Tarjeta (Stripe) · Estrellas de Telegram.');
+  expect(pro.body).not.toContain('solo con estrellas');
+  const home = await get(createApp(), '/es');
+  expect(home.body).toContain('Tarjeta (Stripe) · Estrellas de Telegram');
+  expect(home.body).not.toContain('Stripe · Mercado Pago · Stars');
+});
+
+test('/pro muestra precio y prueba reales del código', async () => {
+  const pricing = require('../src/config/pricing');
+  const ent = require('../src/services/entitlements');
+  const res = await get(createApp(), '/pro?pais=ES');
+  expect(res.body).toContain(`€${pricing.figure(pricing.PRO_EUR_CENTS, 'es')} por mes`);
+  expect(res.body).toContain(`${ent.TRIAL_DAYS} días gratis`);
+});
+
+test('el copy de búsquedas gratis coincide con el tope real', () => {
+  const ent = require('../src/services/entitlements');
+  for (const r of routes) expect(r.es.intro).toContain(`${ent.SEARCH_CAP} búsquedas al mes`);
+});
