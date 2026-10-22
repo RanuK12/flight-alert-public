@@ -11,10 +11,11 @@ function match(doc, filter) {
       if ('$lt' in expected && !(doc[key] < expected.$lt)) return false;
       if ('$lte' in expected && !(doc[key] <= expected.$lte)) return false;
       if ('$gt' in expected && !(doc[key] > expected.$gt)) return false;
+      if ('$gte' in expected && !(doc[key] >= expected.$gte)) return false;
       if ('$ne' in expected && doc[key] === expected.$ne) return false;
       if ('$in' in expected && !expected.$in.includes(doc[key])) return false;
       if ('$exists' in expected && ((doc[key] !== undefined) !== expected.$exists)) return false;
-      if ('$lt' in expected || '$lte' in expected || '$gt' in expected || '$ne' in expected || '$in' in expected || '$exists' in expected) {
+      if ('$lt' in expected || '$lte' in expected || '$gt' in expected || '$gte' in expected || '$ne' in expected || '$in' in expected || '$exists' in expected) {
         return true;
       }
     }

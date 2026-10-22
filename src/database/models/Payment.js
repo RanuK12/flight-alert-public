@@ -8,6 +8,7 @@ const schema = new mongoose.Schema({
   telegramUserId: { type: String, default: null },
   externalReference: { type: String, default: null },
   status: { type: String, default: 'paid' },
+  paidAt: { type: String, default: null },
 }, { timestamps: true });
 
 schema.index({ provider: 1, ref: 1 }, { unique: true });

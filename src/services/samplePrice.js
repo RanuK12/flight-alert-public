@@ -1,12 +1,14 @@
 'use strict';
 
 const clock = require('../utils/clock');
+const { col } = require('../database');
+const logger = require('../utils/logger').child('sample');
 const { pairAllowed } = require('../config/coverage');
 const { isFresh, seenLabel, ageMs } = require('./sortFlights');
 
 const HOUR_MS = 60 * 60 * 1000;
 
-/** Última fila real guardada en este proceso. Sin red y sin precio inventado. */
+/** Última fila real. Vive en memoria y en Mongo (SamplePrice, key 'home') para sobrevivir reinicios. */
 let cached = null;
 
 function remember(flight) {
@@ -36,7 +38,29 @@ function remember(flight) {
   if (!isFresh(row, clock.now())) return;
   const prev = cached ? new Date(cached.foundAt).getTime() : 0;
   const next = foundAt.getTime();
-  if (!cached || next > prev || (next === prev && price < cached.price)) cached = row;
+  if (!cached || next > prev || (next === prev && price < cached.price)) {
+    cached = row;
+    persist(row);
+  }
+}
+
+function persist(row) {
+  Promise.resolve()
+    .then(() => col('SamplePrice').updateOne({ key: 'home' }, { $set: { key: 'home', ...row } }, { upsert: true }))
+    .catch((err) => logger.warn('no guardé el precio de muestra', { error: err.message }));
+}
+
+/** Al arrancar: recupera la última fila guardada si sigue fresca. */
+async function load() {
+  const doc = await col('SamplePrice').findOne({ key: 'home' });
+  if (!doc || !doc.foundAt) return null;
+  const row = {
+    origin: doc.origin, destination: doc.destination, price: doc.price,
+    currency: doc.currency, foundAt: doc.foundAt, departureDate: doc.departureDate || null,
+  };
+  if (!isFresh(row, clock.now())) return null;
+  if (!cached || new Date(row.foundAt) > new Date(cached.foundAt)) cached = row;
+  return row;
 }
 
 function current() {
@@ -62,4 +86,4 @@ function reset() {
   cached = null;
 }
 
-module.exports = { remember, current, reset };
+module.exports = { remember, current, reset, load };

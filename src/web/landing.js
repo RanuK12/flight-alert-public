@@ -182,7 +182,7 @@ function copy(lang) {
       ctaHero: 'Search free on Telegram',
       seePrices: 'See prices',
       small: 'No sign-up. Just open the bot.',
-      quota: '10 searches a month, no card. The daily alert and the 9 PM digest are on a 7-day trial.',
+      quota: '10 searches a month, no card. The daily alert and the 9 PM Argentina time digest are on a 7-day trial.',
       benefitsTitle: 'In short',
       benefits: [
         'Stop checking fares every day. The bot watches them for you and only messages you when it\'s worth it.',
@@ -196,7 +196,7 @@ function copy(lang) {
       steps: [
         ['Open @flightalertpro_bot', 'Choose where you\'re flying from and where you want to go.', 'i-search'],
         ['See the lowest fares', 'The ones available right now for that route.', 'i-pin'],
-        ['Go Pro', 'Get a daily alert plus a 9 PM digest.', 'i-bell'],
+        ['Go Pro', 'Search without limits, get an instant alert when a fare hits your price, plus the 9 PM Argentina time digest.', 'i-bell'],
       ],
       copyStart: 'Copy /start',
       copied: 'Copied',
@@ -210,9 +210,9 @@ function copy(lang) {
       freeBtn: 'Start free',
       proTitle: 'Pro',
       proItems: [
-        'Daily alert',
-        '9 PM digest',
-        'Searches continue after the monthly cap',
+        'Unlimited searches (with an anti-abuse limit)',
+        'Instant alert when a fare drops to your price',
+        '9 PM Argentina time digest',
       ],
       trial: 'The 7-day trial covers the alert and the digest, with no card, once. Pro is charged when you pay.',
       proBtn: 'Get Pro',
@@ -224,9 +224,9 @@ function copy(lang) {
       optAr: 'Argentina',
       optEu: 'European Union',
       optOther: 'Rest of the world',
-      arsMissing: 'No BNA dollar rate is available, so there is no peso price to show.',
-      bna: 'at today\'s BNA dollar rate',
-      arsWords: (n) => `${n} Argentine pesos, at today's BNA dollar rate.`,
+      arsMissing: 'No official dollar rate is available, so there is no peso price to show.',
+      bna: 'at today\'s official dollar rate',
+      arsWords: (n) => `${n} Argentine pesos, at today's official dollar rate.`,
       euFigure: '€4.50',
       euWords: '4.50 euros, VAT included.',
       usdFigure: 'US$5',
@@ -235,11 +235,11 @@ function copy(lang) {
       faq: [
         ['Is the fare final?', 'It\'s the fare the search found at that moment. Airlines change prices fast, so always confirm it on the booking page before you pay.'],
         ['Do you sell tickets?', 'No. The bot sends you to the site where you book. Some links are affiliate links: they cost you nothing extra and help keep the bot running.'],
-        ['What\'s free?', '10 searches a month, with no card needed. The daily alert and the 9 PM digest can be tried for 7 days, once.'],
+        ['What\'s free?', '10 searches a month, with no card needed. The daily alert and the 9 PM Argentina time digest can be tried for 7 days, once.'],
         ['Can I cancel Pro?', 'Write to the bot. There is no self-service cancel. /cancel in the chat only stops the step you were on, not the subscription.'],
         ['What happens when the trial ends?', 'After 7 days the alerts and the digest pause, and the bot tells you then. Pro is a 30-day subscription charged when you pay.'],
         ['Which cities?', `It searches from ${nO} origins to ${nD} destinations. The list is on this page and also inside the bot.`],
-        ['Will you spam me?', 'No. Pro sends one daily alert and the 9 PM digest, and nothing else.'],
+        ['Will you spam me?', 'No. Pro sends instant alerts only when a fare reaches your price (max 5 a day, none between midnight and 8 AM Argentina time) and the 9 PM Argentina time digest.'],
         ['What about my IP?', PRIVACY],
       ],
       finalTitle: 'The next fare drop could land tonight. Be the one who sees it.',
@@ -280,7 +280,7 @@ function copy(lang) {
     steps: [
       ['Abrís @flightalertpro_bot', 'Elegís de dónde salís y adónde querés ir.', 'i-search'],
       ['Ves los precios más bajos', 'Los que hay ahora para esa ruta.', 'i-pin'],
-      ['Si te pasás a Pro', 'Recibís una alerta todos los días y un resumen a las 21:00.', 'i-bell'],
+      ['Si te pasás a Pro', 'Buscás sin límite, te aviso al instante cuando un precio baja a tu techo y te llega el resumen de las 21:00.', 'i-bell'],
     ],
     copyStart: 'Copiar /start',
     copied: 'Copiado',
@@ -294,9 +294,9 @@ function copy(lang) {
     freeBtn: 'Empezar gratis',
     proTitle: 'Pro',
     proItems: [
-      'Alerta diaria',
-      'Resumen a las 21:00',
-      'Seguís buscando después del cupo del mes',
+      'Búsquedas sin límite (con tope anti-abuso)',
+      'Aviso al instante cuando un precio baja a tu techo',
+      'Resumen a las 21:00 (hora de Argentina)',
     ],
     trial: 'La prueba de 7 días cubre la alerta y el reporte, sin tarjeta y una sola vez. Pro se cobra al confirmar el pago.',
     proBtn: 'Quiero Pro',
@@ -308,9 +308,9 @@ function copy(lang) {
     optAr: 'Argentina',
     optEu: 'Unión Europea',
     optOther: 'Resto del mundo',
-    arsMissing: 'Sin cotización del dólar BNA para mostrar el precio en pesos.',
-    bna: 'al dólar BNA de hoy',
-    arsWords: (n) => `${n} pesos argentinos, al dólar BNA de hoy.`,
+    arsMissing: 'Sin cotización del dólar oficial para mostrar el precio en pesos.',
+    bna: 'al dólar oficial de hoy',
+    arsWords: (n) => `${n} pesos argentinos, al dólar oficial de hoy.`,
     euFigure: '€4,50',
     euWords: '4,50 euros, IVA incluido.',
     usdFigure: 'US$5',
@@ -323,7 +323,7 @@ function copy(lang) {
       ['¿Puedo cancelar Pro?', 'Escribinos al bot. No hay baja self-service: /cancel en el chat solo corta lo que estabas haciendo, no la suscripción.'],
       ['¿Qué pasa cuando termina la prueba?', 'A los 7 días se pausan las alertas y el reporte, y el bot te avisa en ese momento. Pro es una suscripción de 30 días que se cobra al pagar.'],
       ['¿Desde qué ciudades busca?', `Desde ${nO} orígenes y hacia ${nD} destinos. La lista está en esta página y también adentro del bot.`],
-      ['¿Me van a llenar de mensajes?', 'No. Pro te manda una alerta diaria y el resumen de las 21:00, nada más.'],
+      ['¿Me van a llenar de mensajes?', 'No. Pro te avisa al instante solo cuando un precio llega a tu techo (hasta 5 por día, nada entre las 00 y las 08) y te manda el resumen de las 21:00.'],
       ['¿Qué hacen con mi IP?', PRIVACY],
     ],
     finalTitle: 'El próximo precio bajo puede aparecer esta noche. Que te encuentre a vos.',
@@ -388,7 +388,7 @@ function jsonLd(lang, ars) {
     { '@type': 'Offer', price: '250', priceCurrency: 'XTR', description: 'Telegram Stars' },
   ];
   if (Number.isInteger(ars) && ars > 0) {
-    offers.push({ '@type': 'Offer', price: String(ars), priceCurrency: 'ARS', description: 'BNA' });
+    offers.push({ '@type': 'Offer', price: String(ars), priceCurrency: 'ARS', description: 'Dólar oficial (dolarapi)' });
   }
   return JSON.stringify({
     '@context': 'https://schema.org',
@@ -528,7 +528,7 @@ function renderLanding(ctx = {}) {
     + `<nav aria-label="${lang === 'en' ? 'Footer' : 'Pie'}">`
     + `<a href="${tg('footer')}">${esc(t.contact)}</a>`
     + `<a href="#privacidad">${esc(t.privacyLink)}</a>`
-    + '</nav><p>© Ranuk IT</p></div></footer>'
+    + `</nav><p>${lang === 'en' ? 'A product by' : 'Un producto de'} <a href="https://ranuk.dev" rel="noopener">Ranuk IT Solutions</a></p></div></footer>`
     + `<script src="${jsHref}" defer></script>`
     + '</body></html>';
 }

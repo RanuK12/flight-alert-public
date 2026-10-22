@@ -15,6 +15,7 @@ const schema = new mongoose.Schema({
   foundAt: { type: String, default: null },
   sentAt: { type: Date, default: Date.now },
   kind: { type: String, default: 'digest' },
+  sentAtIso: { type: String, default: null },
 }, { timestamps: true });
 
 module.exports = mongoose.models.Notification || mongoose.model('Notification', schema);

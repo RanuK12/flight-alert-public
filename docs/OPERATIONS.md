@@ -50,6 +50,13 @@ Sin valores secretos. Los datos de cuentas son los observados en los dashboards 
 | `PUBLIC_KILL_SWITCH` | `on` = mantenimiento | no | manual |
 | `FEATURE_SEARCH`, `FEATURE_ALERTS`, `FEATURE_PAYMENTS_STARS`, `FEATURE_PAYMENTS_MP`, `FEATURE_PAYMENTS_STRIPE` | flags (hoy en `true`) | no | manual |
 | `FEATURE_CHANNELS` | fase 2 (apagado) | no | manual |
+| `ADMIN_TOKEN` | bearer de `/admin/*` (≥32 caracteres; sin él `/admin` da 404) | sí | `openssl rand -hex 32` en el MBP → llavero `flight-alert-public/ADMIN_TOKEN` |
+| `FEATURE_INSTANT_ALERTS` | kill switch de la alerta instantánea Pro | no | manual |
+| `PRO_SEARCH_PER_MIN` / `PRO_SEARCH_PER_DAY` | tope anti-abuso de Pro (10 / 60 por defecto) | no | manual |
+| `INSTANT_ALERTS_EVERY_HOURS` | cada cuántas horas corre la alerta instantánea (3) | no | manual |
+| `INSTANT_ALERTS_COOLDOWN_HOURS` | cooldown por alerta (12) | no | manual |
+| `INSTANT_ALERTS_MAX_PER_DAY` | avisos instantáneos por usuario por día (5) | no | manual |
+| `DIGEST_GRACE_HOURS` | margen para recuperar el informe de las 21:00 si el servicio dormía (3) | no | manual |
 | `PORT`, `NODE_ENV` | runtime | no | Render |
 
 ## 3. Respaldo de secretos
@@ -64,8 +71,10 @@ Al rotar un secreto, actualizar Render **y** el llavero (`security add-generic-p
 2. **Búsqueda**: `runSearch` verifica flags, anti-spam (10 s), cuota (10/mes, ART) y duplicados de 24 h; pide `/v2/prices/month-matrix` a Travelpayouts en EUR, filtra fecha exacta y frescura ≤7 días. Sólo una búsqueda con resultados descuenta cuota. Respuesta: precio "visto hace X h" + deep link Aviasales `ORIGEN DDMM DESTINO [DDMM] 1` con `marker=793462`, `currency=eur`.
 3. **Pago web**: `/pro` (país por geoip-lite + elección) → `POST /pro/checkout` → Stripe Checkout (EUR/USD) o preapproval MP (ARS) → el proveedor llama al webhook → se valida la firma → `activatePro` (idempotente por `provider+ref`, colección `Payment`) → `Entitlement.plan=pro`, `proUntil` +30 d → `/pro/listo` da el link `t.me/<bot>?start=link_<código>` que vincula el chat con el pago → aviso a `OWNER_TELEGRAM_IDS` en live.
 4. **Stars**: dentro del bot, invoice XTR de 250 ⭐ con payload firmado (`STARS_PAYLOAD_SECRET`) → `pre_checkout_query` → `successful_payment` → `activatePro`.
-5. **ARS**: cron 10:00 consulta dolarapi (oficial, venta), guarda la cotización y ajusta el monto de las suscripciones MP.
-6. **Alertas**: rutas en `Route`; cron 21:00 (America/Argentina/*, UTC-3) arma el informe y lo manda; cron horario vence pruebas/Pro y pausa alertas.
+5. **ARS**: job de las 10:00 ART consulta dolarapi (oficial, venta), guarda la cotización y ajusta el monto de las suscripciones MP.
+6. **Alertas**: rutas en `Route`. Informe 21:00 ART; job horario de vencimientos. **Alerta instantánea (Pro)**: cada `INSTANT_ALERTS_EVERY_HOURS` h agrupa las alertas por ruta+fechas (una consulta a Travelpayouts por grupo) y avisa si el precio está en o debajo del techo, con deep link y "visto hace". Dedupe ruta+precio+fecha, cooldown 12 h por alerta, máx. 5/día por usuario, silencio 00–08 ART (lo retenido sale en la corrida de las 08:00). Kill switch `FEATURE_INSTANT_ALERTS`.
+   **Scheduler**: todo corre dentro del proceso de Render (sin cron externo ni MBP). Al arrancar y cada minuto revisa la ventana vigente de cada job; un lease en Mongo (`JobLock`, TTL) evita corridas dobles entre instancias o reinicios, y `lastWindow`/`lastRunAt` en Mongo lo hace idempotente. Si el servicio dormía, al despertar recupera la ventana una vez si sigue dentro del margen (informe 3 h, cotización 12 h, vencimientos 1 h).
+   **Planes**: Free 10 búsquedas/mes. Pro búsquedas sin límite con tope anti-abuso 10/min y 60/día. Owner sin tope.
 7. **Keepalive y monitoreo**: UptimeRobot (cuenta `emilio@ranuk.dev`, login con Google) pide `https://flight-alert-public.onrender.com/health` cada 5 min. Eso evita que el plan Free duerma y, si la respuesta no es 2xx, manda un email a `emilio@ranuk.dev` (y otro cuando se recupera). No depende del MBP. El LaunchAgent viejo `com.ranuk.fap-keepalive` se dio de baja el 22/10/2026; queda solo su log histórico en `~/.rkfap/keepalive.log`.
 
 ```mermaid
@@ -99,13 +108,30 @@ flowchart LR
   H[cron horario] --> E[vence prueba / Pro] --> P[pausa alertas + aviso]
 ```
 
-## 5. Runbooks
+## 5. API de administración
+
+Todas con `Authorization: Bearer $ADMIN_TOKEN`, comparación en tiempo constante, 30 pedidos/min por IP, `Cache-Control: no-store`. Sin token: 401; sin `ADMIN_TOKEN` en el servidor: 404.
+
+| Método | Ruta | Qué hace |
+|---|---|---|
+| GET | `/admin/status` | salud, commit (`RENDER_GIT_COMMIT`), versión, usuarios Free/Pro/prueba, pagos de hoy por método (solo conteos) |
+| POST | `/admin/kill` `{"state":"on"\|"off"}` | kill switch general, guardado en Mongo (`RuntimeFlag`), sobrevive reinicios |
+| POST | `/admin/instant-alerts` `{"state":"on"\|"off"\|"env"}` | override de `FEATURE_INSTANT_ALERTS` (`env` vuelve a la variable) |
+| POST | `/admin/price-check` | fuerza la revisión de alerta instantánea (máx. 2 cada 10 min; respeta el silencio 00–08) |
+| GET | `/admin/logs?n=200` | últimas líneas del proceso, sin tokens, claves, URIs ni emails |
+
+```bash
+TOKEN=$(security find-generic-password -a emilio -s flight-alert-public/ADMIN_TOKEN -w)
+curl -s -H "Authorization: Bearer $TOKEN" https://flight-alert-public.onrender.com/admin/status
+```
+
+## 6. Runbooks
 
 **Go-live (cobros reales)**: seguir `docs/GO_LIVE.md`. Resumen: claves live en Render, `PAYMENTS_MODE=live`, webhook live con los 4 eventos, Stripe Tax activo, deploy, ver `payments: live` en el log, un pago real mínimo y su reembolso (lo hace Emilio).
 
 **Rollback**: Render > Deploys > deploy anterior > "Rollback", o `git revert` del merge en `main` (redeploy automático). Las variables no se revierten solas.
 
-**Kill switch**: `PUBLIC_KILL_SWITCH=on` → el bot contesta "mantenimiento", sin crons. Para apagar una parte: poner en `off` el `FEATURE_*` correspondiente (búsqueda, alertas, Stars, MP, Stripe). Save only + Manual Deploy.
+**Kill switch**: `FEATURE_INSTANT_ALERTS=off` apaga solo la alerta instantánea. `PUBLIC_KILL_SWITCH=on` → el bot contesta "mantenimiento", sin crons. Para apagar una parte: poner en `off` el `FEATURE_*` correspondiente (búsqueda, alertas, Stars, MP, Stripe). Save only + Manual Deploy.
 
 **Reembolsos**: Stripe > Pagos > Reembolsar (y cancelar la suscripción); MP > Actividad > Devolver + cancelar preapproval; Stars: `refundStarPayment` desde la Bot API con el `telegram_payment_charge_id`. Después, bajar el plan (`downgrade`) si corresponde.
 

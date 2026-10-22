@@ -4,6 +4,7 @@ const { col } = require('../../database');
 const copy = require('../copy');
 const link = require('../../services/payments/link');
 const sessions = require('../sessions');
+const ux = require('../ux');
 
 function register(bot) {
   bot.onText(/^\/start(?:@\w+)?(?:\s+(\S+))?$/, async (msg, match) => {
@@ -25,12 +26,16 @@ function register(bot) {
       },
       { upsert: true },
     );
-    await bot.sendMessage(chatId, copy.welcome(msg.from.first_name));
+    await ux.welcome(bot, msg);
   });
 
   bot.onText(/^\/cancel(?:@\w+)?$/, async (msg) => {
     await sessions.clearSession(msg.chat.id);
     await bot.sendMessage(msg.chat.id, 'Listo, cancelé lo que estábamos haciendo.');
+  });
+
+  bot.onText(/^\/help(?:@\w+)?$/, async (msg) => {
+    await bot.sendMessage(msg.chat.id, copy.help, { disable_web_page_preview: true });
   });
 
   bot.onText(/^\/terms(?:@\w+)?$/, async (msg) => {

@@ -181,8 +181,8 @@ test('ARS solo con cotización real y el país detectado no cambia el checkout',
   const app = createApp();
   country.setLookup(async () => 'AR');
   const missing = text(await get(app, '/es'));
-  expect(missing).toContain('Sin cotización del dólar BNA para mostrar el precio en pesos.');
-  expect(missing).not.toContain('pesos argentinos, al dólar BNA de hoy');
+  expect(missing).toContain('Sin cotización del dólar oficial para mostrar el precio en pesos.');
+  expect(missing).not.toContain('pesos argentinos, al dólar oficial de hoy');
   expect(missing).toContain('data-price-region="ar" aria-current="true"');
 
   await col('FxRate').create({
@@ -191,8 +191,8 @@ test('ARS solo con cotización real y el país detectado no cambia el checkout',
     at: '2026-10-21T00:00:00.000Z',
   });
   const html = text(await get(app, '/es'));
-  expect(html).toContain('7700 pesos argentinos, al dólar BNA de hoy.');
-  expect(html).toContain('al dólar BNA de hoy');
+  expect(html).toContain('7700 pesos argentinos, al dólar oficial de hoy.');
+  expect(html).toContain('al dólar oficial de hoy');
   expect(html).toContain('"priceCurrency":"ARS"');
   expect(html).toContain('"price":"7700"');
   expect(html).toContain('Este selector solo cambia la vista.');
