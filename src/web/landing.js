@@ -688,6 +688,7 @@ function renderLanding(ctx = {}) {
     + `<li>${icon('i-check')} <strong>${lang === 'en' ? 'Daily report at 21 h (Argentina time)' : 'Reporte diario a las 21 h (hora Argentina)'}</strong></li>`
     + `<li>${icon('i-check')} ${esc(t.trial)}</li>`
     + `<li>${icon('i-check')} ${esc(t.starsPeriod)}</li>`
+    + require('./aiSoon').li(lang)
     + '</ul>'
     + `<div class="plan-raw-items" hidden><ul>${t.proItems.map((item) => `<li>${esc(item)}</li>`).join('')}</ul><p>${esc(t.trial)}</p><p>${esc(t.stars)}</p></div>`
     + `<a class="btn btn--primary" href="/pro">${esc(t.proBtn)}</a>`

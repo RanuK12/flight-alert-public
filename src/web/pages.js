@@ -91,7 +91,7 @@ function pro({ choice = '', ipCountry: geo = '', language = '', nonce = '', ars 
     <ul class="pro-benefits">
       <li>Búsquedas ilimitadas (uso justo).</li>
       <li>Te avisamos cuando un precio baja de tu techo.</li>
-      <li>Informe de las 21:00 (hora de Argentina).</li>
+      <li>Informe de las 21:00 (hora de Argentina).</li>${require('./aiSoon').li('es')}
     </ul>
     <p class="pro-price" id="pro-price" aria-live="polite" data-ars="${esc(lines.ars)}" data-eur="${esc(lines.eur)}" data-usd="${esc(lines.usd)}">${esc(lines[key])}</p>
     <p class="fine">${note}</p>

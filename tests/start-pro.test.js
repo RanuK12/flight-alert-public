@@ -11,18 +11,39 @@ function fakeBot() {
 
 beforeEach(() => { cleanEnv(); reset(); clock.reset(); clock.setNow(new Date('2026-10-22T12:00:00Z')); });
 
-describe('/start con Pro (comp)', () => {
-  test.each([['es', 'Tenés Pro hasta', 'búsquedas gratis'], ['en', 'You have Pro until', 'free searches']])('%s', async (lang, yes, no) => {
-    await col('Entitlement').create({ telegramUserId: '77', plan: 'pro', source: 'comp', searchesUsed: 0, proUntil: '2099-12-31T00:00:00.000Z' });
-    const bot = fakeBot();
-    await ux.welcome(bot, { chat: { id: 77 }, from: { id: 77, language_code: lang } });
-    expect(bot.sent[0]).toContain(yes);
-    expect(bot.sent[0]).not.toContain(no);
+async function start(id, lang) {
+  const bot = fakeBot();
+  await ux.welcome(bot, { chat: { id }, from: { id, language_code: lang } });
+  return bot.sent[0];
+}
+
+describe('/start con Pro', () => {
+  test.each([['es', 'Tenés Pro hasta', 'búsquedas gratis'], ['en', 'You have Pro until', 'free searches']])('Pro con fecha real (%s)', async (lang, yes, no) => {
+    await col('Entitlement').create({ telegramUserId: '77', plan: 'pro', source: 'stripe', searchesUsed: 0, proUntil: '2026-12-31T00:00:00.000Z' });
+    const msg = await start(77, lang);
+    expect(msg).toContain(yes);
+    expect(msg).not.toContain(no);
+  });
+
+  test.each([['es', 'Tenés Pro:'], ['en', 'You have Pro:']])('comp/admin con año >= 2090 usa helloProOpen (%s)', async (lang, yes) => {
+    await col('Entitlement').create({ telegramUserId: '79', plan: 'pro', source: 'comp', searchesUsed: 0, proUntil: '2099-12-31T00:00:00.000Z' });
+    const msg = await start(79, lang);
+    expect(msg).toContain(yes);
+    expect(msg).not.toMatch(/2099/);
   });
 
   test('Free sigue viendo el cupo', async () => {
-    const bot = fakeBot();
-    await ux.welcome(bot, { chat: { id: 78 }, from: { id: 78, language_code: 'es' } });
-    expect(bot.sent[0]).toContain('búsquedas gratis');
+    expect(await start(78, 'es')).toContain('búsquedas gratis');
+  });
+});
+
+describe('Pro con IA · muy pronto', () => {
+  test('aparece en la landing y /pro, y se apaga con SHOW_AI_SOON=false', () => {
+    const soon = require('../src/web/aiSoon');
+    expect(soon.li('es')).toContain('Pro con IA');
+    expect(soon.li('en')).toContain('Pro with AI');
+    process.env.SHOW_AI_SOON = 'false';
+    expect(soon.li('es')).toBe('');
+    delete process.env.SHOW_AI_SOON;
   });
 });
