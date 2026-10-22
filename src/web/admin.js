@@ -91,6 +91,7 @@ function router({ clientIp, priceCheck }) {
       now: clock.now().toISOString(),
       kill: flags.kill(),
       instantAlerts: flags.instantAlerts(),
+      ai: require('../services/ai').health(),
       overrides: { kill: runtimeFlags.get('kill'), instantAlerts: runtimeFlags.get('instantAlerts') },
       ...data,
     });
