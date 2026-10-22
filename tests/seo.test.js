@@ -30,8 +30,8 @@ beforeEach(() => {
   process.env.PUBLIC_BASE_URL = 'https://flightalert.ranuk.dev';
 });
 
-test('seo-routes.json: 20 rutas válidas, títulos ≤60 y descripciones ≤155', () => {
-  expect(routes).toHaveLength(20);
+test('seo-routes.json: 10 rutas AR→EU válidas, títulos ≤60 y descripciones ≤155', () => {
+  expect(routes).toHaveLength(10);
   for (const r of routes) {
     expect(r.origen_iata).toMatch(/^[A-Z]{3}$/);
     expect(r.destino_iata).toMatch(/^[A-Z]{3}$/);
@@ -45,19 +45,19 @@ test('seo-routes.json: 20 rutas válidas, títulos ≤60 y descripciones ≤155'
     }
   }
   const paths = seo.ROUTES.flatMap((r) => [r.path.es, r.path.en]);
-  expect(new Set(paths).size).toBe(40);
+  expect(new Set(paths).size).toBe(20);
 });
 
-test('sitemap.xml lista home, /pro y las 40 páginas de ruta con hreflang', async () => {
+test('sitemap.xml lista home, /pro y las 20 páginas de ruta con hreflang', async () => {
   const res = await get(createApp(), '/sitemap.xml');
   expect(res.status).toBe(200);
   expect(res.headers['content-type']).toMatch(/xml/);
   expect(res.body).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"');
-  for (const p of ['/', '/es', '/en', '/pro', '/vuelos/madrid-paris', '/en/flights/madrid-paris']) {
+  for (const p of ['/', '/es', '/en', '/pro', '/vuelos/buenos-aires-madrid', '/en/flights/buenos-aires-madrid']) {
     expect(res.body).toContain(`<loc>https://flightalert.ranuk.dev${p}</loc>`);
   }
-  expect((res.body.match(/<url>/g) || []).length).toBe(1 + 2 + 1 + 40);
-  expect(res.body).toContain('hreflang="en" href="https://flightalert.ranuk.dev/en/flights/madrid-rome"');
+  expect((res.body.match(/<url>/g) || []).length).toBe(1 + 2 + 1 + 20);
+  expect(res.body).toContain('hreflang="en" href="https://flightalert.ranuk.dev/en/flights/buenos-aires-rome"');
 });
 
 test('robots.txt tiene la línea Sitemap', async () => {
@@ -67,13 +67,13 @@ test('robots.txt tiene la línea Sitemap', async () => {
 });
 
 test('página de ruta ES: title, h1, canonical, hreflang, JSON-LD y sin número sin datos', async () => {
-  const res = await get(createApp(), '/vuelos/madrid-paris');
+  const res = await get(createApp(), '/vuelos/buenos-aires-madrid');
   expect(res.status).toBe(200);
   const b = res.body;
-  expect(b).toContain('<title>Vuelos baratos Madrid-París | Flight Alert</title>');
-  expect(b).toContain('<h1>Vuelos de Madrid a París</h1>');
-  expect(b).toContain('rel="canonical" href="https://flightalert.ranuk.dev/vuelos/madrid-paris"');
-  expect(b).toContain('hreflang="en" href="https://flightalert.ranuk.dev/en/flights/madrid-paris"');
+  expect(b).toContain('<title>Vuelos baratos Buenos Aires-Madrid | Flight Alert</title>');
+  expect(b).toContain('<h1>Vuelos de Buenos Aires a Madrid</h1>');
+  expect(b).toContain('rel="canonical" href="https://flightalert.ranuk.dev/vuelos/buenos-aires-madrid"');
+  expect(b).toContain('hreflang="en" href="https://flightalert.ranuk.dev/en/flights/buenos-aires-madrid"');
   expect(b).toContain('"@type":"FAQPage"');
   expect(b).toContain('"@type":"BreadcrumbList"');
   expect(b).not.toContain('{PRECIO}');
@@ -83,8 +83,8 @@ test('página de ruta ES: title, h1, canonical, hreflang, JSON-LD y sin número 
 });
 
 test('página de ruta EN con precio real del caché', async () => {
-  await col('Route').create({ telegramUserId: '1', origin: 'MAD', destination: 'FCO', lastPriceEur: 61.4, foundAt: new Date() });
-  const res = await get(createApp(), '/en/flights/madrid-rome');
+  await col('Route').create({ telegramUserId: '1', origin: 'EZE', destination: 'FCO', lastPriceEur: 61.4, foundAt: new Date() });
+  const res = await get(createApp(), '/en/flights/buenos-aires-rome');
   expect(res.status).toBe(200);
   expect(res.body).toContain('<html lang="en">');
   expect(res.body).toContain('€61');
@@ -112,7 +112,7 @@ test('htmlCache: público en HTML, nunca en /admin, /app/api, /webhooks ni check
     res.send('<html>');
     return headers['Cache-Control'];
   };
-  expect(run('GET', '/vuelos/madrid-paris')).toBe(seo.HTML_CACHE);
+  expect(run('GET', '/vuelos/buenos-aires-madrid')).toBe(seo.HTML_CACHE);
   expect(run('GET', '/es')).toBe(seo.HTML_CACHE);
   for (const p of ['/admin', '/app/api/search', '/webhooks/mp', '/pro/checkout', '/app']) {
     expect(run('GET', p)).toBeUndefined();
@@ -143,4 +143,25 @@ test('/pro muestra precio y prueba reales del código', async () => {
 test('el copy de búsquedas gratis coincide con el tope real', () => {
   const ent = require('../src/services/entitlements');
   for (const r of routes) expect(r.es.intro).toContain(`${ent.SEARCH_CAP} búsquedas al mes`);
+});
+
+test('rutas: todas salen de un origen AR y van a un destino de airports.js', () => {
+  const { ORIGINS, DESTINATIONS } = require('../src/config/airports');
+  for (const r of routes) {
+    expect(ORIGINS).toContain(r.origen_iata);
+    expect(DESTINATIONS).toContain(r.destino_iata);
+  }
+});
+
+test('URLs retiradas: 301 a la home del idioma y fuera del sitemap', async () => {
+  const es = await get(createApp(), '/vuelos/madrid-paris');
+  expect(es.status).toBe(301);
+  expect(es.headers.location).toBe('/');
+  const en = await get(createApp(), '/en/flights/madrid-rome');
+  expect(en.status).toBe(301);
+  expect(en.headers.location).toBe('/en');
+  const sm = await get(createApp(), '/sitemap.xml');
+  expect(sm.text || sm.body).not.toContain('madrid-paris');
+  expect(sm.text || sm.body).toContain('/vuelos/cordoba-madrid');
+  for (const r of seo.ROUTES) expect(seo.REMOVED.has(r.path.es) || seo.REMOVED.has(r.path.en)).toBe(false);
 });
