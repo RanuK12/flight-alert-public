@@ -39,7 +39,9 @@ function normalize(text) {
   return String(text || '').normalize('NFKC').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 300);
 }
 
-function today() { return clock.now().toISOString().slice(0, 10); }
+const { todayART } = require('./today');
+
+function today() { return todayART(); }
 
 function takeQuota(id) {
   const d = today();
@@ -105,7 +107,7 @@ async function parse(userId, text, opts = {}) {
   if (!enabled()) return { ok: false, reason: 'disabled' };
   const norm = normalize(text);
   if (!norm) return { ok: false, reason: 'empty' };
-  // Hoy (UTC) en la clave: fechas relativas ("el viernes que viene") no se cachean entre días.
+  // Hoy (ART) en la clave: fechas relativas ("el viernes que viene") no se cachean entre días.
   const key = `${today()}|${norm}`;
   if (cache.has(key)) { stats.cacheHits += 1; return { ok: true, source: 'cache', value: { ...cache.get(key) } }; }
   if (!takeQuota(userId)) { stats.capped += 1; return { ok: false, reason: 'daily_cap' }; }
