@@ -50,10 +50,11 @@ function securityHeaders(_req, res, next) {
   res.set('Content-Security-Policy', [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' https://tp-em.com`,
-    `style-src 'self' 'nonce-${nonce}'`,
+    // El script de Travelpayouts inyecta un <style> sin nonce y Google Fonts; con nonce, 'unsafe-inline' se ignora.
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' https://tp-em.com",
     "connect-src 'self' https://tp-em.com",
-    "font-src 'self'",
+    "font-src 'self' https://fonts.gstatic.com",
     "object-src 'none'",
     "base-uri 'self'",
     "frame-ancestors 'none'",
@@ -256,19 +257,16 @@ function createApp() {
 function schedule() {
   if (flags.kill()) return;
   if (!process.env.TELEGRAM_BOT_TOKEN && !flags.any()) return;
-  const cron = require('node-cron');
-  const tz = 'America/Argentina/Buenos_Aires';
-  cron.schedule('0 21 * * *', () => {
-    runDailyDigest(getBot()).catch((err) => logger.error('informe', err));
-  }, { timezone: tz });
-  cron.schedule('0 * * * *', () => {
-    expire(getBot()).catch((err) => logger.error('vencimientos', err));
-  }, { timezone: tz });
-  cron.schedule('0 10 * * *', () => {
-    fx.refresh()
-      .then(() => fx.adjustSubscriptions((id, amount) => require('./services/payments/mp').updatePreapprovalAmount(id, amount)))
-      .catch((err) => logger.error('fx', err));
-  }, { timezone: tz });
+  if (process.env.NODE_ENV === 'test') return;
+  // Todo corre dentro de este proceso. El lock en Mongo evita corridas dobles y la ventana vigente
+  // se recupera al arrancar si el servicio estaba dormido.
+  require('./services/scheduler').start({
+    digest: () => runDailyDigest(getBot()),
+    expire: () => expire(getBot()),
+    fx: () => fx.refresh()
+      .then(() => fx.adjustSubscriptions((id, amount) => require('./services/payments/mp').updatePreapprovalAmount(id, amount))),
+    instant: () => require('./services/instantAlerts').run(getBot()),
+  });
 }
 
 function start() {
@@ -282,6 +280,7 @@ function start() {
     if (process.env.NODE_ENV === 'production') process.exit(1);
   });
   app.set('booting', booting);
+  booting.then(() => samplePrice.load()).catch(() => {});
   if (process.env.TELEGRAM_BOT_TOKEN) startBot();
   schedule();
   logger.info('servicio público', summary());

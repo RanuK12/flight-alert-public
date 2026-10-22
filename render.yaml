@@ -36,6 +36,20 @@ services:
         sync: false
       - key: FEATURE_CHANNELS
         sync: false
+      - key: FEATURE_INSTANT_ALERTS
+        sync: false
+      - key: PRO_SEARCH_PER_MIN
+        sync: false
+      - key: PRO_SEARCH_PER_DAY
+        sync: false
+      - key: INSTANT_ALERTS_EVERY_HOURS
+        sync: false
+      - key: INSTANT_ALERTS_COOLDOWN_HOURS
+        sync: false
+      - key: INSTANT_ALERTS_MAX_PER_DAY
+        sync: false
+      - key: DIGEST_GRACE_HOURS
+        sync: false
       - key: OWNER_TELEGRAM_IDS
         sync: false
       - key: MONGODB_URI

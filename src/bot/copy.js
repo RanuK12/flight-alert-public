@@ -6,7 +6,9 @@ module.exports = {
   slow: 'Estás yendo muy rápido. Probá de nuevo en un rato.',
   searchOff: 'La búsqueda todavía no está prendida.',
   alertsOff: 'Las alertas todavía no están prendidas.',
-  paywall: 'Llegaste a las 10 búsquedas gratis de este mes. Con Pro seguís buscando, armás alertas y te llega el informe de las 21.',
+  paywall: 'Llegaste a las 10 búsquedas gratis de este mes. Con Pro buscás sin límite, te aviso al toque cuando un precio baja de tu techo y te llega el informe de las 21.',
+  proCapMinute: 'Vas muy rápido. Esperá un minuto y seguí buscando.',
+  proCapDay: (n) => `Por hoy llegaste a ${n} búsquedas, el tope para evitar abusos. Mañana seguís sin límite.`,
   alertsPaywall: 'Las alertas y el informe diario van con Pro. La prueba es una sola, por 7 días.',
   trialOn: 'Listo: tenés 7 días de prueba para las alertas y el informe de las 21. Después sigue con Pro.',
   trialOver: 'Se terminó la prueba. Pausé tus alertas. Con /pro las volvés a prender.',
@@ -21,6 +23,7 @@ module.exports = {
       'Busco vuelos baratos entre Argentina y Europa.',
       'La primera búsqueda es gratis y después tenés 10 por mes.',
       'La alerta diaria y el informe de las 21 se prueban 7 días, una sola vez.',
+      'Con Pro: búsquedas sin límite, aviso al instante cuando un precio baja de tu techo e informe de las 21.',
       '',
       '/buscar  /nueva_alerta  /mis_alertas  /informe  /pro',
     ].join('\n');

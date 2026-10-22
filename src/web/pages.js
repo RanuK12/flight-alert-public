@@ -51,6 +51,7 @@ function pro({ choice = '', ipCountry: geo = '', language = '', nonce = '' } = {
     : 'El pago en pesos solo aparece si elegís Argentina y estás en Argentina.';
   return layout('Pro', `
     <h1>Pro</h1>
+    <p>Búsquedas sin límite (con un tope anti-abuso), aviso al instante cuando un precio baja de tu techo y el informe de las 21:00 (hora de Argentina).</p>
     <p>${note}</p>
     <p>${priceLine}</p>
     <form method="post" action="/pro/checkout">
