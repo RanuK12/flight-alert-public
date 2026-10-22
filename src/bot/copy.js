@@ -36,7 +36,7 @@ module.exports = {
       'La alerta diaria y el informe de las 21 se prueban 7 días, una sola vez.',
       'Con Pro: búsquedas ilimitadas (uso justo), te avisamos cuando un precio baja de tu techo e informe de las 21.',
       '',
-      '/buscar  /nueva_alerta  /mis_alertas  /informe  /pro  /help',
+      '/buscar  /alertas  /pro  /ayuda',
       '',
       'Un producto de Ranuk IT Solutions · https://ranuk.dev',
     ].join('\n');

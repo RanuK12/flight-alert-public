@@ -23,6 +23,7 @@ const link = require('./services/payments/link');
 const { runDailyDigest } = require('./services/dailyReport');
 const { expire } = require('./services/entitlements');
 const { startBot, getBot } = require('./bot');
+const transport = require('./bot/transport');
 const stars = require('./services/payments/stars');
 
 function clientIp(req) {
@@ -93,7 +94,9 @@ function createApp() {
 
   app.get('/health', (_req, res) => {
     const status = db.health();
-    res.status(status.ok ? 200 : 503).json({ ok: status.ok, db: status.db });
+    const body = { ok: status.ok, db: status.db, telegram: { mode: transport.mode(process.env) } };
+    if (body.telegram.mode === 'webhook') body.telegram.webhook = transport.webhookInfo();
+    res.status(status.ok ? 200 : 503).json(body);
   });
 
   app.get('/favicon.ico', (_req, res) => res.status(204).end());
@@ -109,7 +112,8 @@ function createApp() {
     if (/\.(css|js|png|jpe?g|svg|ico|webp|woff2?|txt|map)$/i.test(req.path)) return next();
     const ip = clientIp(req);
     // Páginas públicas: admiten ráfagas (120/min). El resto sigue estricto (20/min).
-    const page = req.method === 'GET' && ['/', '/es', '/en', '/pro', '/pro/listo'].includes(req.path);
+    // La Mini App hace varias llamadas por pantalla: mismo cupo que las páginas.
+    const page = (req.method === 'GET' && ['/', '/es', '/en', '/pro', '/pro/listo'].includes(req.path)) || req.path === '/app' || req.path.startsWith('/app/');
     const bucket = page ? 'ip-page' : 'ip';
     const limit = page ? 120 : 20;
     if (rateLimit.limited(bucket, String(ip), limit, 60 * 1000)) {
@@ -120,6 +124,8 @@ function createApp() {
   });
 
   app.use('/public', express.static(path.join(__dirname, '..', 'public'), { maxAge: '30d' }));
+  app.use('/app', require('./web/miniapp').router());
+
   app.use('/admin', require('./web/admin').router({
     clientIp,
     priceCheck: () => require('./services/instantAlerts').run(getBot(), { force: true }),
@@ -288,6 +294,8 @@ function createApp() {
     const created = await link.createLink(hash);
     res.type('html').send(pages.listo(created.url, { nonce: res.locals.cspNonce }));
   });
+
+  app.post(transport.WEBHOOK_PATH, transport.webhookHandler(getBot));
 
   app.post('/webhooks/mp', async (req, res) => {
     try {

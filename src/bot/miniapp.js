@@ -1,0 +1,116 @@
+'use strict';
+
+/**
+ * Spec PRISM v2 P0.1: botón Menu (Mini App), comandos ES/EN y teclado persistente de abajo.
+ * Las llamadas de setup a Telegram (setChatMenuButton, setMyCommands) se hacen desde startBot,
+ * o sea solo en el server que corre el bot; los tests usan un bot falso.
+ */
+const { t } = require('./ux/i18n');
+
+/** URL de la Mini App si está lista: base https pública y MINIAPP_ENABLED distinto de "false". */
+function miniAppUrl(env = process.env) {
+  if (String(env.MINIAPP_ENABLED || 'true').toLowerCase() === 'false') return null;
+  const base = String(env.PUBLIC_BASE_URL || '').trim().replace(/\/$/, '');
+  if (!/^https:\/\/[^\s/]+/.test(base)) return null;
+  return `${base}/app`;
+}
+
+/** Acciones del teclado persistente; cada una va al mismo handler que su comando. */
+const ACTIONS = ['search', 'alerts', 'pro', 'help', 'settings'];
+const KEY_TEXT = {
+  es: { search: '🔎 Buscar vuelo', alerts: '🔔 Mis alertas', pro: '⭐ Pro', help: '❓ Ayuda', settings: '⚙️ Ajustes' },
+  en: { search: '🔎 Search flight', alerts: '🔔 My alerts', pro: '⭐ Pro', help: '❓ Help', settings: '⚙️ Settings' },
+};
+const PLACEHOLDER = { es: 'Escribí una ciudad o tocá un botón', en: 'Type a city or tap a button' };
+
+/** Comando equivalente de cada acción (mismo handler). */
+const COMMAND_OF = { search: 'buscar', alerts: 'alertas', pro: 'pro', help: 'ayuda', settings: 'ajustes' };
+
+function keyboard(lang, env = process.env) {
+  const k = KEY_TEXT[lang] || KEY_TEXT.es;
+  const url = miniAppUrl(env);
+  const search = url ? { text: k.search, web_app: { url } } : { text: k.search };
+  return {
+    keyboard: [
+      [search],
+      [{ text: k.alerts }, { text: k.pro }],
+      [{ text: k.help }, { text: k.settings }],
+    ],
+    is_persistent: true,
+    resize_keyboard: true,
+    input_field_placeholder: PLACEHOLDER[lang] || PLACEHOLDER.es,
+  };
+}
+
+function norm(s) {
+  return String(s || '').normalize('NFC').replace(/\uFE0F/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+/** Texto de un botón del teclado (ES o EN) → acción, o null. */
+function actionFor(text) {
+  const n = norm(text);
+  for (const lang of Object.keys(KEY_TEXT)) {
+    for (const a of ACTIONS) if (norm(KEY_TEXT[lang][a]) === n) return a;
+  }
+  return null;
+}
+
+function menuButton(lang, env = process.env) {
+  const url = miniAppUrl(env);
+  if (!url) return { type: 'commands' };
+  return { type: 'web_app', text: lang === 'en' ? 'Search ✈' : 'Buscar ✈', web_app: { url } };
+}
+
+/** 4 comandos visibles por idioma; los alias viejos siguen funcionando pero no se listan. */
+function commands() {
+  return {
+    es: [
+      { command: 'buscar', description: 'Buscar un vuelo' },
+      { command: 'alertas', description: 'Ver tus alertas' },
+      { command: 'pro', description: 'Pasarte a Pro' },
+      { command: 'ayuda', description: 'Ayuda' },
+    ],
+    en: [
+      { command: 'search', description: 'Search a flight' },
+      { command: 'alerts', description: 'Your alerts' },
+      { command: 'pro', description: 'Go Pro' },
+      { command: 'help', description: 'Help' },
+    ],
+  };
+}
+
+/** Setup del bot (solo en startBot). */
+async function setup(bot, env = process.env) {
+  const cmds = commands();
+  await bot.setMyCommands(cmds.en).catch(() => {});
+  await bot.setMyCommands(cmds.es, { language_code: 'es' }).catch(() => {});
+  await bot.setChatMenuButton({ menu_button: menuButton('es', env) }).catch(() => {});
+}
+
+/** Menú por chat, en el idioma del usuario (se llama en /start). */
+async function chatMenu(bot, chatId, lang, env = process.env) {
+  if (!bot.setChatMenuButton) return;
+  await bot.setChatMenuButton({ chat_id: chatId, menu_button: menuButton(lang, env) }).catch(() => {});
+}
+
+/** Teclado inline mínimo del home: Buscar (web_app si está lista) + Mis alertas + Pro. */
+function homeInline(lang, cbEncode, env = process.env) {
+  const url = miniAppUrl(env);
+  const search = url ? { text: t(lang, 'btnSearchApp'), web_app: { url } } : { text: t(lang, 'btnSearchApp'), callback_data: cbEncode('b', 'nx') };
+  return {
+    inline_keyboard: [
+      [search],
+      [{ text: KEY_TEXT[lang === 'en' ? 'en' : 'es'].alerts, callback_data: cbEncode('m', 'ls') }, { text: t(lang, 'btnPro'), callback_data: cbEncode('p', 'show') }],
+    ],
+  };
+}
+
+/** Link directo t.me/<bot>/<short> si BotFather /newapp ya está hecho (MINIAPP_SHORT_NAME). */
+function directLink(env = process.env) {
+  const bot = String(env.TELEGRAM_BOT_USERNAME || '').replace(/^@/, '');
+  const short = String(env.MINIAPP_SHORT_NAME || '');
+  if (!/^[A-Za-z0-9_]{5,32}$/.test(bot) || !/^[A-Za-z0-9_]{3,30}$/.test(short)) return null;
+  return `https://t.me/${bot}/${short}`;
+}
+
+module.exports = { directLink, miniAppUrl, keyboard, actionFor, menuButton, commands, setup, chatMenu, homeInline, KEY_TEXT, ACTIONS, COMMAND_OF };

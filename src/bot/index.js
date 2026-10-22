@@ -1,5 +1,7 @@
 'use strict';
 
+const transport = require('./transport');
+
 const TelegramBot = require('node-telegram-bot-api');
 const flags = require('../config/flags');
 const copy = require('./copy');
@@ -62,9 +64,13 @@ function startBot() {
   if (botInstance) return botInstance;
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) return null;
-  const polling = String(process.env.TELEGRAM_POLLING || 'true').toLowerCase() !== 'false';
+  transport.assertConfig(process.env);
+  const how = transport.mode(process.env);
+  const polling = how === 'polling';
   const bot = new TelegramBot(token, { polling });
   botInstance = bot;
+  bot.on('polling_error', (err) => logger.error('polling', transport.safeError(err, token)));
+  bot.on('webhook_error', (err) => logger.error('webhook', transport.safeError(err, token)));
   install(bot);
 
   startHandler.register(bot);
@@ -99,7 +105,8 @@ function startBot() {
     }
     if (!msg.text || msg.text.startsWith('/')) return;
     try {
-      const consumed = (await ux.onText(bot, msg))
+      const consumed = (await ux.onKeyboard(bot, msg))
+        || (await ux.onText(bot, msg))
         || (await buscarHandler.handleText(bot, msg))
         || (await nuevaAlertaHandler.handleText(bot, msg));
       if (!consumed) await ux.notUnderstood(bot, msg);
@@ -121,11 +128,18 @@ function startBot() {
     await bot.answerPreCheckoutQuery(q.id, true).catch(() => {});
   });
 
-  const cmds = ux.commands();
-  bot.setMyCommands(cmds.en).catch(() => {});
-  bot.setMyCommands(cmds.es, { language_code: 'es' }).catch(() => {});
+  // Menu (Mini App) y comandos ES/EN. Solo corre donde arranca el bot.
+  require('./miniapp').setup(bot).catch(() => {});
 
-  logger.info('bot iniciado', { polling });
+  if (how === 'webhook') {
+    transport.registerWebhook(bot, process.env)
+      .then(() => logger.info('webhook registrado', { path: transport.WEBHOOK_PATH }))
+      .catch((err) => logger.error('webhook', transport.safeError(err)))
+      .then(() => transport.refreshInfo(bot));
+    const tick = setInterval(() => transport.refreshInfo(bot), 5 * 60 * 1000);
+    if (tick.unref) tick.unref();
+  }
+  logger.info('bot iniciado', { mode: how, polling });
   return bot;
 }
 
