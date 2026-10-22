@@ -190,11 +190,22 @@ async function createAlert(bot, ctx, f) {
   return doc;
 }
 
+/** Teclado persistente del usuario: los admins ven además el botón Admin. */
+function kbFor(lang, userId) {
+  return miniapp.keyboard(lang, process.env, { admin: userId != null && flags.isAdmin(userId) });
+}
+
 async function proScreen(bot, ctx, extra) {
   const lang = ctx.lang;
   const e = await col('Entitlement').findOne({ telegramUserId: String(ctx.userId) });
-  if (await entitlements.isPro(ctx.userId) && e && e.proUntil) {
-    await show(bot, ctx.chatId, ctx.mid, t(lang, 'alreadyPro', { date: cal.shortDate(lang, cal.todayIso(new Date(e.proUntil))) }));
+  if ((await entitlements.isPro(ctx.userId) && e && e.proUntil) || flags.isAdmin(ctx.userId)) {
+    // Pro (pago, cortesía o admin): estado + teclado + panel, nunca una línea suelta.
+    const until = e && e.proUntil ? new Date(e.proUntil) : null;
+    const status = until && !isNaN(until.getTime()) && until.getUTCFullYear() < 2090
+      ? t(lang, 'alreadyPro', { date: cal.shortDate(lang, cal.todayIso(until)) })
+      : t(lang, 'proActive');
+    await bot.sendMessage(ctx.chatId, status, { reply_markup: kbFor(lang, ctx.userId) });
+    await bot.sendMessage(ctx.chatId, t(lang, 'home'), { reply_markup: miniapp.homeInline(lang, cb.encode) });
     return null;
   }
   const last = await fx.latest().catch(() => null);
@@ -376,7 +387,9 @@ async function greeting(lang, userId) {
 }
 
 async function home(bot, chatId, lang, text, userId) {
-  await bot.sendMessage(chatId, text || await greeting(lang, userId), { reply_markup: miniapp.keyboard(lang) });
+  let body = text || await greeting(lang, userId);
+  if (!text && userId != null && flags.isAdmin(userId)) body += `\n\n${t(lang, 'adminHint')}`;
+  await bot.sendMessage(chatId, body, { reply_markup: kbFor(lang, userId) });
   await bot.sendMessage(chatId, t(lang, 'home'), { reply_markup: miniapp.homeInline(lang, cb.encode) });
 }
 
@@ -443,7 +456,7 @@ async function settings(bot, msg) {
     t(lang, 'settingsReport'),
     t(lang, 'settingsHint'),
   ].join('\n');
-  await bot.sendMessage(msg.chat.id, text, { reply_markup: miniapp.keyboard(lang) });
+  await bot.sendMessage(msg.chat.id, text, { reply_markup: kbFor(lang, msg.from.id) });
 }
 
 function ctxOf(msg) {
@@ -466,12 +479,15 @@ const HANDLERS = {
   pro: (bot, msg) => proScreen(bot, ctxOf(msg)),
   help: (bot, msg) => help(bot, msg),
   settings: (bot, msg) => settings(bot, msg),
+  // Botón Admin: solo admins; para el resto el texto sigue su camino normal.
+  admin: (bot, msg) => require('../admin').onAdminCommand(bot, msg, ''),
 };
 
 /** Si el texto es un botón del teclado de abajo, corre el mismo handler que el comando. */
 async function onKeyboard(bot, msg) {
   const action = miniapp.actionFor(msg.text);
   if (!action) return false;
+  if (action === 'admin' && !flags.isAdmin(msg.from && msg.from.id)) return false;
   await sessions.clearSession(msg.chat.id);
   await HANDLERS[action](bot, msg);
   return action;

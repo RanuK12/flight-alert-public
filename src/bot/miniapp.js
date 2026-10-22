@@ -6,27 +6,28 @@
  * o sea solo en el server que corre el bot; los tests usan un bot falso.
  */
 const { t } = require('./ux/i18n');
+const { baseUrl } = require('../config/site');
 
 /** URL de la Mini App si está lista: base https pública y MINIAPP_ENABLED distinto de "false". */
 function miniAppUrl(env = process.env) {
   if (String(env.MINIAPP_ENABLED || 'true').toLowerCase() === 'false') return null;
-  const base = String(env.PUBLIC_BASE_URL || '').trim().replace(/\/$/, '');
+  const base = baseUrl(env);
   if (!/^https:\/\/[^\s/]+/.test(base)) return null;
   return `${base}/app`;
 }
 
 /** Acciones del teclado persistente; cada una va al mismo handler que su comando. */
-const ACTIONS = ['search', 'alerts', 'pro', 'help', 'settings'];
+const ACTIONS = ['search', 'alerts', 'pro', 'help', 'settings', 'admin'];
 const KEY_TEXT = {
-  es: { search: '🔎 Buscar vuelo', alerts: '🔔 Mis alertas', pro: '⭐ Pro', help: '❓ Ayuda', settings: '⚙️ Ajustes' },
-  en: { search: '🔎 Search flight', alerts: '🔔 My alerts', pro: '⭐ Pro', help: '❓ Help', settings: '⚙️ Settings' },
+  es: { search: '🔎 Buscar vuelo', alerts: '🔔 Mis alertas', pro: '⭐ Pro', help: '❓ Ayuda', settings: '⚙️ Ajustes', admin: '🛠 Admin' },
+  en: { search: '🔎 Search flight', alerts: '🔔 My alerts', pro: '⭐ Pro', help: '❓ Help', settings: '⚙️ Settings', admin: '🛠 Admin' },
 };
 const PLACEHOLDER = { es: 'Escribí una ciudad o tocá un botón', en: 'Type a city or tap a button' };
 
 /** Comando equivalente de cada acción (mismo handler). */
-const COMMAND_OF = { search: 'buscar', alerts: 'alertas', pro: 'pro', help: 'ayuda', settings: 'ajustes' };
+const COMMAND_OF = { search: 'buscar', alerts: 'alertas', pro: 'pro', help: 'ayuda', settings: 'ajustes', admin: 'admin' };
 
-function keyboard(lang, env = process.env) {
+function keyboard(lang, env = process.env, opts = {}) {
   const k = KEY_TEXT[lang] || KEY_TEXT.es;
   const url = miniAppUrl(env);
   const search = url ? { text: k.search, web_app: { url } } : { text: k.search };
@@ -35,6 +36,7 @@ function keyboard(lang, env = process.env) {
       [search],
       [{ text: k.alerts }, { text: k.pro }],
       [{ text: k.help }, { text: k.settings }],
+      ...(opts.admin ? [[{ text: k.admin }]] : []),
     ],
     is_persistent: true,
     resize_keyboard: true,
@@ -61,29 +63,23 @@ function menuButton(lang, env = process.env) {
   return { type: 'web_app', text: lang === 'en' ? 'Search ✈' : 'Buscar ✈', web_app: { url } };
 }
 
-/** 4 comandos visibles por idioma; los alias viejos siguen funcionando pero no se listan. */
+/** Comandos visibles: ES por defecto y EN para language_code 'en'. Los alias siguen funcionando. */
+const COMMANDS = ['start', 'buscar', 'alertas', 'pro', 'ayuda'];
+const DESCRIPTIONS = {
+  es: { start: 'Inicio y menú', buscar: 'Buscar un vuelo', alertas: 'Ver tus alertas', pro: 'Flight Alert Pro', ayuda: 'Ayuda' },
+  en: { start: 'Home and menu', buscar: 'Search a flight', alertas: 'Your alerts', pro: 'Flight Alert Pro', ayuda: 'Help' },
+};
 function commands() {
-  return {
-    es: [
-      { command: 'buscar', description: 'Buscar un vuelo' },
-      { command: 'alertas', description: 'Ver tus alertas' },
-      { command: 'pro', description: 'Pasarte a Pro' },
-      { command: 'ayuda', description: 'Ayuda' },
-    ],
-    en: [
-      { command: 'search', description: 'Search a flight' },
-      { command: 'alerts', description: 'Your alerts' },
-      { command: 'pro', description: 'Go Pro' },
-      { command: 'help', description: 'Help' },
-    ],
-  };
+  const out = {};
+  for (const lang of ['es', 'en']) out[lang] = COMMANDS.map((c) => ({ command: c, description: DESCRIPTIONS[lang][c] }));
+  return out;
 }
 
-/** Setup del bot (solo en startBot). */
+/** Setup del bot (solo en startBot). Idempotente: setMyCommands/setChatMenuButton reemplazan. */
 async function setup(bot, env = process.env) {
   const cmds = commands();
-  await bot.setMyCommands(cmds.en).catch(() => {});
-  await bot.setMyCommands(cmds.es, { language_code: 'es' }).catch(() => {});
+  await bot.setMyCommands(cmds.es).catch(() => {});
+  await bot.setMyCommands(cmds.en, { language_code: 'en' }).catch(() => {});
   await bot.setChatMenuButton({ menu_button: menuButton('es', env) }).catch(() => {});
 }
 

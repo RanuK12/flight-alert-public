@@ -7,6 +7,23 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const MONTH = /^\d{4}-\d{2}$/;
 const KEYS = new Set(['origin', 'destination', 'departDate', 'returnDate', 'adults', 'flexibleMonth']);
 
+/** Nombre de ciudad/alias (p. ej. "Córdoba", "madrid") → IATA, solo si es inequívoco. */
+function resolveCode(raw) {
+  const up = String(raw || '').trim().toUpperCase();
+  if (IATA.has(up)) return up;
+  const { PLACES, norm } = require('../../bot/ux/places');
+  const q = norm(raw);
+  if (!q) return up;
+  for (const code of [...ORIGINS, ...DESTINATIONS]) {
+    const p = PLACES[code];
+    if (!p) continue;
+    if ([p.city, p.airport, ...(p.alias || [])].map(norm).includes(q)) return code; // EZE antes que BUE
+  }
+  return up;
+}
+
+function addYear(s) { return `${Number(s.slice(0, 4)) + 1}${s.slice(4)}`; }
+
 function validDate(s) {
   if (!DATE.test(s)) return false;
   const d = new Date(`${s}T00:00:00Z`);
@@ -20,12 +37,27 @@ const { todayART } = require('./today');
 function validate(obj, opts = {}) {
   if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return { ok: false, error: 'not_object' };
   for (const k of Object.keys(obj)) if (!KEYS.has(k)) return { ok: false, error: `extra_key:${k}` };
-  const origin = String(obj.origin || '').toUpperCase();
-  const destination = String(obj.destination || '').toUpperCase();
+  const today = opts.today || todayART();
+  const origin = resolveCode(obj.origin);
+  const destination = resolveCode(obj.destination);
+  obj = { ...obj };
+  // Mes sin día: el día 1 del mes (o hoy si es el mes actual).
+  if ((obj.departDate === undefined || obj.departDate === null) && typeof obj.flexibleMonth === 'string' && MONTH.test(obj.flexibleMonth)) {
+    obj.departDate = `${obj.flexibleMonth}-01`;
+  }
+  // "en marzo" interpretado en el año en curso ya pasado: la próxima ocurrencia.
+  if (typeof obj.departDate === 'string' && validDate(obj.departDate) && obj.departDate < today
+    && obj.departDate.slice(0, 7) < today.slice(0, 7) && validDate(addYear(obj.departDate)) && addYear(obj.departDate) >= today) {
+    obj.departDate = addYear(obj.departDate);
+    if (typeof obj.returnDate === 'string' && validDate(obj.returnDate)) obj.returnDate = addYear(obj.returnDate);
+    if (typeof obj.flexibleMonth === 'string' && MONTH.test(obj.flexibleMonth)) obj.flexibleMonth = obj.departDate.slice(0, 7);
+  }
+  if (typeof obj.departDate === 'string' && obj.departDate.slice(0, 7) === today.slice(0, 7) && obj.departDate < today
+    && typeof obj.flexibleMonth === 'string') obj.departDate = today;
   if (!IATA.has(origin)) return { ok: false, error: 'origin' };
   if (!IATA.has(destination) || destination === origin) return { ok: false, error: 'destination' };
   if (typeof obj.departDate !== 'string' || !validDate(obj.departDate)) return { ok: false, error: 'departDate' };
-  if (obj.departDate < (opts.today || todayART())) return { ok: false, error: 'past' };
+  if (obj.departDate < today) return { ok: false, error: 'past' };
   let returnDate = null;
   if (obj.returnDate !== null && obj.returnDate !== undefined) {
     if (typeof obj.returnDate !== 'string' || !validDate(obj.returnDate) || obj.returnDate < obj.departDate) {
@@ -43,4 +75,4 @@ function validate(obj, opts = {}) {
   return { ok: true, value };
 }
 
-module.exports = { validate, IATA };
+module.exports = { validate, IATA, resolveCode };

@@ -59,7 +59,11 @@ function prompt(text) {
       role: 'system',
       content: 'Convertís pedidos de vuelos a JSON. Hoy es ' + t + '. Respondé SOLO un objeto JSON con claves '
         + 'origin, destination (códigos IATA de 3 letras), departDate (YYYY-MM-DD), returnDate (YYYY-MM-DD o null), '
-        + 'adults (entero), y opcional flexibleMonth (YYYY-MM). Buenos Aires=EZE, Córdoba=COR. Nunca incluyas precios.',
+        + 'adults (entero), y opcional flexibleMonth (YYYY-MM). Usá SOLO códigos IATA, nunca nombres de ciudad: '
+        + 'Buenos Aires=EZE, Córdoba=COR, Rosario=ROS, Mar del Plata=MDQ, Madrid=MAD, Barcelona=BCN, Roma=FCO, '
+        + 'París=CDG, Londres=LHR, Lisboa=LIS. Si solo dice un mes ("en marzo"), usá la próxima vez que llega ese mes '
+        + '(nunca una fecha pasada): flexibleMonth=YYYY-MM y departDate=el día 1 de ese mes. '
+        + 'Ignorá precios y presupuestos: nunca los incluyas.',
     },
     { role: 'user', content: text },
   ];
@@ -85,6 +89,7 @@ async function askLlm(text, opts = {}) {
       stats.byProvider[p.name] = (stats.byProvider[p.name] || 0) + 1;
       const v = validate(extractJson(out.content));
       if (v.ok) return { ok: true, value: v.value, provider: p.name };
+      logger.warn('llm inválido', { provider: p.name, error: v.error });
       return { ok: false, reason: 'invalid', provider: p.name };
     } catch (err) {
       stats.errors += 1;
