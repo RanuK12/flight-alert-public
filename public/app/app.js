@@ -10,9 +10,9 @@
       oneway: 'Solo ida', round: 'Ida y vuelta', dep: 'Ida', ret: 'Vuelta', pick: 'Elegir', adults: 'adulto(s)', go: 'Buscar', searching: 'Buscando…',
       notCovered: 'Todavía no cubrimos {c}. Cubrimos:', calFoot: 'Precios vistos en las últimas horas. Pueden cambiar.',
       cheap: 'barato', mid: 'medio', high: 'caro', nodata: 'sin dato', flex: 'Fechas flexibles: cualquier día del mes', seen: 'visto hace {h} h', seenLt: 'visto hace menos de 1 h',
-      offer: 'Ver oferta ↗', alertMe: '🔔 Avisarme si baja', cheapest: 'Más barato', fewer: 'Menos escalas', direct: 'Directo', stops: '{n} escala(s)',
+      offer: 'Ver oferta ↗', alertMe: '🔔 Avisarme', cheapest: 'Más barato', fewer: 'Menos escalas', direct: 'Directo', stops: '{n} escala(s)',
       foot: 'Precio en caché, revisado cada 2–3 h. El precio final lo confirma la página. Algunos enlaces son de afiliado.',
-      empty: 'No hay precios guardados para estas fechas', tryFlex: 'Probar fechas flexibles', error: 'No pude traer precios ahora', retry: 'Reintentar',
+      empty: 'No hay precios guardados para estas fechas', tryFlex: 'Probar fechas flexibles', error: 'No pude traer precios ahora', retry: 'Reintentar', wait: 'Esperá unos segundos y probá de nuevo.',
       paywall: 'Usaste tus 10 búsquedas de este mes. Se renuevan el 1°. Con Pro son ilimitadas (uso justo).',
       alerts: 'Mis alertas', none: 'No tenés alertas todavía.', first: 'Crear la primera', active: 'Activa', paused: 'Pausada', pause: 'Pausar', resume: 'Reanudar',
       edit: 'Editar', del: 'Borrar', undo: 'Deshacer', confirmDel: '¿Borrar la alerta {r}?', ceiling: 'Techo', last: 'último', save: 'Guardar', created: 'Alerta creada',
@@ -24,9 +24,9 @@
       oneway: 'One-way', round: 'Round trip', dep: 'Depart', ret: 'Return', pick: 'Pick', adults: 'adult(s)', go: 'Search', searching: 'Searching…',
       notCovered: "We don't cover {c} yet. We cover:", calFoot: 'Prices seen in the last few hours. They may change.',
       cheap: 'cheap', mid: 'average', high: 'expensive', nodata: 'no data', flex: 'Flexible dates: any day of the month', seen: 'seen {h} h ago', seenLt: 'seen less than 1 h ago',
-      offer: 'See deal ↗', alertMe: '🔔 Alert me if it drops', cheapest: 'Cheapest', fewer: 'Fewest stops', direct: 'Direct', stops: '{n} stop(s)',
+      offer: 'See deal ↗', alertMe: '🔔 Alert me', cheapest: 'Cheapest', fewer: 'Fewest stops', direct: 'Direct', stops: '{n} stop(s)',
       foot: 'Cached price, checked every 2–3 h. The final price is confirmed on the site. Some links are affiliate links.',
-      empty: 'No saved prices for these dates', tryFlex: 'Try flexible dates', error: "Couldn't fetch prices right now", retry: 'Retry',
+      empty: 'No saved prices for these dates', tryFlex: 'Try flexible dates', error: "Couldn't fetch prices right now", retry: 'Retry', wait: 'Wait a few seconds and try again.',
       paywall: "You've used your 10 searches this month. They renew on the 1st. Pro is unlimited (fair use).",
       alerts: 'My alerts', none: 'You have no alerts yet.', first: 'Create the first one', active: 'Active', paused: 'Paused', pause: 'Pause', resume: 'Resume',
       edit: 'Edit', del: 'Delete', undo: 'Undo', confirmDel: 'Delete the alert {r}?', ceiling: 'Ceiling', last: 'last', save: 'Save', created: 'Alert created',
@@ -149,18 +149,23 @@
     root.appendChild(h('h1', { text: S.search }));
     root.appendChild(cityField('o'));
     var swap = h('button', { type: 'button', 'class': 'swap', 'aria-label': S.swap, title: canSwap() ? S.swap : S.swapOff, disabled: !canSwap(), on: { click: function () { var x = st.o; st.o = st.d; st.d = x; hap('sel'); render(); } } }, '⇄');
-    root.appendChild(h('div', { 'class': 'row' }, h('span', { 'class': 'muted', text: '' }), swap));
+    root.appendChild(h('div', { 'class': 'swap-row' }, swap));
     root.appendChild(cityField('d'));
     var seg = h('div', { 'class': 'seg', role: 'group' },
       h('button', { type: 'button', 'aria-pressed': st.t === '1' ? 'true' : 'false', on: { click: function () { st.t = '1'; hap('sel'); render(); } }, text: S.oneway }),
       h('button', { type: 'button', 'aria-pressed': st.t === '2' ? 'true' : 'false', on: { click: function () { st.t = '2'; hap('sel'); render(); } }, text: S.round }));
     root.appendChild(seg);
-    var dates = h('div', { 'class': 'row' },
-      h('button', { type: 'button', disabled: !(st.o && st.d), on: { click: function () { go(calendarScreen); } } }, S.dep + ' ' + (st.dep ? (st.flex ? S.months[Number(st.dep.slice(5, 7)) - 1] : dm(st.dep)) : S.pick)),
-      st.t === '2' ? h('button', { type: 'button', disabled: !(st.o && st.d), on: { click: function () { go(calendarScreen); } } }, S.ret + ' ' + (st.ret ? dm(st.ret) : (st.flex ? '—' : S.pick))) : null);
+    var dateBtn = function (label, value, empty) {
+      return h('button', { type: 'button', 'class': 'date' + (empty ? ' empty' : ''), disabled: !(st.o && st.d), on: { click: function () { go(calendarScreen); } } },
+        h('small', { text: label }), h('strong', { text: value }));
+    };
+    var depText = st.dep ? (st.flex ? S.months[Number(st.dep.slice(5, 7)) - 1] : dm(st.dep)) : S.pick;
+    var dates = h('div', { 'class': 'row dates' },
+      dateBtn(S.dep, depText, !st.dep),
+      st.t === '2' ? dateBtn(S.ret, st.ret ? dm(st.ret) : (st.flex ? '—' : S.pick), !st.ret) : null);
     root.appendChild(dates);
     root.appendChild(h('div', { 'class': 'card stepper' },
-      h('span', { text: '👤 ' + st.adults + ' ' + S.adults }),
+      h('span', { 'class': 'grow', text: '👤 ' + st.adults + ' ' + S.adults }),
       h('button', { type: 'button', 'aria-label': '−', disabled: st.adults <= 1, on: { click: function () { st.adults--; hap('imp', 'light'); render(); } } }, '−'),
       h('button', { type: 'button', 'aria-label': '+', disabled: st.adults >= 9, on: { click: function () { st.adults++; hap('imp', 'light'); render(); } } }, '+')));
     setMain(S.go, ready(), doSearch);
@@ -171,7 +176,7 @@
     var now = new Date();
     if (!st.month) st.month = { y: now.getFullYear(), m: now.getMonth() + 1 };
     var y = st.month.y, m = st.month.m;
-    var head = h('div', { 'class': 'row' },
+    var head = h('div', { 'class': 'row cal-head' },
       h('h1', { text: S.months[m - 1] + ' ' + y }),
       h('button', { type: 'button', 'aria-label': '‹', disabled: y === now.getFullYear() && m === now.getMonth() + 1, on: { click: function () { st.month = m === 1 ? { y: y - 1, m: 12 } : { y: y, m: m - 1 }; render(); } } }, '‹'),
       h('button', { type: 'button', 'aria-label': '›', on: { click: function () { st.month = m === 12 ? { y: y + 1, m: 1 } : { y: y, m: m + 1 }; render(); } } }, '›'));
@@ -223,7 +228,7 @@
     root.appendChild(h('h1', { text: st.o + ' → ' + st.d }));
     if (r.status === 401) { root.appendChild(h('p', { text: S.auth })); return; }
     if (r.status === 402) { root.appendChild(h('p', { text: S.paywall })); return; }
-    if (r.status !== 200) { root.appendChild(h('div', { 'class': 'card' }, h('p', { text: S.error }), h('button', { type: 'button', on: { click: function () { stack.pop(); doSearch(); } } }, S.retry))); return; }
+    if (r.status !== 200) { root.appendChild(h('div', { 'class': 'card' }, h('p', { text: r.status === 429 ? S.wait : (r.status === 403 || r.status === 503) && r.data && r.data.text ? r.data.text : S.error }), h('button', { type: 'button', on: { click: function () { stack.pop(); doSearch(); } } }, S.retry))); return; }
     var list = (r.data.results || []).slice();
     if (!list.length) {
       root.appendChild(h('div', { 'class': 'card' }, h('p', { text: S.empty }), h('button', { type: 'button', on: { click: function () { st.flex = true; stack.pop(); doSearch(); } } }, S.tryFlex)));
