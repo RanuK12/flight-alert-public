@@ -315,7 +315,7 @@
       var start = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || '';
       var m = /^search_([A-Z]{3})_([A-Z]{3})$/.exec(start);
       if (m) { st.o = m[1]; st.d = m[2]; }
-      var al = /^alert_([a-f0-9]{24})$/.exec(start);
+      var al = /^alert_([a-f0-9]{24}|m[0-9]{1,9})$/.exec(start);
       if (al) stack = [function () { alertsScreen(al[1]); }];
       else if (start === 'alerts') stack = [alertsScreen];
       else stack = [searchScreen];

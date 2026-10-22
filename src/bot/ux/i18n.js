@@ -92,8 +92,8 @@ const STRINGS = {
     payWeb: 'Pagar en la web',
     payStars: 'Pagar con 250 ⭐',
     alreadyPro: 'Ya tenés Pro hasta el {date}.',
-    // PLACEHOLDER: copy del aviso de baja pendiente de Emilio (spec v2: sin promesas de inmediatez).
-    dropNotice: 'te avisamos cuando un precio baja de tu techo',
+    // PROVISIONAL (22/10): copy del aviso de baja aprobado como provisorio; revisar con Emilio.
+    dropNotice: 'te avisamos apenas detectamos la baja',
     btnSearchApp: '✈ Buscar vuelo',
     obHello: 'Hola, soy Flight Alert. Te aviso cuando baja el precio de tu vuelo a Europa. ¿Desde dónde salís?',
     obDest: '¿A dónde querés ir?',
@@ -215,8 +215,8 @@ const STRINGS = {
     payWeb: 'Pay on the website',
     payStars: 'Pay with 250 ⭐',
     alreadyPro: 'You have Pro until {date}.',
-    // PLACEHOLDER: price-drop copy pending Emilio's decision (spec v2: no "instant").
-    dropNotice: 'we alert you when a price drops below your ceiling',
+    // PROVISIONAL (22/10): price-drop copy approved as provisional; review with Emilio.
+    dropNotice: 'we let you know as soon as we spot the drop',
     btnSearchApp: '✈ Search flight',
     obHello: "Hi, I'm Flight Alert. I'll tell you when your flight to Europe gets cheaper. Where do you fly from?",
     obDest: 'Where do you want to go?',

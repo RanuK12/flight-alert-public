@@ -66,6 +66,7 @@ beforeEach(() => {
   process.env.TELEGRAM_POLLING = 'false';
   process.env.FEATURE_SEARCH = 'on';
   process.env.FEATURE_ALERTS = 'on';
+  delete process.env.MINIAPP_ENABLED;
   travelpayouts.searchRange.mockReset();
   travelpayouts.searchRange.mockResolvedValue([]);
 });
@@ -269,5 +270,25 @@ describe('/app', () => {
     expect(res.status).toBe(200);
     expect(res.json.results[0]).toMatchObject({ price: 510, currency: 'EUR', seen_at: seen });
     expect(res.json.results[0].url).toMatch(/^https:\/\/www\.aviasales\.com\/search\/COR1211MAD28112\?/);
+  });
+
+  test('MINIAPP_ENABLED=false: 404 en /app, assets y /app/api/*', async () => {
+    process.env.MINIAPP_ENABLED = 'false';
+    const app = createApp();
+    const h = { 'X-Telegram-Init-Data': authFor({ id: 501 }) };
+    for (const p of ['/app', '/app/app.js', '/app/api/places', '/app/api/alerts']) expect((await call(app, 'GET', p, { headers: h })).status).toBe(404);
+    expect((await call(app, 'POST', '/app/api/search', { headers: h, body: { o: 'COR', d: 'MAD' } })).status).toBe(404);
+    expect(miniapp.keyboard('es').keyboard[0][0].web_app).toBeUndefined();
+  });
+
+  test('id de alerta inválido → 400 (pausar, editar, borrar)', async () => {
+    const h = { 'X-Telegram-Init-Data': authFor({ id: 501 }) };
+    const app = createApp();
+    expect((await call(app, 'POST', '/app/api/alerts/xyz/pause', { headers: h, body: { paused: true } })).status).toBe(400);
+    expect((await call(app, 'PATCH', '/app/api/alerts/%24ne', { headers: h, body: { ceiling: 500 } })).status).toBe(400);
+    expect((await call(app, 'DELETE', '/app/api/alerts/123', { headers: h })).status).toBe(400);
+    expect(web.validId('5f8d0d55b54764421b7156c9')).toBe(true);
+    process.env.MONGODB_URI = 'mongodb://example.invalid/x';
+    try { expect(web.validId('m3')).toBe(false); } finally { delete process.env.MONGODB_URI; }
   });
 });

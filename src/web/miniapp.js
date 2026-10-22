@@ -155,8 +155,22 @@ function alertView(r) {
   };
 }
 
+// ObjectId de Mongo (24 hex). Sin MONGODB_URI (local/tests) la base en memoria usa m<n>.
+function validId(id) {
+  const v = String(id || '');
+  if (/^[a-f0-9]{24}$/i.test(v)) return true;
+  return !process.env.MONGODB_URI && /^m\d{1,9}$/.test(v);
+}
+
+function enabled(env = process.env) {
+  return String(env.MINIAPP_ENABLED || 'true').toLowerCase() !== 'false';
+}
+
 function router() {
   const r = express.Router();
+  // MINIAPP_ENABLED=false: todo /app y /app/api/* responde 404.
+  r.use((_req, res, next) => (enabled() ? next() : res.status(404).type('text/plain').send('Not found')));
+  r.param('id', (req, res, next, id) => (validId(id) ? next() : res.status(400).json({ error: 'bad_id' })));
   const nonceOf = (res) => res.locals.cspNonce || crypto.randomBytes(16).toString('hex');
 
   r.get('/', (req, res) => {
@@ -269,4 +283,4 @@ function router() {
   return r;
 }
 
-module.exports = { router, csp, heat, monthOf, calendar, placesPayload, _calCache: calCache };
+module.exports = { router, validId, enabled, csp, heat, monthOf, calendar, placesPayload, _calCache: calCache };
