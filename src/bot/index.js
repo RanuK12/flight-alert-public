@@ -12,6 +12,7 @@ const stars = require('../services/payments/stars');
 const startHandler = require('./handlers/start');
 const buscarHandler = require('./handlers/buscar');
 const nuevaAlertaHandler = require('./handlers/nuevaAlerta');
+const naturalSearch = require('./handlers/naturalSearch');
 const misAlertasHandler = require('./handlers/misAlertas');
 const ux = require('./ux');
 
@@ -111,7 +112,8 @@ function startBot() {
       const consumed = (await ux.onKeyboard(bot, msg))
         || (await ux.onText(bot, msg))
         || (await buscarHandler.handleText(bot, msg))
-        || (await nuevaAlertaHandler.handleText(bot, msg));
+        || (await nuevaAlertaHandler.handleText(bot, msg))
+        || (await naturalSearch.handleText(bot, msg));
       if (!consumed) await ux.notUnderstood(bot, msg);
     } catch (err) {
       logger.error('mensaje', err);
