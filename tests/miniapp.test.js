@@ -154,14 +154,14 @@ describe('menú, comandos y /start', () => {
     await miniapp.setup(bot);
     expect(bot.setMyCommands.mock.calls[2]).toEqual(bot.setMyCommands.mock.calls[0]);
     expect(bot.setMyCommands.mock.calls[3]).toEqual(bot.setMyCommands.mock.calls[1]);
-    expect(bot.setChatMenuButton).toHaveBeenCalledWith({ menu_button: { type: 'web_app', text: 'Buscar ✈', web_app: { url: `${BASE}/app` } } });
+    expect(bot.setChatMenuButton).toHaveBeenCalledWith({ menu_button: JSON.stringify({ type: 'web_app', text: 'Buscar ✈', web_app: { url: `${BASE}/app` } }) });
     expect(miniapp.menuButton('en').text).toBe('Search ✈');
   });
 
   test('/start de un usuario que ya existía: home con teclado persistente y panel inline mínimo', async () => {
     const bot = fakeBot();
     await ux.welcome(bot, msgOf(es, '/start'), { isNew: false });
-    expect(bot.setChatMenuButton).toHaveBeenCalledWith({ chat_id: 501, menu_button: expect.objectContaining({ type: 'web_app', text: 'Buscar ✈' }) });
+    expect(bot.setChatMenuButton).toHaveBeenCalledWith({ chat_id: 501, menu_button: expect.stringContaining('"type":"web_app"') });
     expect(bot.sent[0].extra.reply_markup.is_persistent).toBe(true);
     const inline = bot.sent[1].extra.reply_markup.inline_keyboard;
     expect(inline[0][0].web_app).toEqual({ url: `${BASE}/app` });
