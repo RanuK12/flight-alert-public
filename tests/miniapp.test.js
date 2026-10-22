@@ -18,7 +18,7 @@ const cb = require('../src/bot/ux/cb');
 
 const NOW = new Date('2026-10-22T15:00:00Z');
 const TOKEN = 'test:not-a-real-token';
-const BASE = 'https://flight-alert-public.onrender.com';
+const BASE = 'https://flightalert.ranuk.dev';
 
 function fakeBot() {
   const bot = { sent: [], edits: [], n: 10 };
@@ -80,14 +80,15 @@ describe('teclado persistente de abajo', () => {
       expect(kb.resize_keyboard).toBe(true);
       expect(kb.input_field_placeholder).toBeTruthy();
       const texts = kb.keyboard.flat().map((b) => b.text);
-      expect(texts).toEqual(miniapp.ACTIONS.map((a) => miniapp.KEY_TEXT[lang][a]));
+      expect(texts).toEqual(miniapp.ACTIONS.filter((a) => a !== 'admin').map((a) => miniapp.KEY_TEXT[lang][a]));
       expect(kb.keyboard[0][0].web_app).toEqual({ url: `${BASE}/app` });
     }
-    expect(miniapp.KEY_TEXT.es).toEqual({ search: '🔎 Buscar vuelo', alerts: '🔔 Mis alertas', pro: '⭐ Pro', help: '❓ Ayuda', settings: '⚙️ Ajustes' });
+    expect(miniapp.KEY_TEXT.es).toEqual({ search: '🔎 Buscar vuelo', alerts: '🔔 Mis alertas', pro: '⭐ Pro', help: '❓ Ayuda', settings: '⚙️ Ajustes', admin: '🛠 Admin' });
   });
 
   test('sin Mini App lista (sin base https o MINIAPP_ENABLED=false), Buscar va al flujo por chat', () => {
-    expect(miniapp.keyboard('es', {}).keyboard[0][0].web_app).toBeUndefined();
+    // Sin PUBLIC_BASE_URL se usa el dominio canónico (baseUrl()).
+    expect(miniapp.keyboard('es', {}).keyboard[0][0].web_app).toEqual({ url: 'https://flightalert.ranuk.dev/app' });
     expect(miniapp.keyboard('es', { PUBLIC_BASE_URL: BASE, MINIAPP_ENABLED: 'false' }).keyboard[0][0].web_app).toBeUndefined();
     expect(miniapp.keyboard('es', { PUBLIC_BASE_URL: 'http://localhost:4310' }).keyboard[0][0].web_app).toBeUndefined();
   });
@@ -102,6 +103,7 @@ describe('teclado persistente de abajo', () => {
   });
 
   test('botón y comando corren el mismo handler', async () => {
+    process.env.ADMIN_TELEGRAM_IDS = String(es.id);
     const bot = fakeBot();
     const spies = {};
     for (const a of miniapp.ACTIONS) spies[a] = jest.spyOn(ux.HANDLERS, a).mockResolvedValue(undefined);
@@ -141,12 +143,17 @@ describe('menú, comandos y /start', () => {
   test('setup: setMyCommands ES y EN con 4 comandos y botón Menu web_app', async () => {
     const bot = fakeBot();
     await miniapp.setup(bot);
-    expect(bot.setMyCommands).toHaveBeenCalledWith([
-      { command: 'search', description: expect.any(String) }, { command: 'alerts', description: expect.any(String) },
-      { command: 'pro', description: expect.any(String) }, { command: 'help', description: expect.any(String) },
-    ]);
-    expect(bot.setMyCommands.mock.calls[1][0].map((c) => c.command)).toEqual(['buscar', 'alertas', 'pro', 'ayuda']);
-    expect(bot.setMyCommands.mock.calls[1][1]).toEqual({ language_code: 'es' });
+    const names = ['start', 'buscar', 'alertas', 'pro', 'ayuda'];
+    expect(bot.setMyCommands.mock.calls[0].length).toBe(1); // ES por defecto
+    expect(bot.setMyCommands.mock.calls[0][0].map((c) => c.command)).toEqual(names);
+    expect(bot.setMyCommands.mock.calls[0][0][1].description).toBe('Buscar un vuelo');
+    expect(bot.setMyCommands.mock.calls[1][0].map((c) => c.command)).toEqual(names);
+    expect(bot.setMyCommands.mock.calls[1][0][1].description).toBe('Search a flight');
+    expect(bot.setMyCommands.mock.calls[1][1]).toEqual({ language_code: 'en' });
+    // Idempotente: correrlo de nuevo hace las mismas llamadas.
+    await miniapp.setup(bot);
+    expect(bot.setMyCommands.mock.calls[2]).toEqual(bot.setMyCommands.mock.calls[0]);
+    expect(bot.setMyCommands.mock.calls[3]).toEqual(bot.setMyCommands.mock.calls[1]);
     expect(bot.setChatMenuButton).toHaveBeenCalledWith({ menu_button: { type: 'web_app', text: 'Buscar ✈', web_app: { url: `${BASE}/app` } } });
     expect(miniapp.menuButton('en').text).toBe('Search ✈');
   });

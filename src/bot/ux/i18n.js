@@ -92,6 +92,11 @@ const STRINGS = {
     payWeb: 'Pagar en la web',
     payStars: 'Pagar con 250 ⭐',
     alreadyPro: 'Ya tenés Pro hasta el {date}.',
+    proActive: 'Tenés Pro activo: búsquedas sin límite, alertas de precio y búsqueda con IA.',
+    adminHint: '🛠 Sos admin: tocá Admin o usá /admin.',
+    aiFailed: 'No pude interpretar tu búsqueda con IA. Probá así: "Córdoba a Madrid en marzo", o tocá 🔎 Buscar vuelo.',
+    aiPriceOffer: 'Te puedo avisar si {o}→{d} baja de {price} €.',
+    btnAiAlert: '🔔 Crear alerta {o}→{d}',
     // PROVISIONAL (22/10): copy del aviso de baja aprobado como provisorio; revisar con Emilio.
     dropNotice: 'te avisamos apenas detectamos la baja',
     btnSearchApp: '✈ Buscar vuelo',
@@ -218,6 +223,11 @@ const STRINGS = {
     payWeb: 'Pay on the website',
     payStars: 'Pay with 250 ⭐',
     alreadyPro: 'You have Pro until {date}.',
+    proActive: 'Pro is active: unlimited searches, price alerts and AI search.',
+    adminHint: '🛠 You are an admin: tap Admin or use /admin.',
+    aiFailed: 'I could not understand that search. Try "Córdoba to Madrid in March", or tap 🔎 Search flight.',
+    aiPriceOffer: 'I can alert you if {o}→{d} drops below €{price}.',
+    btnAiAlert: '🔔 Create alert {o}→{d}',
     // PROVISIONAL (22/10): price-drop copy approved as provisional; review with Emilio.
     dropNotice: 'we let you know as soon as we spot the drop',
     btnSearchApp: '✈ Search flight',

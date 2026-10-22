@@ -177,4 +177,4 @@ async function onCallback(bot, cq) {
 
 function resetPending() { pending.clear(); }
 
-module.exports = { register, onCallback, audit, menu, PREFIX, resetPending, _pending: pending };
+module.exports = { onAdminCommand, register, onCallback, audit, menu, PREFIX, resetPending, _pending: pending };

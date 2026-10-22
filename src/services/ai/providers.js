@@ -34,7 +34,9 @@ async function callOne(p, messages, { maxTokens = MAX_TOKENS, fetchImpl = global
       messages,
       temperature: 0,
       max_tokens: Math.min(MAX_TOKENS, maxTokens),
-      ...(maxTokens > 20 ? { response_format: { type: 'json_object' } } : {}),
+      // Sin response_format: con openai/gpt-oss-20b Groq responde 400 json_validate_failed.
+      // El JSON se extrae del texto y se valida en schema.js.
+      ...(/gpt-oss/.test(p.model) ? { reasoning_effort: 'low' } : {}),
     }),
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
