@@ -38,6 +38,14 @@ const ROUTES = routes.map((r) => {
   };
 });
 
+/** Rutas Europa↔Europa/LatAm retiradas (no son cobertura AR→EU): 301 a la home del idioma. */
+const REMOVED = new Set(["/vuelos/madrid-paris", "/en/flights/madrid-paris", "/vuelos/madrid-roma", "/en/flights/madrid-rome", "/vuelos/madrid-lisboa", "/en/flights/madrid-lisbon", "/vuelos/madrid-londres", "/en/flights/madrid-london", "/vuelos/barcelona-paris", "/en/flights/barcelona-paris", "/vuelos/barcelona-roma", "/en/flights/barcelona-rome", "/vuelos/madrid-amsterdam", "/en/flights/madrid-amsterdam", "/vuelos/madrid-milan", "/en/flights/madrid-milan", "/vuelos/malaga-londres", "/en/flights/malaga-london", "/vuelos/madrid-berlin", "/en/flights/madrid-berlin", "/vuelos/barcelona-amsterdam", "/en/flights/barcelona-amsterdam", "/vuelos/madrid-oporto", "/en/flights/madrid-porto", "/vuelos/madrid-buenos-aires", "/en/flights/madrid-buenos-aires", "/vuelos/madrid-ciudad-de-mexico", "/en/flights/madrid-mexico-city", "/vuelos/madrid-bogota", "/en/flights/madrid-bogota", "/vuelos/madrid-lima", "/en/flights/madrid-lima", "/vuelos/madrid-sao-paulo", "/en/flights/madrid-sao-paulo", "/vuelos/madrid-santiago-de-chile", "/en/flights/madrid-santiago", "/vuelos/madrid-cancun", "/en/flights/madrid-cancun", "/vuelos/madrid-rio-de-janeiro", "/en/flights/madrid-rio-de-janeiro"]);
+
+function removedTarget(p) {
+  if (!REMOVED.has(p)) return null;
+  return p.startsWith('/en/') ? '/en' : '/';
+}
+
 function byPath(p) {
   return ROUTES.find((r) => r.path.es === p || r.path.en === p) || null;
 }
@@ -190,4 +198,4 @@ function proHead() {
     + `<link rel="alternate" hreflang="x-default" href="${esc(base)}/pro">`;
 }
 
-module.exports = { ROUTES, byPath, routePage, cachedPrice, sitemap, robots, htmlCache, HTML_CACHE, PRO_META, proHead, baseUrl, fill };
+module.exports = { REMOVED, removedTarget, ROUTES, byPath, routePage, cachedPrice, sitemap, robots, htmlCache, HTML_CACHE, PRO_META, proHead, baseUrl, fill };

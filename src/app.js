@@ -211,6 +211,8 @@ function createApp() {
   app.get('/es', (req, res) => sendLanding(req, res, 'es'));
 
   app.get(['/vuelos/:slug', '/en/flights/:slug'], async (req, res, next) => {
+    const gone = seo.removedTarget(req.path);
+    if (gone) return res.redirect(301, gone);
     const route = seo.byPath(req.path);
     if (!route) return next();
     if (flags.kill()) return res.status(503).type('html').send(pages.maintenance({ nonce: res.locals.cspNonce }));
