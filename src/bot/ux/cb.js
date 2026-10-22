@@ -6,7 +6,7 @@
  */
 const VERSION = 'v1';
 const MAX = 64;
-const FLOWS = new Set(['b', 'a', 'm', 'i', 'p', 's']);
+const FLOWS = new Set(['b', 'a', 'm', 'i', 'p', 's', 'o']);
 
 function encode(flow, step, fields = {}) {
   const parts = Object.entries(fields)

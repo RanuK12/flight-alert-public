@@ -105,7 +105,8 @@ function startBot() {
     }
     if (!msg.text || msg.text.startsWith('/')) return;
     try {
-      const consumed = (await ux.onText(bot, msg))
+      const consumed = (await ux.onKeyboard(bot, msg))
+        || (await ux.onText(bot, msg))
         || (await buscarHandler.handleText(bot, msg))
         || (await nuevaAlertaHandler.handleText(bot, msg));
       if (!consumed) await ux.notUnderstood(bot, msg);
@@ -127,9 +128,8 @@ function startBot() {
     await bot.answerPreCheckoutQuery(q.id, true).catch(() => {});
   });
 
-  const cmds = ux.commands();
-  bot.setMyCommands(cmds.en).catch(() => {});
-  bot.setMyCommands(cmds.es, { language_code: 'es' }).catch(() => {});
+  // Menu (Mini App) y comandos ES/EN. Solo corre donde arranca el bot.
+  require('./miniapp').setup(bot).catch(() => {});
 
   if (how === 'webhook') {
     transport.registerWebhook(bot, process.env)

@@ -112,7 +112,8 @@ function createApp() {
     if (/\.(css|js|png|jpe?g|svg|ico|webp|woff2?|txt|map)$/i.test(req.path)) return next();
     const ip = clientIp(req);
     // Páginas públicas: admiten ráfagas (120/min). El resto sigue estricto (20/min).
-    const page = req.method === 'GET' && ['/', '/es', '/en', '/pro', '/pro/listo'].includes(req.path);
+    // La Mini App hace varias llamadas por pantalla: mismo cupo que las páginas.
+    const page = (req.method === 'GET' && ['/', '/es', '/en', '/pro', '/pro/listo'].includes(req.path)) || req.path === '/app' || req.path.startsWith('/app/');
     const bucket = page ? 'ip-page' : 'ip';
     const limit = page ? 120 : 20;
     if (rateLimit.limited(bucket, String(ip), limit, 60 * 1000)) {
@@ -121,6 +122,8 @@ function createApp() {
     }
     return next();
   });
+
+  app.use('/app', require('./web/miniapp').router());
 
   app.use('/admin', require('./web/admin').router({
     clientIp,

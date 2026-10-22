@@ -10,13 +10,14 @@ function ddmm(value) {
   return m ? `${m[3]}${m[2]}` : '';
 }
 
-function bookingUrl(flight) {
+function bookingUrl(flight, { adults = 1 } = {}) {
   const origin = flight.origin || '';
   const destination = flight.destination || '';
   // Aviasales espera ORIGEN + DDMM + DESTINO + [DDMM vuelta] + adultos, p. ej. EZE1012MAD1.
   const depart = ddmm(flight.departureDate);
   const back = flight.returnDate ? ddmm(flight.returnDate) : '';
-  const q = `${origin}${depart}${destination}${back}1`;
+  const pax = Math.min(9, Math.max(1, Math.floor(Number(adults) || 1)));
+  const q = `${origin}${depart}${destination}${back}${pax}`;
   const marker = process.env.TRAVELPAYOUTS_MARKER || '';
   const url = `https://www.aviasales.com/search/${encodeURIComponent(q)}`;
   // Mismas fechas, moneda, marker y mercado que el precio que muestra el bot.

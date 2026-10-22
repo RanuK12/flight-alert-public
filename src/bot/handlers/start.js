@@ -18,6 +18,7 @@ function register(bot) {
         : 'Ese código no sirve o ya venció.');
       return;
     }
+    const existing = await col('User').findOne({ telegramUserId: String(userId) });
     await col('User').updateOne(
       { telegramUserId: String(userId) },
       {
@@ -26,16 +27,12 @@ function register(bot) {
       },
       { upsert: true },
     );
-    await ux.welcome(bot, msg);
+    await ux.welcome(bot, msg, { isNew: !existing });
   });
 
   bot.onText(/^\/cancel(?:@\w+)?$/, async (msg) => {
     await sessions.clearSession(msg.chat.id);
     await bot.sendMessage(msg.chat.id, 'Listo, cancelé lo que estábamos haciendo.');
-  });
-
-  bot.onText(/^\/help(?:@\w+)?$/, async (msg) => {
-    await bot.sendMessage(msg.chat.id, copy.help, { disable_web_page_preview: true });
   });
 
   bot.onText(/^\/terms(?:@\w+)?$/, async (msg) => {
