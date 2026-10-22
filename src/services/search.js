@@ -74,7 +74,7 @@ async function runSearchInner(id, query) {
   }
   const owner = flags.isOwner(id);
   if (pro) {
-    const caps = entitlements.proCaps();
+    const caps = entitlements.proCaps(id);
     if (rateLimit.limited('pro-min', String(id), caps.perMin, 60 * 1000)) {
       return { status: 429, text: copy.proCapMinute, charged: false, proCap: 'minute' };
     }

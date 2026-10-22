@@ -49,27 +49,36 @@ function onOff(body) {
   return undefined;
 }
 
+/** countDocuments sin admins/owners: total menos lo que matchea cada ID staff (pocos, desde env). */
+async function countReal(C, filter, staff) {
+  let n = await C.countDocuments(filter);
+  for (const id of staff) n -= await C.countDocuments({ ...filter, telegramUserId: id });
+  return Math.max(0, n);
+}
+
 async function counts() {
   const nowIso = clock.now().toISOString();
   const E = col('Entitlement');
-  const pro = await E.countDocuments({
+  // Admins y owners no cuentan en métricas ni revenue.
+  const staff = flags.staffIds();
+  const pro = await countReal(E, {
     $or: [
       { plan: 'owner' },
       { plan: 'pro', proUntil: { $gt: nowIso } },
       { plan: 'pro', graceUntil: { $gt: nowIso } },
     ],
-  });
-  const trial = await E.countDocuments({ plan: 'trial', trialEndsAt: { $gt: nowIso } });
-  const users = await col('User').countDocuments({});
-  const total = Math.max(users, await E.countDocuments({}));
+  }, staff);
+  const trial = await countReal(E, { plan: 'trial', trialEndsAt: { $gt: nowIso } }, staff);
+  const users = await countReal(col('User'), {}, staff);
+  const total = Math.max(users, await countReal(E, {}, staff));
   const sinceIso = art.startOfArtDay(clock.now()).toISOString();
   const today = {};
   for (const provider of ['stripe', 'mp', 'stars']) {
-    today[provider] = await col('Payment').countDocuments({
+    today[provider] = await countReal(col('Payment'), {
       provider,
       status: { $ne: 'refunded' },
       $or: [{ paidAt: { $gte: sinceIso } }, { paidAt: { $exists: false }, createdAt: { $gte: sinceIso } }],
-    });
+    }, staff);
   }
   return { users: { total, free: total - pro, pro, trial }, paymentsToday: today };
 }

@@ -76,7 +76,7 @@ async function refundSearch(id) {
 }
 
 async function canUseAlerts(id) {
-  if (flags.isOwner(id)) return true;
+  if (flags.isOwner(id) || flags.isAdmin(id)) return true;
   const doc = await ent().findOne({ telegramUserId: idOf(id) });
   if (!doc) return false;
   const t = clock.now().getTime();
@@ -89,7 +89,7 @@ async function canUseAlerts(id) {
 
 /** Pro activo (o en gracia) u owner. La prueba no cuenta como Pro. */
 async function isPro(id) {
-  if (flags.isOwner(id)) return true;
+  if (flags.isOwner(id) || flags.isAdmin(id)) return true;
   const doc = await ent().findOne({ telegramUserId: idOf(id) });
   if (!doc) return false;
   const t = clock.now().getTime();
@@ -99,8 +99,10 @@ async function isPro(id) {
   return Boolean(doc.graceUntil && new Date(doc.graceUntil).getTime() > t);
 }
 
-function proCaps() {
+function proCaps(id) {
   const n = (k, d) => { const v = Number(process.env[k]); return Number.isFinite(v) && v > 0 ? v : d; };
+  // Admin: sin límites prácticos, solo un tope anti-loop alto.
+  if (id !== undefined && flags.isAdmin(id)) return { perMin: n('ADMIN_SEARCH_PER_MIN', 60), perDay: n('ADMIN_SEARCH_PER_DAY', 500) };
   return { perMin: n('PRO_SEARCH_PER_MIN', 10), perDay: n('PRO_SEARCH_PER_DAY', 60) };
 }
 
@@ -109,7 +111,7 @@ async function proDayOk(id) {
   const day = require('../utils/art').parts(clock.now()).day;
   const doc = await ent().findOne({ telegramUserId: idOf(id) });
   const used = doc && doc.proSearchDay === day ? Number(doc.proSearchesToday) || 0 : 0;
-  return used < proCaps().perDay;
+  return used < proCaps(id).perDay;
 }
 
 /**
@@ -120,7 +122,7 @@ async function proDayOk(id) {
 async function reserveProSearch(id) {
   const day = require('../utils/art').parts(clock.now()).day;
   const telegramUserId = idOf(id);
-  const cap = proCaps().perDay;
+  const cap = proCaps(id).perDay;
   await ensure(id);
   // Día nuevo: reiniciar el contador en 0 (solo si el día guardado es otro).
   await ent().updateOne(

@@ -145,3 +145,11 @@ curl -s -H "Authorization: Bearer $TOKEN" https://flight-alert-public.onrender.c
 - Así dos instancias durante un deploy o restart no se pisan (los 409 "terminated by other getUpdates" del 22/10).
 - Sin el secreto (local) sigue el polling; `TELEGRAM_POLLING=false` lo apaga.
 - Activar: cargar el secreto en Render con "Save only" y después deploy manual. Para volver a polling: borrar la variable y llamar `deleteWebhook`.
+
+## Modo admin del bot (/admin)
+
+- `ADMIN_TELEGRAM_IDS` (env en Render, coma). Solo esos IDs ven `/admin`; el resto recibe la respuesta normal de "no entendí". No figura en el menú de comandos.
+- Admin = Pro sin límites, con tope anti-loop: `ADMIN_SEARCH_PER_DAY` (500), `ADMIN_SEARCH_PER_MIN` (60), `ADMIN_ALERTS_PER_DAY` (500).
+- Menú: estado/webhook, usuarios y pagos de hoy (sin admins/owners), kill switch (confirma), alertas instantáneas on/off, forzar chequeo de precios, logs redactados.
+- Pro de cortesía: `/admin pro <id>` / `/admin unpro <id>` (confirma). `source=comp`, sin pago.
+- Todo queda en la colección `AdminAudit` (adminId, action, target, status, at).
