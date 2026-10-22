@@ -28,7 +28,59 @@ function priceBand(price) {
 }
 
 function groupKey(r) {
-  return [r.origin, r.destination, r.outboundDate, r.returnDate || ''].join('|');
+  return [r.origin, r.destination, r.outboundDate, r.returnDate || '', r.tripType || '', r.flexMonth || '', r.stayDays || ''].join('|');
+}
+
+const ym = (iso) => String(iso).slice(0, 7);
+function addMonthsYm(y, m, i) {
+  const d = new Date(Date.UTC(y, m - 1 + i, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+/**
+ * Consulta para una alerta. Las flexibles (mes o próximos 3 meses) usan el rango y
+ * también respetan la vuelta: misma fecha de vuelta, o misma cantidad de noches.
+ */
+function queryFor(r, now) {
+  const roundtrip = r.tripType === 'roundtrip' || Boolean(r.returnDate) || Boolean(r.stayDays);
+  if (!r.flexMonth) {
+    return { kind: 'exact', q: { origin: r.origin, destination: r.destination, departureDate: r.outboundDate, returnDate: r.returnDate || null } };
+  }
+  const today = now.toISOString().slice(0, 10);
+  let months;
+  if (r.flexMonth === 'next3') {
+    const [y, m] = today.split('-').map(Number);
+    months = [0, 1, 2].map((i) => addMonthsYm(y, m, i));
+  } else {
+    months = [ym(r.flexMonth)];
+  }
+  return {
+    kind: 'range',
+    q: {
+      origin: r.origin,
+      destination: r.destination,
+      months,
+      day: null,
+      from: today,
+      oneway: !roundtrip,
+      // Con noches fijas, la vuelta depende de la ida; si no, se respeta la fecha de vuelta guardada.
+      returnDate: r.stayDays ? null : (roundtrip ? r.returnDate || null : null),
+      stay: r.stayDays ? Number(r.stayDays) : null,
+    },
+  };
+}
+
+/** Un vuelo sirve para la alerta si respeta ida y vuelta de la alerta. */
+function matchesRoute(r, f) {
+  const roundtrip = r.tripType === 'roundtrip' || Boolean(r.returnDate) || Boolean(r.stayDays);
+  if (!roundtrip) return !f.returnDate;
+  if (!f.returnDate || f.returnDate <= f.departureDate) return false;
+  if (r.stayDays) {
+    const nights = Math.round((Date.parse(`${f.returnDate}T00:00:00Z`) - Date.parse(`${f.departureDate}T00:00:00Z`)) / 86400000);
+    return nights === Number(r.stayDays);
+  }
+  if (r.flexMonth) return !r.returnDate || f.returnDate === r.returnDate;
+  return !r.returnDate || f.returnDate === r.returnDate;
 }
 
 function messageFor(route, flight, now) {
@@ -71,12 +123,9 @@ async function run(bot, opts = {}) {
     let best;
     try {
       calls += 1;
-      best = sortFlights(await travelpayouts.search({
-        origin: first.origin,
-        destination: first.destination,
-        departureDate: first.outboundDate,
-        returnDate: first.returnDate || null,
-      }))[0];
+      const { kind, q } = queryFor(first, now);
+      const rows = kind === 'range' ? await travelpayouts.searchRange(q) : await travelpayouts.search(q);
+      best = sortFlights((rows || []).filter((f) => matchesRoute(first, f)))[0];
     } catch (err) {
       logger.warn('travelpayouts', { error: err.message });
       continue;
@@ -141,4 +190,4 @@ async function run(bot, opts = {}) {
   return { groups: groups.size, calls, sent };
 }
 
-module.exports = { run, groupKey, messageFor, priceBand };
+module.exports = { run, groupKey, messageFor, queryFor, matchesRoute, priceBand };

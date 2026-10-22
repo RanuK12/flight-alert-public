@@ -18,6 +18,10 @@ function queryHash(query) {
     String(query.destination || '').toUpperCase(),
     query.departureDate || '',
     query.returnDate || '',
+    (query.months || []).join(','),
+    query.day || '',
+    query.stay || '',
+    query.oneway ? '1' : '',
   ].join('|');
   return crypto.createHash('sha256').update(raw).digest('hex');
 }
@@ -37,7 +41,27 @@ async function remember(id, query) {
   });
 }
 
+async function fetchRows(query) {
+  if (!query.months) return travelpayouts.search(query);
+  try {
+    return await travelpayouts.searchRange(query);
+  } catch (err) {
+    const e = new Error('api');
+    e.apiError = true;
+    throw e;
+  }
+}
+
 async function runSearch(id, query) {
+  try {
+    return await runSearchInner(id, query);
+  } catch (err) {
+    if (err && err.apiError) return { status: 502, apiError: true, charged: false, text: 'api' };
+    throw err;
+  }
+}
+
+async function runSearchInner(id, query) {
   if (flags.kill()) return { status: 503, text: copy.maintenance };
   if (!flags.search()) return { status: 403, text: copy.searchOff };
   const pro = !flags.isOwner(id) && await entitlements.isPro(id);
@@ -45,7 +69,7 @@ async function runSearch(id, query) {
     return { status: 429, text: copy.wait, charged: false };
   }
   if (await recentDup(id, query)) {
-    const results = sortFlights(await travelpayouts.search(query));
+    const results = sortFlights(await fetchRows(query));
     return { status: 200, results, charged: false, duplicate: true };
   }
   const owner = flags.isOwner(id);
@@ -59,7 +83,7 @@ async function runSearch(id, query) {
     }
     let results;
     try {
-      results = sortFlights(await travelpayouts.search(query));
+      results = sortFlights(await fetchRows(query));
     } catch (err) {
       await entitlements.releaseProSearch(id);
       throw err;
@@ -72,7 +96,7 @@ async function runSearch(id, query) {
     const gate = await entitlements.peek(id);
     if (!gate.ok) return { status: 402, text: copy.paywall, paywall: true, charged: false };
   }
-  const results = sortFlights(await travelpayouts.search(query));
+  const results = sortFlights(await fetchRows(query));
   if (results.length === 0) {
     return { status: 200, results, charged: false };
   }

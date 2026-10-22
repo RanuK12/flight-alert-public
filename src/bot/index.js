@@ -11,8 +11,7 @@ const startHandler = require('./handlers/start');
 const buscarHandler = require('./handlers/buscar');
 const nuevaAlertaHandler = require('./handlers/nuevaAlerta');
 const misAlertasHandler = require('./handlers/misAlertas');
-const informeHandler = require('./handlers/informe');
-const proHandler = require('./handlers/pro');
+const ux = require('./ux');
 
 let botInstance = null;
 
@@ -70,14 +69,12 @@ function startBot() {
 
   startHandler.register(bot);
   buscarHandler.register(bot);
-  nuevaAlertaHandler.register(bot);
-  misAlertasHandler.register(bot);
-  informeHandler.register(bot);
-  proHandler.register(bot);
+  // UX v1: /buscar, /nueva_alerta, /mis_alertas, /informe y /pro (ES y EN) van por el panel único.
+  ux.register(bot);
 
   bot.on('callback_query', async (cq) => {
     try {
-      const consumed = await misAlertasHandler.handleRouteCallback(bot, cq);
+      const consumed = (await ux.onCallback(bot, cq)) || (await misAlertasHandler.handleRouteCallback(bot, cq));
       if (!consumed && cq.id) await bot.answerCallbackQuery(cq.id, {}).catch(() => {});
     } catch (err) {
       logger.error('callback', err);
@@ -102,9 +99,10 @@ function startBot() {
     }
     if (!msg.text || msg.text.startsWith('/')) return;
     try {
-      const consumed = (await buscarHandler.handleText(bot, msg))
+      const consumed = (await ux.onText(bot, msg))
+        || (await buscarHandler.handleText(bot, msg))
         || (await nuevaAlertaHandler.handleText(bot, msg));
-      if (!consumed) await bot.sendMessage(msg.chat.id, 'No entendí. Probá /buscar o /nueva_alerta.');
+      if (!consumed) await ux.notUnderstood(bot, msg);
     } catch (err) {
       logger.error('mensaje', err);
     }
@@ -123,18 +121,9 @@ function startBot() {
     await bot.answerPreCheckoutQuery(q.id, true).catch(() => {});
   });
 
-  bot.setMyCommands([
-    { command: 'start', description: 'Empezar' },
-    { command: 'buscar', description: 'Buscar un vuelo' },
-    { command: 'nueva_alerta', description: 'Alerta diaria' },
-    { command: 'mis_alertas', description: 'Ver alertas' },
-    { command: 'informe', description: 'Informe de hoy' },
-    { command: 'pro', description: 'Pasarte a Pro' },
-    { command: 'help', description: 'Ayuda' },
-    { command: 'terms', description: 'Condiciones' },
-    { command: 'paysupport', description: 'Ayuda con un pago' },
-    { command: 'cancel', description: 'Cancelar' },
-  ]).catch(() => {});
+  const cmds = ux.commands();
+  bot.setMyCommands(cmds.en).catch(() => {});
+  bot.setMyCommands(cmds.es, { language_code: 'es' }).catch(() => {});
 
   logger.info('bot iniciado', { polling });
   return bot;

@@ -22,7 +22,7 @@ async function replySearch(bot, chatId, userId, query) {
 }
 
 function register(bot) {
-  bot.onText(/^\/buscar(?:@\w+)?(?:\s+([A-Za-z]{3}))?(?:\s+([A-Za-z]{3}))?(?:\s+(\d{4}-\d{2}-\d{2}))?(?:\s+(\d{4}-\d{2}-\d{2}))?$/, async (msg, match) => {
+  bot.onText(/^\/buscar(?:@\w+)?(?:\s+([A-Za-z]{3}))?(?:\s+([A-Za-z]{3}))?\s+(\d{4}-\d{2}-\d{2})(?:\s+(\d{4}-\d{2}-\d{2}))?$/, async (msg, match) => {
     const chatId = msg.chat.id;
     const userId = msg.from.id;
     if (match[1] && match[2] && match[3]) {
