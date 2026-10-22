@@ -129,7 +129,8 @@ test('la landing en español sale del config, con privacidad y sin promesas de m
   expect(html).toContain('lang="es"');
   expect(html).toContain('Vuelos baratos a Europa, sin pasarte el día buscando');
   expect(html).toContain('Abrir en Telegram');
-  expect(html).toContain('1 búsqueda gratis y después 10 por mes. Sin tarjeta.');
+  expect(html).toContain('10 búsquedas gratis por mes. Sin tarjeta.');
+  expect(html).not.toContain('1 búsqueda gratis');
   expect(html).toContain(PRIVACY);
   expect(html).not.toContain('tp-em.com');
   expect(html).toContain('Algunos links son de afiliado');
@@ -168,7 +169,7 @@ test('inglés por Accept-Language y por /en, español forzado en /es', async () 
   expect(en).toContain('rel="canonical" href="/en"');
   expect(en).toContain('Cheap flights to Europe, without spending all day searching');
   expect(en).toContain('Open in Telegram');
-  expect(en).toContain('1 free search, then 10 a month. No card.');
+  expect(en).toContain('10 free searches a month. No card.');
   expect(en).toContain('4.50 euros, VAT included.');
   expect(en).toContain(PRIVACY);
   expect(en).toContain('Write to the bot');
@@ -402,4 +403,15 @@ test('PRISM: "cada 2–3 h" una sola vez, reporte "21 h (hora Argentina)" y bot�
   expect(en).toContain('21 h (Argentina time)');
   expect(es).toContain('Ver oferta ↗');
   expect(en).toContain('View deal ↗');
+});
+
+test('micro-proof: el cupo Free sale de entitlements.SEARCH_CAP', () => {
+  const entitlements = require('../src/services/entitlements');
+  const { renderLanding } = require('../src/web/landing');
+  const cap = entitlements.SEARCH_CAP;
+  try {
+    entitlements.SEARCH_CAP = 23;
+    expect(renderLanding({ lang: 'es' })).toContain('23 búsquedas gratis por mes. Sin tarjeta.');
+    expect(renderLanding({ lang: 'en' })).toContain('23 free searches a month. No card.');
+  } finally { entitlements.SEARCH_CAP = cap; }
 });

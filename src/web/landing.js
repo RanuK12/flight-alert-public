@@ -1,6 +1,7 @@
 'use strict';
 
 const pricing = require('../config/pricing');
+const entitlements = require('../services/entitlements');
 
 const fs = require('fs');
 const path = require('path');
@@ -207,7 +208,7 @@ function copy(lang) {
       langLabel: 'ES',
       h1: 'Cheap flights to Europe, without spending all day searching',
       eyebrow: 'Argentina ⇄ Europe',
-      micro: '1 free search, then 10 a month. No card.',
+      micro: (n) => `${n} free searches a month. No card.`,
       priceFoot: 'Cached prices. The final price is confirmed by the airline or agency. Some links are affiliate links.',
       sub: 'We message you on Telegram when the price of your route drops. Prices checked every 2–3 h.',
       ctaHero: 'Open in Telegram',
@@ -307,7 +308,7 @@ function copy(lang) {
     langLabel: 'EN',
     h1: 'Vuelos baratos a Europa, sin pasarte el día buscando',
     eyebrow: 'Argentina ⇄ Europa',
-    micro: '1 búsqueda gratis y después 10 por mes. Sin tarjeta.',
+    micro: (n) => `${n} búsquedas gratis por mes. Sin tarjeta.`,
     priceFoot: 'Precios en caché. El precio final lo confirma la aerolínea o la agencia. Algunos enlaces son de afiliado.',
     sub: 'Te avisamos por Telegram cuando baja el precio de tu ruta. Precios revisados cada 2–3 h.',
     ctaHero: 'Abrir en Telegram',
@@ -621,7 +622,7 @@ function renderLanding(ctx = {}) {
     + `<p class="lede">${esc(t.sub)}</p>`
     + `<div class="actions"><a class="btn btn--primary" href="${tg('hero')}">${icon('i-tg')}${esc(t.ctaHero)}</a>`
     + `<a class="btn btn--ghost" href="#precios">${esc(t.seePrices)}</a></div>`
-    + `<p class="micro-proof">${esc(t.micro)}</p>`
+    + `<p class="micro-proof">${esc(t.micro(entitlements.SEARCH_CAP))}</p>`
     + `<h2>${esc(t.benefitsTitle)}</h2><ul class="benefits">${benefits}</ul>`
     + '</div><div class="hero-visual">'
     + `<figure class="tg-phone-mockup"><figcaption class="sr-only">${lang === 'en' ? 'Example Flight Alert message on Telegram' : 'Ejemplo de alerta de Flight Alert en Telegram'}</figcaption>`
