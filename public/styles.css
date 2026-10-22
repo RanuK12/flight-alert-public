@@ -775,3 +775,16 @@ main p a:not(.btn),main li a:not(.btn):not(.dest-mini a),.faq a,.fine a,.privacy
 }
 @keyframes ccy-fade{from{opacity:0}to{opacity:1}}
 .wordmark,.nav-tg-btn{min-height:44px; display:inline-flex; align-items:center}
+
+/* ===== /pro ===== */
+.page-simple .site-header{position:static}
+.narrow{max-width:560px}
+.pro-benefits{display:grid; gap:var(--s2); margin:var(--s4) 0; padding-left:1.2em; color:var(--text-2)}
+.pro-price{font-size:var(--fs-lg); font-weight:700; color:var(--text); margin:var(--s4) 0 var(--s1)}
+.pro-form{display:grid; gap:var(--s2); margin-top:var(--s5)}
+.pro-form label{font-weight:600; font-size:var(--fs-sm); color:var(--text)}
+.pro-form select,.pro-form input{min-height:48px; padding:0 var(--s3); border-radius:12px; border:1px solid var(--border); background:var(--surface); color:var(--text); font:inherit; font-size:var(--fs-sm)}
+.pro-form select:focus-visible,.pro-form input:focus-visible{outline:2px solid var(--mint); outline-offset:2px}
+.pro-form input[aria-invalid="true"]{border-color:#f87171}
+.form-error{color:#f87171; font-size:var(--fs-xs); margin:0}
+.pro-submit{min-height:48px; margin-top:var(--s3); width:100%}

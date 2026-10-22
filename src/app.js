@@ -208,7 +208,10 @@ function createApp() {
     deviceHash(req, res);
     const geo = await ipCountry(req);
     const choice = req.query && req.query.pais ? String(req.query.pais) : '';
+    let quote = null;
+    try { quote = await fx.latest(); } catch { quote = null; }
     res.type('html').send(pages.pro({
+      ars: landing.arsFromQuote(quote),
       choice,
       ipCountry: geo,
       language: req.headers['accept-language'] || '',

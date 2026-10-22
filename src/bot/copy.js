@@ -34,7 +34,7 @@ module.exports = {
       'Busco vuelos baratos entre Argentina y Europa.',
       'La primera búsqueda es gratis y después tenés 10 por mes.',
       'La alerta diaria y el informe de las 21 se prueban 7 días, una sola vez.',
-      'Con Pro: búsquedas sin límite, aviso al instante cuando un precio baja de tu techo e informe de las 21.',
+      'Con Pro: búsquedas ilimitadas (uso justo), te avisamos cuando un precio baja de tu techo e informe de las 21.',
       '',
       '/buscar  /nueva_alerta  /mis_alertas  /informe  /pro  /help',
       '',
