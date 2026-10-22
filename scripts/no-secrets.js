@@ -33,7 +33,10 @@ for (const file of walk(root, [])) {
     if (text.includes(needle)) hits.push(`${path.relative(root, file)} contiene un secreto`);
   }
   if (token.test(text)) hits.push(`${path.relative(root, file)} contiene un token de Telegram`);
-  if (chatId.test(text)) hits.push(`${path.relative(root, file)} contiene un id numérico largo`);
+  // En imágenes (screenshots/, docs/screenshots/) se buscan secretos y tokens, pero no ids numéricos:
+  // los bytes comprimidos dan falsos positivos.
+  const binary = /\.(png|jpe?g|webp|avif|gif|ico|woff2?)$/i.test(file);
+  if (!binary && chatId.test(text)) hits.push(`${path.relative(root, file)} contiene un id numérico largo`);
 }
 
 if (hits.length) {

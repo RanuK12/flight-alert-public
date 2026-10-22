@@ -2,9 +2,8 @@
 
 const pages = require('../src/web/pages');
 
-test('home lleva el script de Travelpayouts Drive en el head', () => {
+test('sin Travelpayouts Drive: ninguna página carga tp-em.com', () => {
   const html = pages.home();
-  const head = html.slice(0, html.indexOf('</head>'));
-  expect(head).toContain('https://tp-em.com/NTg4ODIz.js?t=588823');
-  expect(head).toContain('data-cmp-ab');
+  expect(html).not.toContain('tp-em.com');
+  expect(html).not.toContain('data-cmp-ab');
 });

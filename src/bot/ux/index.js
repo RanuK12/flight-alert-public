@@ -368,7 +368,8 @@ function freeVars() {
 async function greeting(lang, userId) {
   if (userId != null && await entitlements.isPro(userId)) {
     const e = await col('Entitlement').findOne({ telegramUserId: String(userId) });
-    if (e && e.proUntil) return t(lang, 'helloPro', { date: cal.shortDate(lang, cal.todayIso(new Date(e.proUntil))) });
+    const until = e && e.proUntil ? new Date(e.proUntil) : null;
+    if (until && !isNaN(until.getTime()) && until.getUTCFullYear() < 2090) return t(lang, 'helloPro', { date: cal.shortDate(lang, cal.todayIso(until)) });
     return t(lang, 'helloProOpen');
   }
   return t(lang, 'hello', freeVars());

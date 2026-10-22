@@ -11,26 +11,22 @@
     var root = document.documentElement;
     if (mode === 'light' || mode === 'dark') root.setAttribute('data-theme', mode);
     else root.removeAttribute('data-theme');
-    var btn = document.getElementById('theme-toggle');
-    if (!btn) return;
-    var label = btn.getAttribute('data-label-' + mode) || mode;
-    btn.setAttribute('data-mode', mode);
-    btn.textContent = label;
-    btn.setAttribute('aria-label', (btn.getAttribute('data-prefix') || 'Tema') + ': ' + label);
+    var opts = document.querySelectorAll('#theme-pick .theme-opt');
+    for (var i = 0; i < opts.length; i++) opts[i].setAttribute('aria-pressed', String(opts[i].getAttribute('data-mode') === mode));
   }
 
-  var themeBtn = document.getElementById('theme-toggle');
-  if (themeBtn) {
+  var themePick = document.getElementById('theme-pick');
+  if (themePick) {
     var saved = 'system';
     try {
       var stored = localStorage.getItem('theme');
       if (stored === 'light' || stored === 'dark' || stored === 'system') saved = stored;
     } catch (err) { /* sin almacenamiento, queda el sistema */ }
     applyTheme(saved);
-    var order = ['system', 'light', 'dark'];
-    themeBtn.addEventListener('click', function () {
-      var current = themeBtn.getAttribute('data-mode') || 'system';
-      var next = order[(order.indexOf(current) + 1) % order.length];
+    themePick.addEventListener('click', function (e) {
+      var btn = e.target.closest && e.target.closest('.theme-opt');
+      if (!btn) return;
+      var next = btn.getAttribute('data-mode');
       try { localStorage.setItem('theme', next); } catch (err) { /* el tema igual cambia en esta visita */ }
       applyTheme(next);
     });
@@ -98,7 +94,11 @@
         else node.removeAttribute('aria-current');
       });
     }
-    country.addEventListener('change', function () { showRegion(country.value); });
+    country.addEventListener('change', function (e) {
+      if (!e.target || e.target.name !== 'ccy') return;
+      var go = function () { showRegion(e.target.value); };
+      if (document.startViewTransition && !reduceMotion()) document.startViewTransition(go); else go();
+    });
   }
 
   document.querySelectorAll('[data-copy]').forEach(function (btn) {
@@ -160,17 +160,15 @@
     var origin = sample && /^[A-Z]{3}$/.test(sample.origin) ? sample.origin : '';
     var destination = sample && /^[A-Z]{3}$/.test(sample.destination) ? sample.destination : '';
     var currency = sample && /^[A-Z]{3}$/.test(sample.currency) ? sample.currency : '';
+    var popular = card.querySelector('.popular-routes-preview');
     if (!sample || price <= 0 || !origin || !destination || !currency) {
       card.setAttribute('data-state', 'empty');
-      if (amount) amount.textContent = card.getAttribute('data-empty') || '';
-      if (route) route.textContent = '';
-      if (when) when.textContent = '';
-      if (words) words.textContent = '';
-      if (seen) seen.textContent = '';
+      if (popular) popular.style.display = '';
       if (cta) cta.setAttribute('href', BOT + '?start=landing_hero');
       return;
     }
     card.setAttribute('data-state', 'ready');
+    if (popular) popular.style.display = 'none';
     if (route) {
       route.textContent = '';
       route.appendChild(abbr(origin));
@@ -234,3 +232,49 @@
       .catch(function () { /* se queda el HTML del servidor */ });
   }
 }());
+
+(function () {
+  var svg = document.querySelector('.hero-route');
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
+  function still() {
+    if (svg && svg.pauseAnimations && reduce && reduce.matches) { svg.pauseAnimations(); svg.setCurrentTime(3); }
+    else if (svg && svg.unpauseAnimations) svg.unpauseAnimations();
+  }
+  still();
+  if (reduce && reduce.addEventListener) reduce.addEventListener('change', still);
+  var header = document.querySelector('.site-header');
+  if (header) {
+    var ticking = false;
+    window.addEventListener('scroll', function () {
+      if (ticking) return; ticking = true;
+      requestAnimationFrame(function () { header.classList.toggle('is-scrolled', window.scrollY > 8); ticking = false; });
+    }, { passive: true });
+  }
+
+  // P1.3: filtro de destinos por región y "Ver los 31".
+  var list = document.getElementById('dest-all');
+  var more = document.querySelector('.dest-toggle');
+  if (list) {
+    var applyFilter = function (region) {
+      list.setAttribute('data-region', region);
+      list.querySelectorAll('.dest-mini').forEach(function (li) {
+        li.hidden = region !== 'all' && li.getAttribute('data-region') !== region;
+      });
+      if (more) more.hidden = region !== 'all';
+    };
+    document.querySelectorAll('input[name="dest-region"]').forEach(function (r) {
+      r.addEventListener('change', function () {
+        var go = function () { applyFilter(r.value); };
+        if (document.startViewTransition && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.startViewTransition(go); else go();
+      });
+    });
+  }
+  if (more && list) {
+    more.addEventListener('click', function () {
+      var open = more.getAttribute('aria-expanded') !== 'true';
+      more.setAttribute('aria-expanded', String(open));
+      list.setAttribute('data-collapsed', String(!open));
+      more.textContent = more.getAttribute(open ? 'data-less' : 'data-more');
+    });
+  }
+})();

@@ -23,7 +23,7 @@ const { ORIGINS, DESTINATIONS } = require('../src/config/airports');
 const { createApp } = require('../src/app');
 const { renderSampleCard, criticalCss, PRIVACY } = require('../src/web/landing');
 
-const EMPTY_CARD = '<article class="price-card" id="sample-card" data-state="empty" data-empty="Sin precio reciente para mostrar"><p class="route-chip"></p><p class="price-card__when"></p><p class="price-card__amount">Sin precio reciente para mostrar</p><p class="price-card__words"></p><p class="seen"><svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#i-clock"></use></svg> <span class="seen__text"></span></p><svg class="route-draw" viewBox="0 0 320 80" aria-hidden="true" focusable="false"><path pathLength="1" d="M8 64C70 64 90 16 160 16s90 48 152 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><p class="price-card__source">Precio en caché de Travelpayouts</p><a class="btn" href="https://t.me/flightalertpro_bot?start=landing_hero"><svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#i-tg"></use></svg>Buscar gratis en Telegram</a></article>';
+const EMPTY_CARD = "<article class=\"price-card\" id=\"sample-card\" data-state=\"empty\"><div class=\"popular-routes-preview\"><span class=\"route-pill is-active\"><abbr title=\"Ezeiza, Buenos Aires\">EZE</abbr> \u2192 <abbr title=\"Madrid\">MAD</abbr></span><span class=\"route-pill\"><abbr title=\"Ezeiza, Buenos Aires\">EZE</abbr> \u2192 <abbr title=\"Barcelona\">BCN</abbr></span><span class=\"route-pill\"><abbr title=\"C\u00f3rdoba\">COR</abbr> \u2192 <abbr title=\"Fiumicino, Roma\">FCO</abbr></span></div><p class=\"price-card__when\">Pr\u00f3ximas tarifas monitoreadas</p><div class=\"price-card__price-row\"><p class=\"price-card__amount\"><span class=\"price-card__empty\">Sin precio reciente para esta ruta</span></p></div><svg class=\"route-draw\" viewBox=\"0 0 320 80\" aria-hidden=\"true\" focusable=\"false\"><path pathLength=\"1\" d=\"M8 64C70 64 90 16 160 16s90 48 152 8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg><p class=\"price-card__source\">Precio en cach\u00e9 de Travelpayouts</p><a class=\"btn\" href=\"https://t.me/flightalertpro_bot?start=landing_hero\"><svg width=\"16\" height=\"16\" aria-hidden=\"true\" focusable=\"false\"><use href=\"#i-tg\"></use></svg>Abrir en Telegram</a></article>";
 
 const DAY = 24 * 60 * 60 * 1000;
 const HOUR = 60 * 60 * 1000;
@@ -103,10 +103,12 @@ afterEach(() => cleanEnv());
 
 test('snapshot de la card vacía, sin precio inventado', () => {
   expect(renderSampleCard(null, 'es')).toBe(EMPTY_CARD);
-  expect(EMPTY_CARD).toContain('Sin precio reciente para mostrar');
+  expect(EMPTY_CARD).toContain('Sin precio reciente para esta ruta'); // review PRISM P1
   expect(EMPTY_CARD).not.toContain('data-value');
-  expect(renderSampleCard(null, 'en')).toContain('No recent fare to show');
+  expect(EMPTY_CARD).toContain('EZE');
+  expect(EMPTY_CARD).toContain('MAD');
   expect(renderSampleCard(null, 'en')).not.toContain('data-value');
+  expect(renderSampleCard(null, 'en')).not.toContain('No recent fare');
 });
 
 test('la landing en español sale del config, con privacidad y sin promesas de más', async () => {
@@ -115,8 +117,7 @@ test('la landing en español sale del config, con privacidad y sin promesas de m
   const html = text(res);
   expect(res.status).toBe(200);
   expect(res.headers['content-security-policy']).toContain("default-src 'self'");
-  expect(res.headers['content-security-policy']).toContain('https://tp-em.com');
-  expect(res.headers['content-security-policy']).not.toContain('http://tp-em.com');
+  expect(res.headers['content-security-policy']).not.toContain('tp-em.com');
   expect(html).toContain('rel="canonical" href="/es"');
   expect(html).toContain('hreflang="es" href="/es"');
   expect(html).toContain('hreflang="en" href="/en"');
@@ -126,11 +127,13 @@ test('la landing en español sale del config, con privacidad y sin promesas de m
   const nonce = /'nonce-([a-f0-9]+)'/.exec(res.headers['content-security-policy'])[1];
   expect(html).toContain(`nonce="${nonce}"`);
   expect(html).toContain('lang="es"');
-  expect(html).toContain('Vuelos baratos entre Argentina y Europa, directo en tu Telegram.');
-  expect(html).toContain('Buscar gratis en Telegram');
-  expect(html).toContain('Sin registro. Abrís el bot y listo.');
+  expect(html).toContain('Vuelos baratos a Europa, sin pasarte el día buscando');
+  expect(html).toContain('Abrir en Telegram');
+  expect(html).toContain('10 búsquedas gratis por mes. Sin tarjeta.');
+  expect(html).not.toContain('1 búsqueda gratis');
   expect(html).toContain(PRIVACY);
-  expect(html).toContain('https://tp-em.com/NTg4ODIz.js?t=588823');
+  expect(html).not.toContain('tp-em.com');
+  expect(html).toContain('Algunos links son de afiliado');
   expect(html).toContain('https://t.me/flightalertpro_bot?start=landing_hero');
   expect(html).toContain('Algunos links son de afiliado');
   expect(html).toContain('Escribinos al bot');
@@ -164,9 +167,9 @@ test('inglés por Accept-Language y por /en, español forzado en /es', async () 
   const en = text(await get(app, '/', { 'accept-language': 'en-US,en;q=0.8' }));
   expect(en).toContain('lang="en"');
   expect(en).toContain('rel="canonical" href="/en"');
-  expect(en).toContain('Cheap flights between Argentina and Europe, right in Telegram.');
-  expect(en).toContain('Search free on Telegram');
-  expect(en).toContain('No sign-up. Just open the bot.');
+  expect(en).toContain('Cheap flights to Europe, without spending all day searching');
+  expect(en).toContain('Open in Telegram');
+  expect(en).toContain('10 free searches a month. No card.');
   expect(en).toContain('4.50 euros, VAT included.');
   expect(en).toContain(PRIVACY);
   expect(en).toContain('Write to the bot');
@@ -174,7 +177,7 @@ test('inglés por Accept-Language y por /en, español forzado en /es', async () 
   expect(forced).toContain('lang="en"');
   const es = text(await get(app, '/es', { 'accept-language': 'en' }));
   expect(es).toContain('lang="es"');
-  expect(es).toContain('directo en tu Telegram');
+  expect(es).toContain('sin pasarte el día buscando');
 });
 
 test('ARS solo con cotización real y el país detectado no cambia el checkout', async () => {
@@ -317,7 +320,7 @@ test('el css y el js entran en el presupuesto y el html se comprime', async () =
   const app = createApp();
   const res = await get(app, '/es', { 'accept-encoding': 'gzip' });
   expect(res.headers['content-encoding']).toBe('gzip');
-  expect(text(res)).toContain('directo en tu Telegram');
+  expect(text(res)).toContain('sin pasarte el día buscando');
 });
 
 test('el kill switch de la home sigue en mantenimiento', async () => {
@@ -326,4 +329,89 @@ test('el kill switch de la home sigue en mantenimiento', async () => {
   const res = await get(app, '/');
   expect(res.status).toBe(503);
   expect(text(res)).toContain('Estamos en mantenimiento, volvé en un rato');
+});
+
+describe('copia honesta y precio desde config', () => {
+  const landing = require('../src/web/landing');
+  const pricing = require('../src/config/pricing');
+  const html = (lang) => {
+    for (const k of ['render', 'page', 'landingHtml']) if (typeof landing[k] === 'function') return String(landing[k]({ lang }));
+    return '';
+  };
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'src', 'web', 'landing.js'), 'utf8');
+  test('sin promesas de "en vivo", "tiempo real" ni 24/7', () => {
+    expect(src).not.toMatch(/En vivo|'Live'|tiempo real|real time|24\/7|badge-live/);
+    expect(src).toMatch(/revisamos precios cada pocas horas/i);
+    expect(src).toMatch(/we check prices every few hours/i);
+  });
+  test('sin BNA en la copia y hora en EN sin ART', () => {
+    expect(src).not.toMatch(/BNA/);
+    expect(src).not.toMatch(/9:00 PM ART/);
+    expect(src).toMatch(/9 PM Argentina time/);
+  });
+  test('sin ítems duplicados de Pro', () => {
+    for (const s of ["'Alerta diaria'", "'Resumen a las 21:00'", 'después del cupo', "'Daily alert'", "'9 PM digest'", 'after the monthly cap']) expect(src).not.toContain(s);
+  });
+  test('el precio en euros sale de config', () => {
+    expect(src).not.toMatch(/4[.,]50/);
+    expect(pricing.figure(pricing.PRO_EUR_CENTS, 'es')).toBe('4,50');
+    expect(pricing.figure(pricing.PRO_EUR_CENTS, 'en')).toBe('4.50');
+    void html;
+  });
+});
+
+test('no-secrets también revisa screenshots/', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'scripts', 'no-secrets.js'), 'utf8');
+  expect(src).not.toMatch(/'screenshots'/);
+});
+
+test('fotos propias en webp, < 200 KB y con créditos', () => {
+  const fs = require('fs'); const path = require('path');
+  const credits = fs.readFileSync(path.join(__dirname, '..', 'docs', 'IMAGE_CREDITS.md'), 'utf8');
+  for (const n of ['madrid', 'barcelona', 'roma', 'paris', 'lisboa', 'avatar']) {
+    const f = path.join(__dirname, '..', 'public', `${n}.webp`);
+    expect(fs.statSync(f).size).toBeLessThan(200 * 1024);
+    expect(credits).toContain(`public/${n}.webp`);
+  }
+});
+
+
+test('review PRISM: 31 destinos con chips, moneda en radiogroup, fuentes propias, sin toggle de tema', () => {
+  const { renderLanding } = require('../src/web/landing');
+  const html = renderLanding({ lang: 'es' });
+  expect((html.match(/class="dest-mini[ "]/g) || []).length).toBe(31);
+  expect(html).toContain('name="dest-region"');
+  expect(html).toContain('Ver los 31 destinos');
+  expect(html).toMatch(/role="radiogroup"[^>]*class="ccy-group"/);
+  expect((html.match(/name="ccy"/g) || []).length).toBe(4);
+  expect(html).not.toContain('<select');
+  expect(html).toContain('/public/fonts/inter-latin-wght-normal.woff2');
+  expect(html).not.toMatch(/<button[^>]*id="theme-toggle"/);
+  expect(html).toMatch(/id="theme-pick" role="group" aria-label="Tema"/);
+  expect((html.match(/class="theme-opt" data-mode="(system|light|dark)" aria-pressed="(true|false)"/g) || []).length).toBe(3);
+  expect(html).toContain('<span class="sr-only">Sistema</span>');
+  expect(html).not.toContain('cada pocas horas');
+});
+
+test('PRISM: "cada 2–3 h" una sola vez, reporte "21 h (hora Argentina)" y botón "Ver oferta ↗"', () => {
+  const { renderLanding } = require('../src/web/landing');
+  const es = renderLanding({ lang: 'es' }).replace(/<style[\s\S]*?<\/style>/g, '');
+  const en = renderLanding({ lang: 'en' }).replace(/<style[\s\S]*?<\/style>/g, '');
+  expect(es.split('cada 2–3 h').length - 1).toBe(1);
+  expect(en.split('every 2–3 h').length - 1).toBe(1);
+  expect(es).toContain('21 h (hora Argentina)');
+  expect(en).toContain('21 h (Argentina time)');
+  expect(es).toContain('Ver oferta ↗');
+  expect(en).toContain('View deal ↗');
+});
+
+test('micro-proof: el cupo Free sale de entitlements.SEARCH_CAP', () => {
+  const entitlements = require('../src/services/entitlements');
+  const { renderLanding } = require('../src/web/landing');
+  const cap = entitlements.SEARCH_CAP;
+  try {
+    entitlements.SEARCH_CAP = 23;
+    expect(renderLanding({ lang: 'es' })).toContain('23 búsquedas gratis por mes. Sin tarjeta.');
+    expect(renderLanding({ lang: 'en' })).toContain('23 free searches a month. No card.');
+  } finally { entitlements.SEARCH_CAP = cap; }
 });

@@ -1,6 +1,7 @@
 'use strict';
 
 const geoip = require('geoip-lite');
+const pricing = require('../config/pricing');
 
 /**
  * Orden: elección de la persona, IP real (geo del servidor), medio de pago.
@@ -55,15 +56,15 @@ function currencyFor(choice, ipCountry) {
     return { rail: 'mp', currency: 'ARS', unitAmount: null };
   }
   if (EU.has(selected)) {
-    return { rail: 'stripe', currency: 'EUR', unitAmount: 450 };
+    return { rail: 'stripe', currency: 'EUR', unitAmount: pricing.PRO_EUR_CENTS };
   }
   if (selected && selected !== 'AR' && selected !== 'OTRO') {
-    return { rail: 'stripe', currency: 'USD', unitAmount: 500 };
+    return { rail: 'stripe', currency: 'USD', unitAmount: pricing.PRO_USD_CENTS };
   }
   if (EU.has(ip)) {
-    return { rail: 'stripe', currency: 'EUR', unitAmount: 450 };
+    return { rail: 'stripe', currency: 'EUR', unitAmount: pricing.PRO_EUR_CENTS };
   }
-  return { rail: 'stripe', currency: 'USD', unitAmount: 500 };
+  return { rail: 'stripe', currency: 'USD', unitAmount: pricing.PRO_USD_CENTS };
 }
 
 function preselect(languageCode) {

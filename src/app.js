@@ -1,6 +1,7 @@
 'use strict';
 
 const crypto = require('crypto');
+const path = require('path');
 const express = require('express');
 const flags = require('./config/flags');
 const { summary } = require('./config');
@@ -51,11 +52,10 @@ function securityHeaders(_req, res, next) {
   res.locals.cspNonce = nonce;
   res.set('Content-Security-Policy', [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' https://tp-em.com`,
-    // El script de Travelpayouts inyecta un <style> sin nonce y Google Fonts; con nonce, 'unsafe-inline' se ignora.
+    `script-src 'self' 'nonce-${nonce}'`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "img-src 'self' https://tp-em.com",
-    "connect-src 'self' https://tp-em.com",
+    "img-src 'self'",
+    "connect-src 'self'",
     "font-src 'self' https://fonts.gstatic.com",
     "object-src 'none'",
     "base-uri 'self'",
@@ -123,6 +123,7 @@ function createApp() {
     return next();
   });
 
+  app.use('/public', express.static(path.join(__dirname, '..', 'public'), { maxAge: '30d' }));
   app.use('/app', require('./web/miniapp').router());
 
   app.use('/admin', require('./web/admin').router({
@@ -138,9 +139,37 @@ function createApp() {
     return res.send(hit.body);
   });
 
-  app.get('/api/sample-price', (_req, res) => {
+  async function resolveSample() {
+    let sample = samplePrice.current();
+    if (!sample) {
+      try {
+        const Route = db.col('Route');
+        if (Route) {
+          const lastRoute = await Route.findOne({ lastPriceEur: { $gt: 0 }, foundAt: { $ne: null } })
+            .sort({ foundAt: -1 })
+            .lean();
+          if (lastRoute && lastRoute.lastPriceEur) {
+            samplePrice.remember({
+              origin: lastRoute.origin,
+              destination: lastRoute.destination,
+              price: lastRoute.lastPriceEur,
+              currency: lastRoute.currency || 'EUR',
+              departureDate: lastRoute.outboundDate,
+              foundAt: lastRoute.foundAt,
+              actual: true,
+            });
+            sample = samplePrice.current();
+          }
+        }
+      } catch { /* mongo opcional */ }
+    }
+    return sample;
+  }
+
+  app.get('/api/sample-price', async (_req, res) => {
     res.set('Cache-Control', 'no-store');
-    res.json({ ok: true, sample: samplePrice.current() });
+    const sample = await resolveSample();
+    res.json({ ok: true, sample });
   });
 
   async function sendLanding(req, res, lang) {
@@ -152,13 +181,14 @@ function createApp() {
       const geo = await ipCountry(req);
       let quote = null;
       try { quote = await fx.latest(); } catch { quote = null; }
+      const sample = await resolveSample();
       res.set('Cache-Control', 'no-cache');
       res.set('Vary', 'Accept-Language');
       return res.type('html').send(pages.home({
         lang,
         region: landing.regionFor(geo),
         ars: landing.arsFromQuote(quote),
-        sample: samplePrice.current(),
+        sample,
         nonce: res.locals.cspNonce,
         base: process.env.PUBLIC_BASE_URL || '',
       }));
@@ -184,7 +214,10 @@ function createApp() {
     deviceHash(req, res);
     const geo = await ipCountry(req);
     const choice = req.query && req.query.pais ? String(req.query.pais) : '';
+    let quote = null;
+    try { quote = await fx.latest(); } catch { quote = null; }
     res.type('html').send(pages.pro({
+      ars: landing.arsFromQuote(quote),
       choice,
       ipCountry: geo,
       language: req.headers['accept-language'] || '',
