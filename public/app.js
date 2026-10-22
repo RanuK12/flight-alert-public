@@ -232,3 +232,22 @@
       .catch(function () { /* se queda el HTML del servidor */ });
   }
 }());
+
+(function () {
+  var svg = document.querySelector('.hero-route');
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
+  function still() {
+    if (svg && svg.pauseAnimations && reduce && reduce.matches) { svg.pauseAnimations(); svg.setCurrentTime(3); }
+    else if (svg && svg.unpauseAnimations) svg.unpauseAnimations();
+  }
+  still();
+  if (reduce && reduce.addEventListener) reduce.addEventListener('change', still);
+  var header = document.querySelector('.site-header');
+  if (header) {
+    var ticking = false;
+    window.addEventListener('scroll', function () {
+      if (ticking) return; ticking = true;
+      requestAnimationFrame(function () { header.classList.toggle('is-scrolled', window.scrollY > 8); ticking = false; });
+    }, { passive: true });
+  }
+})();

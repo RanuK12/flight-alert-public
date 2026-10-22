@@ -29,7 +29,7 @@ const hashes = {
   png: fileHash('og.png'),
 };
 
-const imageFiles = ['avatar.jpg', 'madrid.jpg', 'barcelona.jpg', 'roma.jpg', 'paris.jpg', 'lisboa.jpg'];
+const imageFiles = ['avatar.webp', 'madrid.webp', 'barcelona.webp', 'roma.webp', 'paris.webp', 'lisboa.webp'];
 const assetFiles = new Map([
   [`styles.${hashes.css}.css`, { file: 'styles.css', type: 'text/css; charset=utf-8' }],
   [`app.${hashes.js}.js`, { file: 'app.js', type: 'text/javascript; charset=utf-8' }],
@@ -38,7 +38,7 @@ const assetFiles = new Map([
 
 imageFiles.forEach((file) => {
   if (fs.existsSync(path.join(publicDir, file))) {
-    assetFiles.set(file, { file, type: 'image/jpeg' });
+    assetFiles.set(file, { file, type: 'image/webp' });
   }
 });
 
@@ -180,11 +180,11 @@ function renderSampleCard(sample, lang) {
 }
 
 const POPULAR_DESTINATIONS = [
-  { code: 'MAD', file: 'madrid.jpg', es: { city: 'Madrid', country: 'España', note: 'Vuelos directos y 1 escala' }, en: { city: 'Madrid', country: 'Spain', note: 'Direct & 1-stop flights' } },
-  { code: 'BCN', file: 'barcelona.jpg', es: { city: 'Barcelona', country: 'España', note: 'Vuelos directos y 1 escala' }, en: { city: 'Barcelona', country: 'Spain', note: 'Direct & 1-stop flights' } },
-  { code: 'FCO', file: 'roma.jpg', es: { city: 'Roma', country: 'Italia', note: 'Vuelos directos y 1 escala' }, en: { city: 'Rome', country: 'Italy', note: 'Direct & 1-stop flights' } },
-  { code: 'CDG', file: 'paris.jpg', es: { city: 'París', country: 'Francia', note: 'Conexiones diarias' }, en: { city: 'Paris', country: 'France', note: 'Daily connections' } },
-  { code: 'LIS', file: 'lisboa.jpg', es: { city: 'Lisboa', country: 'Portugal', note: 'Excelente puerta de entrada' }, en: { city: 'Lisbon', country: 'Portugal', note: 'Top European gateway' } },
+  { code: 'MAD', file: 'madrid.webp', es: { city: 'Madrid', country: 'España', note: 'Vuelos directos y 1 escala' }, en: { city: 'Madrid', country: 'Spain', note: 'Direct & 1-stop flights' } },
+  { code: 'BCN', file: 'barcelona.webp', es: { city: 'Barcelona', country: 'España', note: 'Vuelos directos y 1 escala' }, en: { city: 'Barcelona', country: 'Spain', note: 'Direct & 1-stop flights' } },
+  { code: 'FCO', file: 'roma.webp', es: { city: 'Roma', country: 'Italia', note: 'Vuelos directos y 1 escala' }, en: { city: 'Rome', country: 'Italy', note: 'Direct & 1-stop flights' } },
+  { code: 'CDG', file: 'paris.webp', es: { city: 'París', country: 'Francia', note: 'Conexiones diarias' }, en: { city: 'Paris', country: 'France', note: 'Daily connections' } },
+  { code: 'LIS', file: 'lisboa.webp', es: { city: 'Lisboa', country: 'Portugal', note: 'Excelente puerta de entrada' }, en: { city: 'Lisbon', country: 'Portugal', note: 'Top European gateway' } },
 ];
 
 function copy(lang) {
@@ -204,9 +204,12 @@ function copy(lang) {
       themeLight: 'Light',
       themeDark: 'Dark',
       langLabel: 'ES',
-      h1: 'Cheap flights between Argentina and Europe, right in Telegram.',
-      sub: `Pick your origin and destination, and the bot tells you when a good fare shows up. It covers ${nO} origins and ${nD} destinations with Travelpayouts data. Your first search is free.`,
-      ctaHero: 'Search free on Telegram',
+      h1: 'Cheap flights to Europe, without spending all day searching',
+      eyebrow: 'Argentina ⇄ Europe',
+      micro: '1 free search · 7-day trial of the daily alert',
+      priceFoot: 'Cached prices, checked every 2–3 h. The final price is confirmed by the airline or agency. Some links are affiliate links.',
+      sub: 'We message you on Telegram when the price of your route drops. Prices checked every 2–3 h.',
+      ctaHero: 'Open in Telegram',
       seePrices: 'See prices',
       small: 'No sign-up. Just open the bot.',
       quota: '10 searches a month, no card. The daily alert and the 9 PM digest are on a 7-day trial.',
@@ -223,7 +226,7 @@ function copy(lang) {
       steps: [
         ['Choose your route', 'Pick your departure airport in Argentina and your European destination.', 'i-search'],
         ['Set your target price', 'Tell the bot your maximum budget. We check prices every few hours.', 'i-sliders'],
-        ['Get alerted instantly', 'Receive direct Telegram alerts the moment prices drop with booking links.', 'i-zap'],
+        ['Alerts when prices drop', 'When a fare you follow drops, you get a Telegram message with the booking link.', 'i-zap'],
       ],
       copyStart: 'Copy /start',
       copied: 'Copied',
@@ -236,10 +239,10 @@ function copy(lang) {
       freeBody: '10 searches a month, no card needed.',
       freeBtn: 'Start free',
       proTitle: 'Pro',
-      proBadge: 'Most popular',
+      proBadge: 'Recommended',
       proItems: [
-        'Unlimited searches (with fair-use limit)',
-        'Instant price drop alert',
+        'Unlimited searches (fair use)',
+        'Alert when the price drops',
         'Daily digest at 9 PM Argentina time',
       ],
       trial: 'The 7-day trial covers the alert and the digest, with no card, once. Pro is charged when you pay.',
@@ -278,7 +281,7 @@ function copy(lang) {
         ['Can I cancel Pro?', 'Write to the bot. There is no self-service cancel. /cancel in the chat only stops the step you were on, not the subscription.'],
         ['What happens when the trial ends?', 'After 7 days the alerts and the digest pause, and the bot tells you then. Pro is a 30-day subscription charged when you pay.'],
         ['Which cities?', `It searches from ${nO} origins to ${nD} destinations. The list is on this page and also inside the bot.`],
-        ['Will you spam me?', 'No. Pro sends one daily alert and the 9 PM digest, and nothing else.'],
+        ['Will you spam me?', 'No. Pro messages you when a fare you follow drops, plus one digest at 9 PM Argentina time.'],
         ['What about my IP?', PRIVACY],
       ],
       finalTitle: 'The next fare drop could land tonight. Be the one who sees it.',
@@ -301,9 +304,12 @@ function copy(lang) {
     themeLight: 'Claro',
     themeDark: 'Oscuro',
     langLabel: 'EN',
-    h1: 'Vuelos baratos entre Argentina y Europa, directo en tu Telegram.',
-    sub: `Elegís origen y destino y el bot te avisa cuando aparece un buen precio. Cubre ${nO} orígenes y ${nD} destinos, con datos de Travelpayouts. Tu primera búsqueda es gratis.`,
-    ctaHero: 'Buscar gratis en Telegram',
+    h1: 'Vuelos baratos a Europa, sin pasarte el día buscando',
+    eyebrow: 'Argentina ⇄ Europa',
+    micro: '1 búsqueda gratis · 7 días de prueba de la alerta diaria',
+    priceFoot: 'Precios en caché, revisados cada 2–3 h. El precio final lo confirma la aerolínea o la agencia. Algunos enlaces son de afiliado.',
+    sub: 'Te avisamos por Telegram cuando baja el precio de tu ruta. Precios revisados cada 2–3 h.',
+    ctaHero: 'Abrir en Telegram',
     seePrices: 'Ver precios',
     small: 'Sin registro. Abrís el bot y listo.',
     quota: '10 búsquedas por mes, sin tarjeta. La alerta diaria y el reporte de las 21:00 se prueban 7 días.',
@@ -320,7 +326,7 @@ function copy(lang) {
     steps: [
       ['Elegís la ruta', 'Elegís de dónde salís en Argentina y adónde querés ir en Europa.', 'i-search'],
       ['Fijás tu precio máximo', 'Le indicás al bot cuánto estás dispuesto a pagar. Revisamos precios cada pocas horas.', 'i-sliders'],
-      ['Te avisa al instante', 'Cuando el precio baja, te llega una alerta directa a Telegram con el link para reservar.', 'i-zap'],
+      ['Te avisa cuando baja', 'Cuando baja una tarifa que seguís, te llega un mensaje a Telegram con el link para reservar.', 'i-zap'],
     ],
     copyStart: 'Copiar /start',
     copied: 'Copiado',
@@ -333,10 +339,10 @@ function copy(lang) {
     freeBody: '10 búsquedas por mes, sin tarjeta.',
     freeBtn: 'Empezar gratis',
     proTitle: 'Pro',
-    proBadge: 'Más elegido',
+    proBadge: 'Recomendado',
     proItems: [
-      'Búsquedas ilimitadas (con límite de uso justo)',
-      'Aviso al instante si baja el precio',
+      'Búsquedas ilimitadas (uso justo)',
+      'Aviso cuando baja el precio',
       'Reporte diario a las 21:00 hora Argentina',
     ],
     trial: 'La prueba de 7 días cubre la alerta y el reporte, sin tarjeta y una sola vez. Pro se cobra al confirmar el pago.',
@@ -375,7 +381,7 @@ function copy(lang) {
       ['¿Puedo cancelar Pro?', 'Escribinos al bot. No hay baja self-service: /cancel en el chat solo corta lo que estabas haciendo, no la suscripción.'],
       ['¿Qué pasa cuando termina la prueba?', 'A los 7 días se pausan las alertas y el reporte, y el bot te avisa en ese momento. Pro es una suscripción de 30 días que se cobra al pagar.'],
       ['¿Desde qué ciudades busca?', `Desde ${nO} orígenes y hacia ${nD} destinos. La lista está en esta página y también adentro del bot.`],
-      ['¿Me van a llenar de mensajes?', 'No. Pro te manda una alerta diaria y el resumen de las 21:00, nada más.'],
+      ['¿Me van a llenar de mensajes?', 'No. Pro te avisa cuando baja una tarifa que seguís, y te manda un solo resumen a las 21:00.'],
       ['¿Qué hacen con mi IP?', PRIVACY],
     ],
     finalTitle: 'El próximo precio bajo puede aparecer esta noche. Que te encuentre a vos.',
@@ -543,7 +549,7 @@ function renderLanding(ctx = {}) {
     + sprite
     + '<div id="top-sentinel"></div>'
     + '<header class="site-header"><div class="wrap">'
-    + `<a class="wordmark" href="${wordmark}"><img class="bot-logo" src="/public/avatar.jpg" alt="" width="36" height="36"><span class="wordmark-label">Flight Alert</span></a>`
+    + `<a class="wordmark" href="${wordmark}"><img class="bot-logo" src="/public/avatar.webp" alt="" width="36" height="36"><span class="wordmark-label">Flight Alert</span></a>`
     + `<nav class="nav" aria-label="${lang === 'en' ? 'Primary' : 'Principal'}">`
     + `<a href="#destinos">${lang === 'en' ? 'Destinations' : 'Destinos'}</a>`
     + `<a href="#como">${esc(t.howTitle)}</a>`
@@ -555,29 +561,29 @@ function renderLanding(ctx = {}) {
     + '<main id="contenido" tabindex="-1">'
     + '<section class="hero section" aria-labelledby="titulo">'
     + '<div class="hero-transatlantic" aria-hidden="true">'
-    + '<svg class="transatlantic-svg" viewBox="0 0 800 240" fill="none" preserveAspectRatio="none">'
-    + '<path class="route-bg-line" d="M 60 210 C 240 210, 380 90, 740 30" stroke="rgba(100, 255, 218, 0.12)" stroke-width="2" stroke-dasharray="6 6"/>'
-    + '<path class="route-flight-line" d="M 60 210 C 240 210, 380 90, 740 30" stroke="url(#hero-flight-gradient)" stroke-width="2.5" stroke-linecap="round"/>'
-    + '<defs><linearGradient id="hero-flight-gradient" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#38bdf8" stop-opacity="0.3"/><stop offset="50%" stop-color="#64ffda" stop-opacity="0.9"/><stop offset="100%" stop-color="#38bdf8" stop-opacity="0.4"/></linearGradient></defs>'
-    + '<g class="city-dot origin-dot"><circle cx="60" cy="210" r="5" fill="#64ffda"/><circle cx="60" cy="210" r="12" stroke="#64ffda" stroke-width="1.5" class="pulse-dot"/><text x="60" y="235" fill="#94a3b8" font-size="11" font-weight="600" text-anchor="middle">ARGENTINA</text></g>'
-    + '<g class="city-dot dest-dot"><circle cx="740" cy="30" r="5" fill="#38bdf8"/><circle cx="740" cy="30" r="12" stroke="#38bdf8" stroke-width="1.5" class="pulse-dot"/><text x="740" y="55" fill="#94a3b8" font-size="11" font-weight="600" text-anchor="middle">EUROPA</text></g>'
-    + '<g class="plane-flight-anim"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" fill="#64ffda" transform="scale(0.85) translate(-12,-12)"/></g>'
+    + '<svg class="hero-route" viewBox="0 0 600 240" focusable="false">'
+    + '<defs><linearGradient id="trail" x1="0" x2="1"><stop offset="0" stop-color="#64ffda" stop-opacity="0"/><stop offset="1" stop-color="#64ffda"/></linearGradient></defs>'
+    + '<path id="arc" d="M40 200 Q300 -20 560 200" fill="none" stroke="url(#trail)" stroke-width="2" stroke-dasharray="4 8" stroke-linecap="round"/>'
+    + '<circle cx="40" cy="200" r="5" class="pin"/><circle cx="560" cy="200" r="5" class="pin"/>'
+    + '<g class="plane"><path d="M12 0 L-8 -7 L-4 0 L-8 7 Z" fill="#64ffda"/>'
+    + '<animateMotion dur="6s" repeatCount="indefinite" rotate="auto" keyPoints="0;1" keyTimes="0;1" calcMode="spline" keySplines=".45 0 .55 1"><mpath href="#arc"/></animateMotion></g>'
     + '</svg></div>'
+    + `<p class="hero-route-labels" aria-hidden="true"><span>COR / EZE</span><span>MAD</span></p>`
     + '<div class="wrap hero-grid"><div>'
-    + '<div class="hero-badge"><span class="badge-dot"></span><span>Alertas inteligentes Argentina → Europa</span></div>'
+    + `<p class="eyebrow">${esc(t.eyebrow)}</p>`
     + `<h1 id="titulo">${esc(t.h1)}</h1>`
     + `<p class="lede">${esc(t.sub)}</p>`
     + `<div class="actions"><a class="btn btn--primary" href="${tg('hero')}">${icon('i-tg')}${esc(t.ctaHero)}</a>`
     + `<a class="btn btn--ghost" href="#precios">${esc(t.seePrices)}</a></div>`
-    + `<p class="fine">${esc(t.small)}</p>`
+    + `<p class="micro-proof">${esc(t.micro)}</p>`
     + `<p class="fine">${esc(t.quota)}</p>`
     + `<h2>${esc(t.benefitsTitle)}</h2><ul class="benefits">${benefits}</ul>`
     + '</div><div class="hero-visual">'
     + renderSampleCard(ctx.sample, lang)
-    + '<div class="tg-phone-mockup" aria-label="Mockup Telegram">'
+    + `<figure class="tg-phone-mockup"><figcaption class="sr-only">${lang === 'en' ? 'Example Flight Alert message on Telegram' : 'Ejemplo de alerta de Flight Alert en Telegram'}</figcaption>`
     + '<div class="tg-phone-shell"><div class="tg-header-bar">'
     + '<span class="tg-back-arrow">‹</span>'
-    + '<img class="tg-bot-pic" src="/public/avatar.jpg" alt="" width="28" height="28">'
+    + '<img class="tg-bot-pic" src="/public/avatar.webp" alt="" width="28" height="28">'
     + '<div class="tg-info"><span class="tg-name">Flight Alert</span><span class="tg-role">bot</span></div>'
     + '</div>'
     + '<div class="tg-screen-content">'
@@ -590,7 +596,7 @@ function renderLanding(ctx = {}) {
     + `<div class="tg-msg-footer">⏱️ ${lang === 'en' ? 'Seen 2 h ago · Travelpayouts' : 'Visto hace 2 h · Travelpayouts'}</div>`
     + `<div class="tg-msg-btn">${lang === 'en' ? 'View airline deal →' : 'Ver oferta en aerolínea →'}</div>`
     + '<span class="tg-msg-timestamp">21:00 ✓✓</span>'
-    + '</div></div></div></div>'
+    + '</div></div></div></figure>'
     + `<p class="proof">${esc(t.proof)}</p>`
     + '</div></div></section>'
     + '<section class="trust-bar" aria-label="Confianza y cobertura"><div class="wrap trust-grid">'
@@ -621,7 +627,7 @@ function renderLanding(ctx = {}) {
     + '<ul class="plan-checklist">'
     + `<li>${icon('i-check')} 10 ${lang === 'en' ? 'searches per month' : 'búsquedas por mes'}</li>`
     + `<li>${icon('i-check')} ${lang === 'en' ? 'No card or registration needed' : 'Sin registro ni tarjeta'}</li>`
-    + `<li>${icon('i-check')} ${lang === 'en' ? 'Live Travelpayouts data' : 'Datos reales de Travelpayouts'}</li>`
+    + `<li>${icon('i-check')} ${lang === 'en' ? 'Travelpayouts data' : 'Datos de Travelpayouts'}</li>`
     + `<li>${icon('i-check')} ${lang === 'en' ? '7-day trial of alerts' : '7 días de prueba de la alerta'}</li>`
     + '</ul>'
     + `<a class="btn btn--ghost" href="${tg('precios')}">${esc(t.freeBtn)}</a></article>`
@@ -631,8 +637,8 @@ function renderLanding(ctx = {}) {
     + priceBlocks(lang, region, ars)
     + '</div>'
     + '<ul class="plan-checklist">'
-    + `<li>${icon('i-check')} <strong>${lang === 'en' ? 'Unlimited searches' : 'Búsquedas ilimitadas'}</strong> (${lang === 'en' ? 'fair-use limit' : 'límite de uso justo'})</li>`
-    + `<li>${icon('i-check')} <strong>${lang === 'en' ? 'Instant price drop alert' : 'Aviso al instante si baja el precio'}</strong></li>`
+    + `<li>${icon('i-check')} <strong>${lang === 'en' ? 'Unlimited searches' : 'Búsquedas ilimitadas'}</strong> (${lang === 'en' ? 'fair use' : 'uso justo'})</li>`
+    + `<li>${icon('i-check')} <strong>${lang === 'en' ? 'Alert when the price drops' : 'Aviso cuando baja el precio'}</strong></li>`
     + `<li>${icon('i-check')} <strong>${lang === 'en' ? 'Daily report at 21:00 Argentina time' : 'Reporte diario a las 21:00 hora Argentina'}</strong></li>`
     + `<li>${icon('i-check')} ${esc(t.trial)}</li>`
     + `<li>${icon('i-check')} ${esc(t.starsPeriod)}</li>`
@@ -657,13 +663,13 @@ function renderLanding(ctx = {}) {
     + '</div></section>'
     + '</main>'
     + '<footer class="site-footer"><div class="wrap footer-wrap">'
-    + '<div class="footer-brand"><img class="bot-logo" src="/public/avatar.jpg" alt="" width="28" height="28"><strong>Flight Alert</strong></div>'
+    + '<div class="footer-brand"><img class="bot-logo" src="/public/avatar.webp" alt="" width="28" height="28"><strong>Flight Alert</strong></div>'
     + `<nav class="footer-nav" aria-label="${lang === 'en' ? 'Footer' : 'Pie'}">`
     + '<a href="https://ranuk.dev" target="_blank" rel="noopener">ranuk.dev</a>'
     + `<a href="${tg('footer')}">${esc(t.contact)}</a>`
     + `<a href="#privacidad">${esc(t.privacyLink)}</a>`
     + '</nav>'
-    + `<p class="affiliate-notice">${esc(t.affiliateNote)}</p>`
+    + `<p class="affiliate-notice">${esc(t.priceFoot)}</p>`
     + '<p class="footer-copy">© 2026 Ranuk IT Solutions · <a href="https://ranuk.dev" target="_blank" rel="noopener">ranuk.dev</a></p>'
     + '</div></footer>'
     + `<script src="${jsHref}" defer></script>`

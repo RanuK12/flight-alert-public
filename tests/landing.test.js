@@ -23,7 +23,7 @@ const { ORIGINS, DESTINATIONS } = require('../src/config/airports');
 const { createApp } = require('../src/app');
 const { renderSampleCard, criticalCss, PRIVACY } = require('../src/web/landing');
 
-const EMPTY_CARD = '<article class="price-card" id="sample-card" data-state="empty"><div class="price-card__header"><p class="route-chip"><abbr title="Ezeiza, Buenos Aires">EZE</abbr> → <abbr title="Madrid">MAD</abbr></p></div><div class="popular-routes-preview"><span class="route-pill is-active"><abbr title="Ezeiza, Buenos Aires">EZE</abbr> → <abbr title="Madrid">MAD</abbr></span><span class="route-pill"><abbr title="Ezeiza, Buenos Aires">EZE</abbr> → <abbr title="Barcelona">BCN</abbr></span><span class="route-pill"><abbr title="Córdoba">COR</abbr> → <abbr title="Fiumicino, Roma">FCO</abbr></span></div><p class="price-card__when">Próximas tarifas monitoreadas</p><div class="price-card__price-row"><p class="price-card__amount"><span class="skeleton-shimmer skeleton-amount"></span></p><svg class="sparkline" viewBox="0 0 100 24" aria-hidden="true" focusable="false"><path d="M2 18 L24 16 L48 19 L72 8 L96 4" fill="none" stroke="#64ffda" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="96" cy="4" r="3" fill="#64ffda"/></svg></div><p class="price-card__words">Revisamos precios cada pocas horas</p><p class="seen"><svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#i-clock"></use></svg> <span class="seen__text">revisamos precios cada pocas horas</span></p><svg class="route-draw" viewBox="0 0 320 80" aria-hidden="true" focusable="false"><path pathLength="1" d="M8 64C70 64 90 16 160 16s90 48 152 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><p class="price-card__source">Precio en caché de Travelpayouts</p><a class="btn" href="https://t.me/flightalertpro_bot?start=landing_hero"><svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#i-tg"></use></svg>Buscar gratis en Telegram</a></article>';
+const EMPTY_CARD = '<article class="price-card" id="sample-card" data-state="empty"><div class="price-card__header"><p class="route-chip"><abbr title="Ezeiza, Buenos Aires">EZE</abbr> → <abbr title="Madrid">MAD</abbr></p></div><div class="popular-routes-preview"><span class="route-pill is-active"><abbr title="Ezeiza, Buenos Aires">EZE</abbr> → <abbr title="Madrid">MAD</abbr></span><span class="route-pill"><abbr title="Ezeiza, Buenos Aires">EZE</abbr> → <abbr title="Barcelona">BCN</abbr></span><span class="route-pill"><abbr title="Córdoba">COR</abbr> → <abbr title="Fiumicino, Roma">FCO</abbr></span></div><p class="price-card__when">Próximas tarifas monitoreadas</p><div class="price-card__price-row"><p class="price-card__amount"><span class="skeleton-shimmer skeleton-amount"></span></p><svg class="sparkline" viewBox="0 0 100 24" aria-hidden="true" focusable="false"><path d="M2 18 L24 16 L48 19 L72 8 L96 4" fill="none" stroke="#64ffda" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="96" cy="4" r="3" fill="#64ffda"/></svg></div><p class="price-card__words">Revisamos precios cada pocas horas</p><p class="seen"><svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#i-clock"></use></svg> <span class="seen__text">revisamos precios cada pocas horas</span></p><svg class="route-draw" viewBox="0 0 320 80" aria-hidden="true" focusable="false"><path pathLength="1" d="M8 64C70 64 90 16 160 16s90 48 152 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><p class="price-card__source">Precio en caché de Travelpayouts</p><a class="btn" href="https://t.me/flightalertpro_bot?start=landing_hero"><svg width="16" height="16" aria-hidden="true" focusable="false"><use href="#i-tg"></use></svg>Abrir en Telegram</a></article>';
 
 const DAY = 24 * 60 * 60 * 1000;
 const HOUR = 60 * 60 * 1000;
@@ -128,9 +128,9 @@ test('la landing en español sale del config, con privacidad y sin promesas de m
   const nonce = /'nonce-([a-f0-9]+)'/.exec(res.headers['content-security-policy'])[1];
   expect(html).toContain(`nonce="${nonce}"`);
   expect(html).toContain('lang="es"');
-  expect(html).toContain('Vuelos baratos entre Argentina y Europa, directo en tu Telegram.');
-  expect(html).toContain('Buscar gratis en Telegram');
-  expect(html).toContain('Sin registro. Abrís el bot y listo.');
+  expect(html).toContain('Vuelos baratos a Europa, sin pasarte el día buscando');
+  expect(html).toContain('Abrir en Telegram');
+  expect(html).toContain('1 búsqueda gratis · 7 días de prueba de la alerta diaria');
   expect(html).toContain(PRIVACY);
   expect(html).toContain('https://tp-em.com/NTg4ODIz.js?t=588823');
   expect(html).toContain('https://t.me/flightalertpro_bot?start=landing_hero');
@@ -166,9 +166,9 @@ test('inglés por Accept-Language y por /en, español forzado en /es', async () 
   const en = text(await get(app, '/', { 'accept-language': 'en-US,en;q=0.8' }));
   expect(en).toContain('lang="en"');
   expect(en).toContain('rel="canonical" href="/en"');
-  expect(en).toContain('Cheap flights between Argentina and Europe, right in Telegram.');
-  expect(en).toContain('Search free on Telegram');
-  expect(en).toContain('No sign-up. Just open the bot.');
+  expect(en).toContain('Cheap flights to Europe, without spending all day searching');
+  expect(en).toContain('Open in Telegram');
+  expect(en).toContain('1 free search · 7-day trial of the daily alert');
   expect(en).toContain('4.50 euros, VAT included.');
   expect(en).toContain(PRIVACY);
   expect(en).toContain('Write to the bot');
@@ -176,7 +176,7 @@ test('inglés por Accept-Language y por /en, español forzado en /es', async () 
   expect(forced).toContain('lang="en"');
   const es = text(await get(app, '/es', { 'accept-language': 'en' }));
   expect(es).toContain('lang="es"');
-  expect(es).toContain('directo en tu Telegram');
+  expect(es).toContain('sin pasarte el día buscando');
 });
 
 test('ARS solo con cotización real y el país detectado no cambia el checkout', async () => {
@@ -319,7 +319,7 @@ test('el css y el js entran en el presupuesto y el html se comprime', async () =
   const app = createApp();
   const res = await get(app, '/es', { 'accept-encoding': 'gzip' });
   expect(res.headers['content-encoding']).toBe('gzip');
-  expect(text(res)).toContain('directo en tu Telegram');
+  expect(text(res)).toContain('sin pasarte el día buscando');
 });
 
 test('el kill switch de la home sigue en mantenimiento', async () => {
@@ -357,4 +357,19 @@ describe('copia honesta y precio desde config', () => {
     expect(pricing.figure(pricing.PRO_EUR_CENTS, 'en')).toBe('4.50');
     void html;
   });
+});
+
+test('no-secrets también revisa screenshots/', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'scripts', 'no-secrets.js'), 'utf8');
+  expect(src).not.toMatch(/'screenshots'/);
+});
+
+test('fotos propias en webp, < 200 KB y con créditos', () => {
+  const fs = require('fs'); const path = require('path');
+  const credits = fs.readFileSync(path.join(__dirname, '..', 'docs', 'IMAGE_CREDITS.md'), 'utf8');
+  for (const n of ['madrid', 'barcelona', 'roma', 'paris', 'lisboa', 'avatar']) {
+    const f = path.join(__dirname, '..', 'public', `${n}.webp`);
+    expect(fs.statSync(f).size).toBeLessThan(200 * 1024);
+    expect(credits).toContain(`public/${n}.webp`);
+  }
 });
