@@ -14,7 +14,10 @@ function validDate(s) {
 }
 
 /** Validación estricta. Devuelve {ok, value} o {ok:false, error}. Rechaza claves extra (p. ej. precios). */
-function validate(obj) {
+function todayUtc() { return require('../../utils/clock').now().toISOString().slice(0, 10); }
+
+/** opts.today (YYYY-MM-DD, UTC por defecto): rechaza departDate anterior a hoy. */
+function validate(obj, opts = {}) {
   if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return { ok: false, error: 'not_object' };
   for (const k of Object.keys(obj)) if (!KEYS.has(k)) return { ok: false, error: `extra_key:${k}` };
   const origin = String(obj.origin || '').toUpperCase();
@@ -22,6 +25,7 @@ function validate(obj) {
   if (!IATA.has(origin)) return { ok: false, error: 'origin' };
   if (!IATA.has(destination) || destination === origin) return { ok: false, error: 'destination' };
   if (typeof obj.departDate !== 'string' || !validDate(obj.departDate)) return { ok: false, error: 'departDate' };
+  if (obj.departDate < (opts.today || todayUtc())) return { ok: false, error: 'past' };
   let returnDate = null;
   if (obj.returnDate !== null && obj.returnDate !== undefined) {
     if (typeof obj.returnDate !== 'string' || !validDate(obj.returnDate) || obj.returnDate < obj.departDate) {

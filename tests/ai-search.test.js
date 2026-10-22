@@ -11,6 +11,8 @@ const pro = async () => true;
 const free = async () => false;
 
 beforeEach(() => {
+  require('../src/utils/clock').setNow(new Date('2026-10-22T12:00:00Z'));
+  delete process.env.GROQ_MODEL;
   ai._reset();
   process.env.AI_ENABLED = 'true';
   delete process.env.ADMIN_TELEGRAM_IDS;
@@ -104,6 +106,6 @@ test('providers: temperature 0, max_tokens tope y timeout', async () => {
   });
   const out = await providers.callOne(providers.PROVIDERS[0], [], { maxTokens: 999, fetchImpl });
   expect(out).toMatchObject({ provider: 'groq', tokens: 9 });
-  expect(providers.PROVIDERS.map((p) => p.model)).toEqual(['llama-3.1-8b-instant', 'mistral-small-latest']);
+  expect(providers.PROVIDERS.map((p) => p.model)).toEqual(['openai/gpt-oss-20b', 'mistral-small-latest']);
   delete process.env.GROQ_API_KEY;
 });

@@ -12,6 +12,15 @@ async function handleText(bot, msg) {
       await bot.sendMessage(msg.chat.id, 'Llegaste al tope diario de búsquedas con IA. Probá con /buscar EZE MAD AAAA-MM-DD.');
       return true;
     }
+    if (out.reason === 'not_pro') {
+      const { t, langOf } = require('../ux/i18n');
+      const cb = require('../ux/cb');
+      const lang = langOf(msg.from);
+      await bot.sendMessage(msg.chat.id, t(lang, 'aiUpsell'), {
+        reply_markup: { inline_keyboard: [[{ text: t(lang, 'btnPro'), callback_data: cb.encode('p', 'show') }]] },
+      });
+      return true;
+    }
     return false;
   }
   const v = out.value;
@@ -20,6 +29,7 @@ async function handleText(bot, msg) {
     destination: v.destination,
     departureDate: v.departDate,
     returnDate: v.returnDate,
+    adults: v.adults,
   });
   return true;
 }
