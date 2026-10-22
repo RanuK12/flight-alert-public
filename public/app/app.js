@@ -249,7 +249,7 @@
           h('button', { type: 'button', 'class': 'primary', on: { click: function () { if (tg && tg.openLink) tg.openLink(x.url); else window.open(x.url, '_blank', 'noopener'); } } }, S.offer),
           h('button', { type: 'button', on: { click: function () { createAlert(x); } } }, S.alertMe))));
     });
-    root.appendChild(h('p', { 'class': 'muted', text: S.foot }));
+    root.appendChild(h('p', { 'class': 'muted res-foot', text: S.foot }));
   }
 
   function createAlert(x) {
