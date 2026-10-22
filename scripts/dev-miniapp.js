@@ -40,7 +40,7 @@ const initData = require('../src/web/initData');
 (async () => {
   const id = '501';
   await col('User').create({ telegramUserId: id, telegramChatId: id, languageCode: 'es', firstName: 'Demo' });
-  await col('Route').create({ telegramUserId: id, telegramChatId: id, origin: 'COR', destination: 'MAD', tripType: 'roundtrip', outboundDate: '2026-12-10', returnDate: '2026-12-28', notify: 'drop', priceThreshold: 650, currency: 'EUR', paused: false });
+  await col('Route').create({ telegramUserId: id, telegramChatId: id, origin: 'COR', destination: 'MAD', tripType: 'roundtrip', outboundDate: '2026-12-10', returnDate: '2026-12-28', notify: 'drop', priceThreshold: 650, currency: 'EUR', paused: false, lastPriceEur: 612, foundAt: new Date(Date.now() - 3 * 3600000).toISOString() });
   await col('Route').create({ telegramUserId: id, telegramChatId: id, origin: 'EZE', destination: 'FCO', tripType: 'oneway', outboundDate: '2027-01-15', notify: 'daily', currency: 'EUR', paused: true });
   const port = Number(process.env.PORT || 4320);
   createApp().listen(port, () => {

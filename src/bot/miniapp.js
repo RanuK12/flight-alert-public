@@ -105,4 +105,12 @@ function homeInline(lang, cbEncode, env = process.env) {
   };
 }
 
-module.exports = { miniAppUrl, keyboard, actionFor, menuButton, commands, setup, chatMenu, homeInline, KEY_TEXT, ACTIONS, COMMAND_OF };
+/** Link directo t.me/<bot>/<short> si BotFather /newapp ya está hecho (MINIAPP_SHORT_NAME). */
+function directLink(env = process.env) {
+  const bot = String(env.TELEGRAM_BOT_USERNAME || '').replace(/^@/, '');
+  const short = String(env.MINIAPP_SHORT_NAME || '');
+  if (!/^[A-Za-z0-9_]{5,32}$/.test(bot) || !/^[A-Za-z0-9_]{3,30}$/.test(short)) return null;
+  return `https://t.me/${bot}/${short}`;
+}
+
+module.exports = { directLink, miniAppUrl, keyboard, actionFor, menuButton, commands, setup, chatMenu, homeInline, KEY_TEXT, ACTIONS, COMMAND_OF };

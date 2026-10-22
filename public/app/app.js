@@ -15,7 +15,7 @@
       empty: 'No hay precios guardados para estas fechas', tryFlex: 'Probar fechas flexibles', error: 'No pude traer precios ahora', retry: 'Reintentar', wait: 'Esperá unos segundos y probá de nuevo.',
       paywall: 'Usaste tus 10 búsquedas de este mes. Se renuevan el 1°. Con Pro son ilimitadas (uso justo).',
       alerts: 'Mis alertas', none: 'No tenés alertas todavía.', first: 'Crear la primera', active: 'Activa', paused: 'Pausada', pause: 'Pausar', resume: 'Reanudar',
-      edit: 'Editar', del: 'Borrar', undo: 'Deshacer', confirmDel: '¿Borrar la alerta {r}?', ceiling: 'Techo', last: 'último', save: 'Guardar', created: 'Alerta creada',
+      edit: 'Editar', del: 'Borrar', undo: 'Deshacer', confirmDel: '¿Borrar la alerta {r}?', delAlert: 'Borrar alerta {r}', ceiling: 'Techo', last: 'último', save: 'Guardar', created: 'Alerta creada',
       auth: 'Abrí esta pantalla desde el bot en Telegram.', months: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
       dows: ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'], newSearch: 'Buscar vuelo', of: 'de'
     },
@@ -29,7 +29,7 @@
       empty: 'No saved prices for these dates', tryFlex: 'Try flexible dates', error: "Couldn't fetch prices right now", retry: 'Retry', wait: 'Wait a few seconds and try again.',
       paywall: "You've used your 10 searches this month. They renew on the 1st. Pro is unlimited (fair use).",
       alerts: 'My alerts', none: 'You have no alerts yet.', first: 'Create the first one', active: 'Active', paused: 'Paused', pause: 'Pause', resume: 'Resume',
-      edit: 'Edit', del: 'Delete', undo: 'Undo', confirmDel: 'Delete the alert {r}?', ceiling: 'Ceiling', last: 'last', save: 'Save', created: 'Alert created',
+      edit: 'Edit', del: 'Delete', undo: 'Undo', confirmDel: 'Delete the alert {r}?', delAlert: 'Delete alert {r}', ceiling: 'Ceiling', last: 'last', save: 'Save', created: 'Alert created',
       auth: 'Open this screen from the bot in Telegram.', months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
       dows: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'], newSearch: 'Search flight', of: ''
     }
@@ -184,7 +184,7 @@
     var grid = h('div', { 'class': 'cal', role: 'grid' });
     S.dows.forEach(function (d) { grid.appendChild(h('div', { 'class': 'dow', text: d })); });
     root.appendChild(grid);
-    root.appendChild(h('div', { 'class': 'legend' }, '↓ ' + S.cheap, ' ▒ ' + S.mid, ' █ ' + S.high, ' · ' + S.nodata));
+    root.appendChild(h('div', { 'class': 'legend', 'aria-hidden': 'true' }, ['cheap', 'mid', 'high', 'nodata'].map(function (k) { return h('span', null, h('i', { 'class': 'sw ' + k }), S[k]); })));
     root.appendChild(h('button', { type: 'button', on: { click: function () { st.flex = true; st.dep = y + '-' + String(m).padStart(2, '0') + '-01'; st.ret = null; hap('sel'); back(); } } }, S.flex));
     root.appendChild(h('p', { 'class': 'muted', text: S.calFoot }));
     var today = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
@@ -243,7 +243,7 @@
         h('div', { 'class': 'row' }, h('strong', { text: x.origin + ' → ' + x.destination }), h('span', { 'class': 'muted', text: x.returnDate ? '⇄ ' + S.round : '→ ' + S.oneway })),
         h('div', { 'class': 'price', text: money(x.price, x.currency) }),
         h('div', { text: dm(x.departureDate) + (x.returnDate ? ' → ' + dm(x.returnDate) : '') + ' · ' + (x.stops === 0 ? S.direct : tr('stops', { n: x.stops })) }),
-        h('div', { 'class': 'muted', text: seen(x.seen_at) }),
+        h('div', { 'class': 'seen', text: seen(x.seen_at) }),
         h('div', { 'class': 'row' },
           h('button', { type: 'button', 'class': 'primary', on: { click: function () { if (tg && tg.openLink) tg.openLink(x.url); else window.open(x.url, '_blank', 'noopener'); } } }, S.offer),
           h('button', { type: 'button', on: { click: function () { createAlert(x); } } }, S.alertMe))));
@@ -278,11 +278,13 @@
         var card = h('div', { 'class': 'card', id: 'alert-' + a.id });
         var m = a.outboundDate ? S.months[Number(a.outboundDate.slice(5, 7)) - 1].slice(0, 3) : '';
         card.appendChild(h('div', { 'class': 'row' }, h('strong', { text: a.origin + ' → ' + a.destination + (m ? ' · ' + m : '') + (a.tripType === 'roundtrip' ? ' · ⇄' : '') }), h('span', { 'class': 'badge' + (a.paused ? '' : ' on'), text: a.paused ? S.paused : '● ' + S.active })));
-        card.appendChild(h('div', { 'class': 'muted', text: (a.ceiling ? S.ceiling + ' ' + money(a.ceiling, a.currency) : '') + (a.lastPrice ? ' · ' + S.last + ' ' + money(a.lastPrice, 'EUR') + (a.seen_at ? ' (' + seen(a.seen_at) + ')' : '') : '') }));
+        card.appendChild(h('div', { 'class': 'muted', text: a.ceiling ? S.ceiling + ' ' + money(a.ceiling, a.currency) : '' }));
+        var lastLine = a.lastPrice && a.seen_at && !isNaN(new Date(a.seen_at).getTime()) ? h('div', { 'class': 'seen', text: S.last + ' ' + money(a.lastPrice, 'EUR') + ' · ' + seen(a.seen_at) }) : null;
         var editor = h('div', { hidden: true },
           h('label', { 'for': 'c-' + a.id, text: S.ceiling + ' (€)' }),
           h('input', { type: 'range', min: 50, max: 3000, step: 10, value: a.ceiling || 600, 'aria-label': S.ceiling, on: { input: function (e) { editor.querySelector('input[type=number]').value = e.target.value; } } }),
           h('input', { type: 'number', id: 'c-' + a.id, min: 50, max: 9999, value: a.ceiling || 600 }),
+          lastLine,
           h('button', { type: 'button', 'class': 'primary', on: { click: function () { var v = Number(editor.querySelector('input[type=number]').value); api('PATCH', '/app/api/alerts/' + a.id, { ceiling: v }).then(function (x) { hap('notif', x.status === 200 ? 'success' : 'error'); render(); }); } } }, S.save));
         card.appendChild(h('div', { 'class': 'row' },
           h('button', { type: 'button', on: { click: function () {
@@ -293,7 +295,7 @@
             });
           } } }, a.paused ? S.resume : S.pause),
           h('button', { type: 'button', on: { click: function () { editor.hidden = !editor.hidden; } } }, S.edit),
-          h('button', { type: 'button', 'aria-label': S.del, on: { click: function () {
+          h('button', { type: 'button', 'aria-label': tr('delAlert', { r: a.origin + ' → ' + a.destination }), on: { click: function () {
             var q = tr('confirmDel', { r: a.origin + ' → ' + a.destination });
             var del = function (ok) { if (ok) api('DELETE', '/app/api/alerts/' + a.id).then(function () { hap('notif', 'success'); render(); }); };
             if (tg && tg.showConfirm) tg.showConfirm(q, del); else del(window.confirm(q));

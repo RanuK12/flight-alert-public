@@ -291,4 +291,20 @@ describe('/app', () => {
     process.env.MONGODB_URI = 'mongodb://example.invalid/x';
     try { expect(web.validId('m3')).toBe(false); } finally { delete process.env.MONGODB_URI; }
   });
+
+  test('error async en /api → 500 {error:"api"} sin colgar la request', async () => {
+    const entitlements = require('../src/services/entitlements');
+    const spy = jest.spyOn(entitlements, 'isPro').mockRejectedValue(new Error('db caída'));
+    try {
+      const res = await call(createApp(), 'GET', '/app/api/me', { headers: { 'X-Telegram-Init-Data': authFor({ id: 501 }) } });
+      expect(res.status).toBe(500);
+      expect(res.json).toEqual({ error: 'api' });
+    } finally { spy.mockRestore(); }
+  });
+
+  test('directLink: t.me/<bot>/<short> solo con MINIAPP_SHORT_NAME válido', () => {
+    expect(miniapp.directLink({ TELEGRAM_BOT_USERNAME: 'flightalertpro_bot', MINIAPP_SHORT_NAME: 'app' })).toBe('https://t.me/flightalertpro_bot/app');
+    expect(miniapp.directLink({ TELEGRAM_BOT_USERNAME: 'flightalertpro_bot' })).toBeNull();
+    expect(miniapp.directLink({ TELEGRAM_BOT_USERNAME: 'flightalertpro_bot', MINIAPP_SHORT_NAME: 'a/b' })).toBeNull();
+  });
 });

@@ -21,7 +21,7 @@
 9. Opcional: `/myapps` → el app → **Edit Web App URL** si cambia el dominio.
 
 ## Después (en código, PR aparte)
-- Variable `MINIAPP_SHORT_NAME=app` en Render (sin auto-deploy; deploy manual).
+- Variable `MINIAPP_SHORT_NAME=app` en Render (sin auto-deploy; deploy manual). `miniapp.directLink()` arma `https://t.me/<bot>/<short>` solo si el nombre es válido; sin la variable devuelve null.
 - Usar `https://t.me/<bot>/<short_name>?startapp=alert_<id>` / `search_COR_MAD` en los mensajes del chat. La Mini App ya lee `start_param` (`alerts`, `alert_<id>`, `search_XXX_YYY`).
 
 ## Verificar

@@ -65,6 +65,14 @@ function langOfReq(req) {
   return /^en/i.test(String(req.headers['accept-language'] || '')) ? 'en' : 'es';
 }
 
+/** Envuelve handlers async: un throw/reject se loguea y responde 500 {error:'api'} (nunca cuelga la request). */
+function safe(fn) {
+  return (req, res, next) => Promise.resolve().then(() => fn(req, res, next)).catch((err) => {
+    logger.error(`api ${req.method} ${req.path}`, err);
+    if (!res.headersSent) res.status(500).json({ error: 'api' });
+  });
+}
+
 function auth(req, res, next) {
   const raw = req.get('X-Telegram-Init-Data') || '';
   const v = initData.validate(raw, process.env.TELEGRAM_BOT_TOKEN, { now: clock.now().getTime() });
@@ -170,6 +178,7 @@ function router() {
   const r = express.Router();
   // MINIAPP_ENABLED=false: todo /app y /app/api/* responde 404.
   r.use((_req, res, next) => (enabled() ? next() : res.status(404).type('text/plain').send('Not found')));
+  const api = (m, p, ...h) => r[m](p, ...h.map(safe));
   r.param('id', (req, res, next, id) => (validId(id) ? next() : res.status(400).json({ error: 'bad_id' })));
   const nonceOf = (res) => res.locals.cspNonce || crypto.randomBytes(16).toString('hex');
 
@@ -187,14 +196,14 @@ function router() {
   }
 
   r.use('/api', auth);
-  r.get('/api/me', async (req, res) => {
+  api('get', '/api/me', async (req, res) => {
     const id = req.tgUser.id;
     const pro = await entitlements.isPro(id);
     const gate = pro ? null : await entitlements.peek(id);
     res.json({ lang: String(req.tgUser.language_code || '').startsWith('es') ? 'es' : 'en', pro, left: gate ? Math.max(0, entitlements.SEARCH_CAP - (gate.used || 0)) : null });
   });
-  r.get('/api/places', (_req, res) => res.json(placesPayload()));
-  r.get('/api/calendar', async (req, res) => {
+  api('get', '/api/places', (_req, res) => res.json(placesPayload()));
+  api('get', '/api/calendar', async (req, res) => {
     const o = String(req.query.o || '').toUpperCase();
     const d = String(req.query.d || '').toUpperCase();
     const month = monthOf(req.query.m);
@@ -206,7 +215,7 @@ function router() {
       res.status(502).json({ error: 'api' });
     }
   });
-  r.post('/api/search', async (req, res) => {
+  api('post', '/api/search', async (req, res) => {
     const b = req.body || {};
     const o = String(b.o || '').toUpperCase();
     const d = String(b.d || '').toUpperCase();
@@ -230,11 +239,11 @@ function router() {
     res.json({ results: list });
   });
 
-  r.get('/api/alerts', async (req, res) => {
+  api('get', '/api/alerts', async (req, res) => {
     const list = await col('Route').find({ telegramUserId: String(req.tgUser.id) }).lean();
     res.json(list.map(alertView));
   });
-  r.post('/api/alerts', async (req, res) => {
+  api('post', '/api/alerts', async (req, res) => {
     const b = req.body || {};
     const o = String(b.o || '').toUpperCase();
     const d = String(b.d || '').toUpperCase();
@@ -256,7 +265,7 @@ function router() {
     const created = await col('Route').create(doc);
     res.json({ ok: true, id: String(created && created._id ? created._id : '') });
   });
-  r.post('/api/alerts/:id/pause', async (req, res) => {
+  api('post', '/api/alerts/:id/pause', async (req, res) => {
     const paused = !!(req.body && req.body.paused);
     const q = { _id: req.params.id, telegramUserId: String(req.tgUser.id) };
     const found = await col('Route').findOne(q);
@@ -264,7 +273,7 @@ function router() {
     await col('Route').updateOne(q, { $set: { paused } });
     res.json({ ok: true, paused });
   });
-  r.patch('/api/alerts/:id', async (req, res) => {
+  api('patch', '/api/alerts/:id', async (req, res) => {
     const c = Number(req.body && req.body.ceiling);
     if (!Number.isFinite(c) || c < 50 || c > 9999) return res.status(400).json({ error: 'bad_ceiling' });
     const q = { _id: req.params.id, telegramUserId: String(req.tgUser.id) };
@@ -273,7 +282,7 @@ function router() {
     await col('Route').updateOne(q, { $set: { priceThreshold: Math.round(c) } });
     res.json({ ok: true, ceiling: Math.round(c) });
   });
-  r.delete('/api/alerts/:id', async (req, res) => {
+  api('delete', '/api/alerts/:id', async (req, res) => {
     const q = { _id: req.params.id, telegramUserId: String(req.tgUser.id) };
     const found = await col('Route').findOne(q);
     if (!found) return res.status(404).json({ error: 'not_found' });
