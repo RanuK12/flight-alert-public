@@ -23,7 +23,7 @@ const { ORIGINS, DESTINATIONS } = require('../src/config/airports');
 const { createApp } = require('../src/app');
 const { renderSampleCard, criticalCss, PRIVACY } = require('../src/web/landing');
 
-const EMPTY_CARD = "<article class=\"price-card\" id=\"sample-card\" data-state=\"empty\"><div class=\"popular-routes-preview\"><span class=\"route-pill is-active\"><abbr title=\"Ezeiza, Buenos Aires\">EZE</abbr> \u2192 <abbr title=\"Madrid\">MAD</abbr></span><span class=\"route-pill\"><abbr title=\"Ezeiza, Buenos Aires\">EZE</abbr> \u2192 <abbr title=\"Barcelona\">BCN</abbr></span><span class=\"route-pill\"><abbr title=\"C\u00f3rdoba\">COR</abbr> \u2192 <abbr title=\"Fiumicino, Roma\">FCO</abbr></span></div><p class=\"price-card__when\">Pr\u00f3ximas tarifas monitoreadas</p><div class=\"price-card__price-row\"><p class=\"price-card__amount\"><span class=\"price-card__empty\">Sin precio reciente para esta ruta</span></p></div><p class=\"seen\"><svg width=\"16\" height=\"16\" aria-hidden=\"true\" focusable=\"false\"><use href=\"#i-clock\"></use></svg> <span class=\"seen__text\">Precios revisados cada 2\u20133 h</span></p><svg class=\"route-draw\" viewBox=\"0 0 320 80\" aria-hidden=\"true\" focusable=\"false\"><path pathLength=\"1\" d=\"M8 64C70 64 90 16 160 16s90 48 152 8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg><p class=\"price-card__source\">Precio en cach\u00e9 de Travelpayouts</p><a class=\"btn\" href=\"https://t.me/flightalertpro_bot?start=landing_hero\"><svg width=\"16\" height=\"16\" aria-hidden=\"true\" focusable=\"false\"><use href=\"#i-tg\"></use></svg>Abrir en Telegram</a></article>";
+const EMPTY_CARD = "<article class=\"price-card\" id=\"sample-card\" data-state=\"empty\"><div class=\"popular-routes-preview\"><span class=\"route-pill is-active\"><abbr title=\"Ezeiza, Buenos Aires\">EZE</abbr> \u2192 <abbr title=\"Madrid\">MAD</abbr></span><span class=\"route-pill\"><abbr title=\"Ezeiza, Buenos Aires\">EZE</abbr> \u2192 <abbr title=\"Barcelona\">BCN</abbr></span><span class=\"route-pill\"><abbr title=\"C\u00f3rdoba\">COR</abbr> \u2192 <abbr title=\"Fiumicino, Roma\">FCO</abbr></span></div><p class=\"price-card__when\">Pr\u00f3ximas tarifas monitoreadas</p><div class=\"price-card__price-row\"><p class=\"price-card__amount\"><span class=\"price-card__empty\">Sin precio reciente para esta ruta</span></p></div><svg class=\"route-draw\" viewBox=\"0 0 320 80\" aria-hidden=\"true\" focusable=\"false\"><path pathLength=\"1\" d=\"M8 64C70 64 90 16 160 16s90 48 152 8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg><p class=\"price-card__source\">Precio en cach\u00e9 de Travelpayouts</p><a class=\"btn\" href=\"https://t.me/flightalertpro_bot?start=landing_hero\"><svg width=\"16\" height=\"16\" aria-hidden=\"true\" focusable=\"false\"><use href=\"#i-tg\"></use></svg>Abrir en Telegram</a></article>";
 
 const DAY = 24 * 60 * 60 * 1000;
 const HOUR = 60 * 60 * 1000;
@@ -387,4 +387,16 @@ test('review PRISM: 31 destinos con chips, moneda en radiogroup, fuentes propias
   expect(html).toContain('/public/fonts/inter-latin-wght-normal.woff2');
   expect(html).not.toMatch(/<button[^>]*id="theme-toggle"/);
   expect(html).not.toContain('cada pocas horas');
+});
+
+test('PRISM: "cada 2–3 h" una sola vez, reporte "21 h (hora Argentina)" y botón "Ver oferta ↗"', () => {
+  const { renderLanding } = require('../src/web/landing');
+  const es = renderLanding({ lang: 'es' }).replace(/<style[\s\S]*?<\/style>/g, '');
+  const en = renderLanding({ lang: 'en' }).replace(/<style[\s\S]*?<\/style>/g, '');
+  expect(es.split('cada 2–3 h').length - 1).toBe(1);
+  expect(en.split('every 2–3 h').length - 1).toBe(1);
+  expect(es).toContain('21 h (hora Argentina)');
+  expect(en).toContain('21 h (Argentina time)');
+  expect(es).toContain('Ver oferta ↗');
+  expect(en).toContain('View deal ↗');
 });

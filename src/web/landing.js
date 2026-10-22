@@ -159,7 +159,7 @@ function renderSampleCard(sample, lang) {
   const words = row ? esc(fareWords(row, lang)) : '';
   const seen = row
     ? esc(lang === 'en' ? `seen ${row.seenHours} h ago` : row.seen)
-    : (lang === 'en' ? 'Prices checked every 2–3 h' : 'Precios revisados cada 2–3 h');
+    : '';
   const href = row ? `${BOT_URL}?start=${row.origin}-${row.destination}` : tg('hero');
   const popularPreview = !row
     ? `<div class="popular-routes-preview"><span class="route-pill is-active">${abbr('EZE', lang)} → ${abbr('MAD', lang)}</span><span class="route-pill">${abbr('EZE', lang)} → ${abbr('BCN', lang)}</span><span class="route-pill">${abbr('COR', lang)} → ${abbr('FCO', lang)}</span></div>`
@@ -173,7 +173,7 @@ function renderSampleCard(sample, lang) {
     + `<p class="price-card__amount">${amount}</p>`
     + '</div>'
     + (words ? `<p class="price-card__words">${words}</p>` : '')
-    + `<p class="seen">${icon('i-clock')} <span class="seen__text">${seen}</span></p>`
+    + (seen ? `<p class="seen">${icon('i-clock')} <span class="seen__text">${seen}</span></p>` : '')
     + '<svg class="route-draw" viewBox="0 0 320 80" aria-hidden="true" focusable="false"><path pathLength="1" d="M8 64C70 64 90 16 160 16s90 48 152 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
     + `<p class="price-card__source">${esc(t.cacheLabel)}</p>`
     + `<a class="btn" href="${href}">${icon('i-tg')}${esc(t.ctaHero)}</a>`
@@ -208,7 +208,7 @@ function copy(lang) {
       h1: 'Cheap flights to Europe, without spending all day searching',
       eyebrow: 'Argentina ⇄ Europe',
       micro: '1 free search, then 10 a month. No card.',
-      priceFoot: 'Cached prices, checked every 2–3 h. The final price is confirmed by the airline or agency. Some links are affiliate links.',
+      priceFoot: 'Cached prices. The final price is confirmed by the airline or agency. Some links are affiliate links.',
       sub: 'We message you on Telegram when the price of your route drops. Prices checked every 2–3 h.',
       ctaHero: 'Open in Telegram',
       seePrices: 'See prices',
@@ -308,7 +308,7 @@ function copy(lang) {
     h1: 'Vuelos baratos a Europa, sin pasarte el día buscando',
     eyebrow: 'Argentina ⇄ Europa',
     micro: '1 búsqueda gratis y después 10 por mes. Sin tarjeta.',
-    priceFoot: 'Precios en caché, revisados cada 2–3 h. El precio final lo confirma la aerolínea o la agencia. Algunos enlaces son de afiliado.',
+    priceFoot: 'Precios en caché. El precio final lo confirma la aerolínea o la agencia. Algunos enlaces son de afiliado.',
     sub: 'Te avisamos por Telegram cuando baja el precio de tu ruta. Precios revisados cada 2–3 h.',
     ctaHero: 'Abrir en Telegram',
     seePrices: 'Ver precios',
@@ -344,7 +344,7 @@ function copy(lang) {
     proItems: [
       'Búsquedas ilimitadas (uso justo)',
       'Aviso cuando baja el precio',
-      'Reporte diario a las 21:00 hora Argentina',
+      'Reporte diario a las 21 h (hora Argentina)',
     ],
     trial: 'La prueba de 7 días cubre la alerta y el reporte, sin tarjeta y una sola vez. Pro se cobra al confirmar el pago.',
     proBtn: 'Quiero Pro',
@@ -635,7 +635,7 @@ function renderLanding(ctx = {}) {
     + `<div class="tg-msg-dates">📅 ${lang === 'en' ? 'Nov 12 · Return Nov 28' : '12 nov · Vuelta: 28 nov'}</div>`
     + '<div class="tg-msg-price"><span class="tg-val-now">€510</span><span class="tg-val-prev">€680</span><span class="tg-discount">-25%</span></div>'
     + `<div class="tg-msg-footer">⏱️ ${lang === 'en' ? 'Seen 2 h ago · Travelpayouts' : 'Visto hace 2 h · Travelpayouts'}</div>`
-    + `<div class="tg-msg-btn">${lang === 'en' ? 'View airline deal →' : 'Ver oferta en aerolínea →'}</div>`
+    + `<div class="tg-msg-btn">${lang === 'en' ? 'View deal ↗' : 'Ver oferta ↗'}</div>`
     + '<span class="tg-msg-timestamp">21:00 ✓✓</span>'
     + '</div></div></div></figure>'
     + `<p class="proof">${esc(t.proof)}</p>`
@@ -681,7 +681,7 @@ function renderLanding(ctx = {}) {
     + '<ul class="plan-checklist">'
     + `<li>${icon('i-check')} <strong>${lang === 'en' ? 'Unlimited searches' : 'Búsquedas ilimitadas'}</strong> (${lang === 'en' ? 'fair use' : 'uso justo'})</li>`
     + `<li>${icon('i-check')} <strong>${lang === 'en' ? 'Alert when the price drops' : 'Aviso cuando baja el precio'}</strong></li>`
-    + `<li>${icon('i-check')} <strong>${lang === 'en' ? 'Daily report at 21:00 Argentina time' : 'Reporte diario a las 21:00 hora Argentina'}</strong></li>`
+    + `<li>${icon('i-check')} <strong>${lang === 'en' ? 'Daily report at 21 h (Argentina time)' : 'Reporte diario a las 21 h (hora Argentina)'}</strong></li>`
     + `<li>${icon('i-check')} ${esc(t.trial)}</li>`
     + `<li>${icon('i-check')} ${esc(t.starsPeriod)}</li>`
     + '</ul>'
