@@ -528,7 +528,7 @@ function renderLanding(ctx = {}) {
     + `<nav aria-label="${lang === 'en' ? 'Footer' : 'Pie'}">`
     + `<a href="${tg('footer')}">${esc(t.contact)}</a>`
     + `<a href="#privacidad">${esc(t.privacyLink)}</a>`
-    + '</nav><p>© Ranuk IT</p></div></footer>'
+    + `</nav><p>${lang === 'en' ? 'A product by' : 'Un producto de'} <a href="https://ranuk.dev" rel="noopener">Ranuk IT Solutions</a></p></div></footer>`
     + `<script src="${jsHref}" defer></script>`
     + '</body></html>';
 }

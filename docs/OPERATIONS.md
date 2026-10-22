@@ -50,6 +50,7 @@ Sin valores secretos. Los datos de cuentas son los observados en los dashboards 
 | `PUBLIC_KILL_SWITCH` | `on` = mantenimiento | no | manual |
 | `FEATURE_SEARCH`, `FEATURE_ALERTS`, `FEATURE_PAYMENTS_STARS`, `FEATURE_PAYMENTS_MP`, `FEATURE_PAYMENTS_STRIPE` | flags (hoy en `true`) | no | manual |
 | `FEATURE_CHANNELS` | fase 2 (apagado) | no | manual |
+| `ADMIN_TOKEN` | bearer de `/admin/*` (≥32 caracteres; sin él `/admin` da 404) | sí | `openssl rand -hex 32` en el MBP → llavero `flight-alert-public/ADMIN_TOKEN` |
 | `FEATURE_INSTANT_ALERTS` | kill switch de la alerta instantánea Pro | no | manual |
 | `PRO_SEARCH_PER_MIN` / `PRO_SEARCH_PER_DAY` | tope anti-abuso de Pro (10 / 60 por defecto) | no | manual |
 | `INSTANT_ALERTS_EVERY_HOURS` | cada cuántas horas corre la alerta instantánea (3) | no | manual |
@@ -107,7 +108,24 @@ flowchart LR
   H[cron horario] --> E[vence prueba / Pro] --> P[pausa alertas + aviso]
 ```
 
-## 5. Runbooks
+## 5. API de administración
+
+Todas con `Authorization: Bearer $ADMIN_TOKEN`, comparación en tiempo constante, 30 pedidos/min por IP, `Cache-Control: no-store`. Sin token: 401; sin `ADMIN_TOKEN` en el servidor: 404.
+
+| Método | Ruta | Qué hace |
+|---|---|---|
+| GET | `/admin/status` | salud, commit (`RENDER_GIT_COMMIT`), versión, usuarios Free/Pro/prueba, pagos de hoy por método (solo conteos) |
+| POST | `/admin/kill` `{"state":"on"\|"off"}` | kill switch general, guardado en Mongo (`RuntimeFlag`), sobrevive reinicios |
+| POST | `/admin/instant-alerts` `{"state":"on"\|"off"\|"env"}` | override de `FEATURE_INSTANT_ALERTS` (`env` vuelve a la variable) |
+| POST | `/admin/price-check` | fuerza la revisión de alerta instantánea (máx. 2 cada 10 min; respeta el silencio 00–08) |
+| GET | `/admin/logs?n=200` | últimas líneas del proceso, sin tokens, claves, URIs ni emails |
+
+```bash
+TOKEN=$(security find-generic-password -a emilio -s flight-alert-public/ADMIN_TOKEN -w)
+curl -s -H "Authorization: Bearer $TOKEN" https://flight-alert-public.onrender.com/admin/status
+```
+
+## 6. Runbooks
 
 **Go-live (cobros reales)**: seguir `docs/GO_LIVE.md`. Resumen: claves live en Render, `PAYMENTS_MODE=live`, webhook live con los 4 eventos, Stripe Tax activo, deploy, ver `payments: live` en el log, un pago real mínimo y su reembolso (lo hace Emilio).
 
