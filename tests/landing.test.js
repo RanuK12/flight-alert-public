@@ -147,7 +147,7 @@ test('la landing en español sale del config, con privacidad y sin promesas de m
     expect(html).toContain(`>${code}</abbr>`);
   }
   expect(html.match(/role="tab"/g)).toHaveLength(ORIGINS.length);
-  expect(html).toContain('5 orígenes, 31 destinos');
+  expect(html).toContain('12 orígenes, 31 destinos');
   expect(html).toContain('href="/pro"');
   expect(html).toContain('Quiero Pro');
   const prices = html.slice(html.indexOf('id="precios"'), html.indexOf('id="faq"'));

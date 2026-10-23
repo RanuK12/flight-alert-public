@@ -88,8 +88,8 @@ test('P16. no hay playwright ni carpeta de scrapers', () => {
   expect(fs.existsSync(path.join(__dirname, '..', 'src', 'scrapers'))).toBe(false);
 });
 
-test('la cobertura de la v1 son 5 orígenes y 31 destinos', () => {
+test('la cobertura son 12 orígenes (5 AR + 7 LATAM) y 31 destinos', () => {
   const { ORIGINS, DESTINATIONS } = require('../src/config/airports');
-  expect(ORIGINS).toHaveLength(5);
+  expect(ORIGINS).toHaveLength(12);
   expect(DESTINATIONS).toHaveLength(31);
 });

@@ -6,7 +6,16 @@ const entitlements = require('../services/entitlements');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { ORIGINS, DESTINATIONS } = require('../config/airports');
+const { DESTINATIONS } = require('../config/airports');
+const coverage = require('../config/coverage');
+
+const COUNTRY_EN = { AR: 'Argentina', BR: 'Brazil', CL: 'Chile', UY: 'Uruguay', PE: 'Peru', CO: 'Colombia', MX: 'Mexico' };
+/** Países con al menos un origen medido con datos (sale del informe de cobertura). */
+function countryList(lang) {
+  const names = coverage.groupsAvailable().map((g) => (lang === 'en' ? COUNTRY_EN[g.country] || g.name : g.name));
+  if (names.length < 2) return names.join('');
+  return `${names.slice(0, -1).join(', ')}${lang === 'en' ? ' & ' : ' y '}${names[names.length - 1]}`;
+}
 const { EU } = require('../services/country');
 const fx = require('../services/fx');
 
@@ -191,12 +200,12 @@ const POPULAR_DESTINATIONS = [
 
 function copy(lang) {
   const en = lang === 'en';
-  const nO = ORIGINS.length;
-  const nD = DESTINATIONS.length;
+  const nO = coverage.latamOriginsAvailable().length;
+  const nD = DESTINATIONS.filter((d) => coverage.latamOriginsAvailable().some((o) => coverage.pairAllowed(o, d))).length;
   if (en) {
     return {
       htmlLang: 'en',
-      title: 'Cheap flights between Argentina and Europe | Flight Alert',
+      title: 'Cheap flights between Latin America and Europe | Flight Alert',
       description: 'Pick your origin and destination, and the bot tells you when a good fare shows up. Travelpayouts data. 10 searches a month.',
       skip: 'Skip to content',
       pricesLink: 'Pricing',
@@ -207,7 +216,7 @@ function copy(lang) {
       themeDark: 'Dark',
       langLabel: 'ES',
       h1: 'Cheap flights to Europe, without spending all day searching',
-      eyebrow: 'Argentina ⇄ Europe',
+      eyebrow: 'Latin America ⇄ Europe',
       micro: (n) => `${n} free searches a month. No card.`,
       priceFoot: 'Cached prices. The final price is confirmed by the airline or agency. Some links are affiliate links.',
       sub: 'We message you on Telegram when the price of your route drops. Prices checked every 2–3 h.',
@@ -226,7 +235,7 @@ function copy(lang) {
       proof: 'Powered by Travelpayouts data',
       howTitle: 'How it works',
       steps: [
-        ['Choose your route', 'Pick your departure airport in Argentina and your European destination.', 'i-search'],
+        ['Choose your route', 'Pick your departure airport in Argentina or another Latin American hub, and your European destination.', 'i-search'],
         ['Set your target price', 'Tell the bot your maximum budget. It writes when a fare fits.', 'i-sliders'],
         ['Alerts when prices drop', 'When a fare you follow drops, you get a Telegram message with the booking link.', 'i-zap'],
       ],
@@ -266,10 +275,10 @@ function copy(lang) {
       usdFigure: 'US$5',
       usdWords: '5 US dollars.',
       destinationsTitle: 'Popular destinations in Europe',
-      destinationsSub: 'Top monitored routes from Argentina with daily price checks.',
-      trustOrigins: '5 origins',
-      trustOriginsList: 'EZE · COR · MDQ · ROS · BUE',
-      trustDestinations: '31 destinations',
+      destinationsSub: 'Most searched routes from Latin America.',
+      trustOrigins: `${nO} origins`,
+      trustOriginsList: countryList('en'),
+      trustDestinations: `${nD} destinations`,
       trustDestinationsList: 'Madrid, Rome, Paris, London & more',
       trustData: 'Travelpayouts',
       trustDataDesc: 'Real cached fares',
@@ -296,7 +305,7 @@ function copy(lang) {
   }
   return {
     htmlLang: 'es',
-    title: 'Vuelos baratos entre Argentina y Europa | Flight Alert',
+    title: 'Vuelos baratos entre Latinoamérica y Europa | Flight Alert',
     description: 'Elegís origen y destino y el bot te avisa cuando aparece un buen precio. Datos de Travelpayouts. 10 búsquedas por mes.',
     skip: 'Saltar al contenido',
     pricesLink: 'Precios',
@@ -307,7 +316,7 @@ function copy(lang) {
     themeDark: 'Oscuro',
     langLabel: 'EN',
     h1: 'Vuelos baratos a Europa, sin pasarte el día buscando',
-    eyebrow: 'Argentina ⇄ Europa',
+    eyebrow: 'Latinoamérica ⇄ Europa',
     micro: (n) => `${n} búsquedas gratis por mes. Sin tarjeta.`,
     priceFoot: 'Precios en caché. El precio final lo confirma la aerolínea o la agencia. Algunos enlaces son de afiliado.',
     sub: 'Te avisamos por Telegram cuando baja el precio de tu ruta. Precios revisados cada 2–3 h.',
@@ -326,7 +335,7 @@ function copy(lang) {
     proof: 'Datos de Travelpayouts',
     howTitle: 'Cómo funciona',
     steps: [
-      ['Elegís la ruta', 'Elegís de dónde salís en Argentina y adónde querés ir en Europa.', 'i-search'],
+      ['Elegís la ruta', 'Elegís de dónde salís (Argentina u otro hub de Latinoamérica) y adónde querés ir en Europa.', 'i-search'],
       ['Fijás tu precio máximo', 'Le indicás al bot cuánto estás dispuesto a pagar. Te escribe cuando una tarifa entra.', 'i-sliders'],
       ['Te avisa cuando baja', 'Cuando baja una tarifa que seguís, te llega un mensaje a Telegram con el link para reservar.', 'i-zap'],
     ],
@@ -366,10 +375,10 @@ function copy(lang) {
     usdFigure: 'US$5',
     usdWords: '5 dólares estadounidenses.',
     destinationsTitle: 'Destinos populares en Europa',
-    destinationsSub: 'Las rutas más buscadas desde Argentina, monitoreadas todos los días.',
-    trustOrigins: '5 orígenes',
-    trustOriginsList: 'EZE · COR · MDQ · ROS · BUE',
-    trustDestinations: '31 destinos',
+    destinationsSub: 'Las rutas más buscadas desde Latinoamérica.',
+    trustOrigins: `${nO} orígenes`,
+    trustOriginsList: countryList('es'),
+    trustDestinations: `${nD} destinos`,
     trustDestinationsList: 'Madrid, Barcelona, Roma, París y más',
     trustData: 'Datos de Travelpayouts',
     trustDataDesc: 'Precios reales en caché',
@@ -423,9 +432,9 @@ function priceBlocks(lang, region, ars) {
 
 function panels(lang) {
   const t = copy(lang);
-  return ORIGINS.map((origin, index) => {
+  return coverage.latamOriginsAvailable().map((origin, index) => {
     const active = index === 0 ? ' is-active' : '';
-    const items = DESTINATIONS.map((code) => `<li>${abbr(code, lang)}</li>`).join('');
+    const items = coverage.destinationsAvailable(origin).map((code) => `<li>${abbr(code, lang)}</li>`).join('');
     return `<div class="tab-panel${active}" id="panel-${origin}" role="tabpanel" aria-labelledby="tab-${origin}">`
       + `<h3>${esc(t.from)} ${abbr(origin, lang)}</h3>`
       + `<ul class="dest-grid">${items}</ul>`
@@ -435,7 +444,7 @@ function panels(lang) {
 
 function tabs(lang) {
   const t = copy(lang);
-  const buttons = ORIGINS.map((origin, index) => {
+  const buttons = coverage.latamOriginsAvailable().map((origin, index) => {
     const selected = index === 0;
     return `<button type="button" role="tab" id="tab-${origin}" aria-controls="panel-${origin}" aria-selected="${selected ? 'true' : 'false'}" tabindex="${selected ? '0' : '-1'}">${abbr(origin, lang)}</button>`;
   }).join('');

@@ -41,8 +41,11 @@ function home(ctx) {
   });
 }
 
+/** Países de los hubs LATAM: pagan en USD (Stripe/Stars). MP queda solo para AR. */
+const LATAM_COUNTRIES = [['BR', 'Brasil'], ['CL', 'Chile'], ['UY', 'Uruguay'], ['PE', 'Perú'], ['CO', 'Colombia'], ['MX', 'México']];
+
 function countryOptions(suggested) {
-  const rows = [['AR', 'Argentina'], ...EU_COUNTRIES, ['OTRO', 'Otro']];
+  const rows = [['AR', 'Argentina'], ...LATAM_COUNTRIES, ...EU_COUNTRIES, ['OTRO', 'Otro']];
   return rows.map(([code, name]) => (
     `<option value="${code}" ${suggested === code ? 'selected' : ''}>${name}</option>`
   )).join('');

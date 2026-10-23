@@ -1,5 +1,6 @@
 node_modules/
 .env
-data/
+data/*
+!data/coverage.json
 *.log
 node_modules

@@ -111,7 +111,7 @@ describe('3. Matching de ciudades', () => {
         const f = side === 'o' ? {} : { o: 'EZE' };
         const r = flow.applyText('es', 'b', f, q);
         const codes = [r.fields[side], ...(r.choices || []).map((b) => cb.decode(b.callback_data).fields[side])].filter(Boolean);
-        codes.forEach((c) => expect((side === 'o' ? ORIGINS : DESTINATIONS)).toContain(c));
+        codes.forEach((c) => expect((side === 'o' ? [...ORIGINS, ...DESTINATIONS] : DESTINATIONS)).toContain(c));
       }
     }
   });

@@ -407,12 +407,12 @@ async function onboarding(bot, ctx, s, fields) {
   const skip = [{ text: t(lang, 'skip'), callback_data: cb.encode('o', 'sk') }];
   const btn = (code, step, extra) => ({ text: places.label(code), callback_data: cb.encode('o', step, extra) });
   if (s === 'o1') {
-    const rows = flow.pairs(places.popular('o').map((c) => btn(c, 'o2', { o: c })));
+    const rows = places.originRows((c) => btn(c, 'o2', { o: c }), 2, lang);
     await show(bot, ctx.chatId, ctx.mid, t(lang, 'obHello'), { inline_keyboard: [...rows, skip] });
     return;
   }
   if (s === 'o2' && fields.o) {
-    const rows = flow.pairs(places.popular('d').map((c) => btn(c, 'o3', { o: fields.o, d: c })));
+    const rows = flow.pairs(places.popular('d', fields.o).map((c) => btn(c, 'o3', { o: fields.o, d: c })));
     rows.push([{ text: t(lang, 'obOther'), callback_data: cb.encode('b', 'nx', { o: fields.o }) }]);
     await show(bot, ctx.chatId, ctx.mid, t(lang, 'obDest'), { inline_keyboard: [...rows, skip] });
     return;
