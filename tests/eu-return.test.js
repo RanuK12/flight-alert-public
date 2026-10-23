@@ -70,7 +70,7 @@ describe('auditoría OVERSEER', () => {
       expect(cov.pairAllowed('MVD', 'MAD')).toBe(true);
       expect(cov.pairAllowed('MVD', 'BCN')).toBe(false);
       expect(cov.pairAllowed('MAD', 'EZE')).toBe(false); // no medido
-      expect(cov.latamOriginsAvailable()).toEqual(['EZE', 'MVD']);
+      expect(cov.latamOriginsAvailable()).toEqual(['EZE', 'COR', 'MDQ', 'ROS', 'BUE', 'MVD']);
       expect(ux.codesFor('d', 'MVD')).toEqual(['MAD']);
       const titles = ux.originRows((c) => ({ text: c, callback_data: c })).filter((r) => r[0].callback_data === 'noop').map((r) => r[0].text);
       expect(titles).toEqual(['🇦🇷 Argentina', '🇺🇾 Uruguay']); // sin vuelta: ningún hub medido
@@ -80,7 +80,7 @@ describe('auditoría OVERSEER', () => {
   test('umbral 60 % por origen: un origen bajo el umbral no se ofrece aunque tenga algún par', () => {
     withReport([{ origin: 'EZE', destination: 'MAD' }, { origin: 'MVD', destination: 'MAD' }], () => {
       expect(cov.pairAllowed('MVD', 'MAD')).toBe(false);
-      expect(cov.latamOriginsAvailable()).toEqual(['EZE']);
+      expect(cov.latamOriginsAvailable()).toEqual(['EZE', 'COR', 'MDQ', 'ROS', 'BUE']);
     }, { MVD: { with: 5, total: 31, percent: 16.1 } });
   });
 
@@ -108,9 +108,8 @@ describe('auditoría OVERSEER', () => {
       expect(r).toBeTruthy();
       expect(r.tested).toHaveLength(744);
       expect(r.freshHours).toBe(48);
-      for (const o of cov.latamOriginsAvailable()) expect(r.byOrigin[o].percent).toBeGreaterThanOrEqual(60);
       expect(cov.latamOriginsAvailable()).not.toContain('MVD');
-      expect(cov.latamOriginsAvailable()).toContain('EZE');
+      for (const o of cov.latamOriginsAvailable().filter((x) => !cov.GRANDFATHERED_ORIGINS.includes(x))) expect(r.byOrigin[o].percent).toBeGreaterThanOrEqual(60);
       for (const h of cov.euHubsAvailable()) expect(r.byOrigin[h].percent).toBeGreaterThanOrEqual(60);
     } finally { process.env.COVERAGE_FILE = 'off'; }
   });
@@ -120,7 +119,7 @@ describe('auditoría OVERSEER', () => {
       const html = require('../src/web/landing').renderLanding({ lang: 'es' });
       expect(html).toMatch(/Argentina y Brasil/);
       expect(html).not.toMatch(/monitoreadas todos los días/);
-      expect(html).toMatch(/2 orígenes/);
+      expect(html).toMatch(/6 orígenes, 31 destinos/);
       const en = require('../src/web/landing').renderLanding({ lang: 'en' });
       expect(en).toMatch(/Argentina &amp; Brazil|Argentina & Brazil/);
       expect(en).not.toMatch(/daily price checks/);
@@ -147,3 +146,24 @@ describe('auditoría OVERSEER', () => {
     expect(v('MAD', 'EZE').ok).toBe(true);
   });
 });
+
+describe('regresión vs main: AR grandfathered', () => {
+  const os = require('os');
+  const path = require('path');
+  const cov = require('../src/config/coverage');
+  const { DESTINATIONS } = require('../src/config/airports');
+  // Lo que main ofrecía en prod (sin data/coverage.json): 5 orígenes AR × 31 destinos.
+  const MAIN_ORIGINS = ['EZE', 'COR', 'MDQ', 'ROS', 'BUE'];
+  const mainPairs = MAIN_ORIGINS.flatMap((o) => DESTINATIONS.map((d) => [o, d]));
+  test.each([['informe real', () => cov.REPORT], ['sin informe', () => path.join(os.tmpdir(), 'no-existe.json')]])('%s: lo ofrecido ⊇ main', (_, f) => {
+    process.env.COVERAGE_FILE = f();
+    try {
+      expect(mainPairs).toHaveLength(155);
+      for (const [o, d] of mainPairs) expect([o, d, cov.pairAllowed(o, d)]).toEqual([o, d, true]);
+      expect(cov.latamOriginsAvailable()).toEqual(expect.arrayContaining(MAIN_ORIGINS));
+      const ux = require('../src/bot/ux/places');
+      for (const o of ['ROS', 'COR', 'MDQ']) expect(ux.codesFor('d', o)).toHaveLength(31);
+    } finally { process.env.COVERAGE_FILE = 'off'; }
+  });
+});
+

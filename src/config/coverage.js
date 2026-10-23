@@ -39,10 +39,15 @@ function report() {
 /**
  * Umbral prometido: un origen se ofrece solo si ≥60 % de sus destinos tuvo precio fresco (≤48 h)
  * en el último chequeo, y dentro de ese origen solo los pares que tuvieron datos.
+ * Los orígenes argentinos de main quedan siempre completos (grandfathered).
  * Sin informe legible: fail-closed, solo Argentina → Europa.
  */
+/** Orígenes de main (AR↔EU): siempre se ofrecen completos, como antes del PR. El umbral es solo para lo nuevo. */
+const GRANDFATHERED_ORIGINS = ['EZE', 'COR', 'MDQ', 'ROS', 'BUE'];
+
 function pairAllowed(origin, destination) {
   if (disabled()) return true;
+  if (GRANDFATHERED_ORIGINS.includes(origin) && DESTINATIONS.includes(destination)) return true;
   const r = report();
   if (!r) return FALLBACK_ORIGINS.includes(origin) && DESTINATIONS.includes(destination);
   return cache.set.has(`${origin}-${destination}`);
@@ -76,6 +81,6 @@ function euOriginsAvailable() {
 }
 
 module.exports = {
-  pairAllowed, report, MIN_ORIGIN_PERCENT, FALLBACK_ORIGINS, allPairs, REPORT,
+  pairAllowed, report, MIN_ORIGIN_PERCENT, FALLBACK_ORIGINS, GRANDFATHERED_ORIGINS, allPairs, REPORT,
   destinationsAvailable, originAvailable, latamOriginsAvailable, groupsAvailable, euHubsAvailable, euOriginsAvailable,
 };
