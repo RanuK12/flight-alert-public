@@ -62,7 +62,7 @@ function monthName(lang, y, m) {
 }
 function shortDate(lang, isoDate) {
   const [y, m, d] = isoDate.split('-').map(Number);
-  return lang === 'es' ? `${d} ${t(lang, 'monthsShort')[m - 1].toLowerCase()} ${y}` : `${t(lang, 'monthsShort')[m - 1]} ${d}, ${y}`;
+  return lang !== 'en' ? `${d} ${t(lang, 'monthsShort')[m - 1].toLowerCase()} ${y}` : `${t(lang, 'monthsShort')[m - 1]} ${d}, ${y}`;
 }
 
 /** Próximos 12 meses; el actual solo si quedan ≥3 días (contando hoy). */

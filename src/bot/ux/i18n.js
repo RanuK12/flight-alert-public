@@ -264,11 +264,21 @@ const STRINGS = {
       report: "Today's report", pro: 'Go Pro', terms: 'Terms', paysupport: 'Payment help', cancel: 'Cancel',
     },
   },
+  pt: require('./i18n.pt'),
 };
 
-function langOf(from) {
+const BR_ORIGINS = ['GRU', 'GIG'];
+
+/**
+ * Idioma del usuario: language_code de Telegram (es/pt/resto→en). Si Telegram no dice
+ * nada útil (vacío) y el origen elegido es de Brasil, portugués.
+ */
+function langOf(from, { origin } = {}) {
   const code = String((from && from.language_code) || '').toLowerCase();
-  return code.startsWith('es') ? 'es' : 'en';
+  if (code.startsWith('es')) return 'es';
+  if (code.startsWith('pt')) return 'pt';
+  if (!code && BR_ORIGINS.includes(String(origin || '').toUpperCase())) return 'pt';
+  return 'en';
 }
 
 function t(lang, key, vars = {}) {
@@ -279,4 +289,4 @@ function t(lang, key, vars = {}) {
   return raw.replace(/\{(\w+)\}/g, (_, k) => (vars[k] === undefined ? `{${k}}` : String(vars[k])));
 }
 
-module.exports = { STRINGS, langOf, t };
+module.exports = { STRINGS, BR_ORIGINS, langOf, t };
