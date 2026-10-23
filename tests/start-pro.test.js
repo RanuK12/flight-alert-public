@@ -37,11 +37,13 @@ describe('/start con Pro', () => {
   });
 });
 
-describe('Pro con IA · muy pronto', () => {
+describe('Pro con IA (disponible)', () => {
   test('aparece en la landing y /pro, y se apaga con SHOW_AI_SOON=false', () => {
     const soon = require('../src/web/aiSoon');
     expect(soon.li('es')).toContain('Pro con IA');
     expect(soon.li('en')).toContain('Pro with AI');
+    expect(soon.li('es')).not.toMatch(/muy pronto/i);
+    expect(soon.li('en')).not.toMatch(/coming soon/i);
     process.env.SHOW_AI_SOON = 'false';
     expect(soon.li('es')).toBe('');
     delete process.env.SHOW_AI_SOON;
