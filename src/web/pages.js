@@ -100,6 +100,12 @@ const PRO_TEXT = {
   },
 };
 
+function ptPrices(lines) {
+  const tr = (v) => String(v).replace(/ por mes/g, ' por mês').replace(/al dólar oficial de hoy/g, 'ao dólar oficial de hoje')
+    .replace(/IVA incluido/g, 'IVA incluído').replace(/Sin cotización del dólar oficial/g, 'Sem cotação do dólar oficial');
+  return Object.fromEntries(Object.entries(lines).map(([k, v]) => [k, tr(v)]));
+}
+
 /** pt-BR se ?lang=pt, Accept-Language pt* ou país sugerido Brasil. */
 function proLang({ lang = '', language = '', country = '' } = {}) {
   if (lang === 'pt' || lang === 'es') return lang;
@@ -111,9 +117,10 @@ function proLang({ lang = '', language = '', country = '' } = {}) {
 function pro({ choice = '', ipCountry: geo = '', language = '', nonce = '', ars = null, lang = '' } = {}) {
   const suggested = String(choice || preselect(language) || '').toUpperCase();
   const offer = currencyFor(suggested, geo);
-  const lines = priceLines(Number.isInteger(ars) && ars > 0 ? ars : null);
-  const key = priceKey(suggested);
   const L = proLang({ lang, language, country: suggested });
+  const raw = priceLines(Number.isInteger(ars) && ars > 0 ? ars : null);
+  const lines = L === 'pt' ? ptPrices(raw) : raw;
+  const key = priceKey(suggested);
   const t = PRO_TEXT[L];
   const note = offer.rail === 'mp' ? t.mp : t.noMp;
   return layout('Pro', `
@@ -135,7 +142,7 @@ function pro({ choice = '', ipCountry: geo = '', language = '', nonce = '', ars 
       <p class="form-error" id="pro-email-error" role="alert" hidden>${t.emailError}</p>
       <button class="btn btn--primary pro-submit" type="submit">${offer.rail === 'mp' ? t.btnMp : t.btnCard}</button>
     </form>
-    <p class="fine">${t.methods}: ${esc(require('./payMethods').line(L))}.</p>
+    <p class="fine">${t.methods}: ${esc(require('./payMethods').line(L).replace(/\.$/, ''))}.</p>
     <p class="fine">${t.trial(entitlements.TRIAL_DAYS)}</p>
   `, { nonce, script: PRO_SCRIPT, fullTitle: require('./seo').PRO_META.title, head: require('./seo').proHead(), lang: L === 'pt' ? 'pt-BR' : 'es' });
 }

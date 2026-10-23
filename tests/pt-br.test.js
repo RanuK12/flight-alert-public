@@ -32,6 +32,7 @@ describe('pt-BR', () => {
     expect(br).toContain('<html lang="pt-BR"');
     expect(br).toContain('Buscas ilimitadas (uso justo).');
     expect(br).toContain('Seguir com cartão');
+    expect(br).toContain('US$5 por mês.');
     expect(br).not.toContain('Búsquedas ilimitadas');
     expect(pages.pro({ choice: 'ES' })).toContain('<html lang="es"');
   });

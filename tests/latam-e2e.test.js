@@ -90,7 +90,7 @@ test('página Pro: países LATAM en la lista, con precio en USD y sin MP', () =>
   for (const [c, name] of [['BR', 'Brasil'], ['CL', 'Chile'], ['UY', 'Uruguay'], ['PE', 'Perú'], ['CO', 'Colombia'], ['MX', 'México']]) {
     const html = pages.pro({ choice: c, ipCountry: c });
     expect(html).toContain(`<option value="${c}" selected>${name}</option>`);
-    expect(html).toMatch(/US\$5 por mes/);
+    expect(html).toMatch(c === "BR" ? /US\$5 por mês/ : /US\$5 por mes/); // Brasil ve la página en pt-BR
     expect(html).not.toContain('Podés pagar en pesos con Mercado Pago');
     expect(country.currencyFor(c, c).rail).toBe('stripe');
   }
