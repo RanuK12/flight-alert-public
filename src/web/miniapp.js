@@ -262,6 +262,7 @@ function router() {
       telegramUserId: String(id), telegramChatId: String(chatId), origin: o, destination: d,
       tripType: ret ? 'roundtrip' : 'oneway', outboundDate: dep, returnDate: ret, flexMonth: null, stayDays: null,
       notify: c ? 'drop' : 'daily', priceThreshold: c ? Math.round(c) : null, currency: 'EUR', hour: '21:00', paused: false, name: `${o}→${d}`,
+      lang: ['es', 'en', 'pt'].includes(String(b.lang || '')) ? String(b.lang) : (String((req.tgUser && req.tgUser.language_code) || '').startsWith('es') ? 'es' : 'en'),
     };
     const created = await col('Route').create(doc);
     res.json({ ok: true, id: String(created && created._id ? created._id : '') });

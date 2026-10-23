@@ -12,217 +12,303 @@
     "AMS": {
       "with": 7,
       "total": 12,
-      "percent": 58.3
+      "percent": 58.3,
+      "withDuffel": 0,
+      "percentWithDuffel": 58.3
     },
     "ATH": {
       "with": 2,
       "total": 12,
-      "percent": 16.7
+      "percent": 16.7,
+      "withDuffel": 0,
+      "percentWithDuffel": 16.7
     },
     "BCN": {
       "with": 9,
       "total": 12,
-      "percent": 75
+      "percent": 75,
+      "withDuffel": 3,
+      "percentWithDuffel": 100
     },
     "BER": {
       "with": 9,
       "total": 12,
-      "percent": 75
+      "percent": 75,
+      "withDuffel": 0,
+      "percentWithDuffel": 75
     },
     "BGY": {
       "with": 5,
       "total": 12,
-      "percent": 41.7
+      "percent": 41.7,
+      "withDuffel": 0,
+      "percentWithDuffel": 41.7
     },
     "BIO": {
       "with": 1,
       "total": 12,
-      "percent": 8.3
+      "percent": 8.3,
+      "withDuffel": 0,
+      "percentWithDuffel": 8.3
     },
     "BOG": {
       "with": 8,
       "total": 31,
-      "percent": 25.8
+      "percent": 25.8,
+      "withDuffel": 23,
+      "percentWithDuffel": 100
     },
     "BRU": {
       "with": 3,
       "total": 12,
-      "percent": 25
+      "percent": 25,
+      "withDuffel": 0,
+      "percentWithDuffel": 25
     },
     "BUE": {
       "with": 23,
       "total": 31,
-      "percent": 74.2
+      "percent": 74.2,
+      "withDuffel": 0,
+      "percentWithDuffel": 74.2
     },
     "CDG": {
       "with": 9,
       "total": 12,
-      "percent": 75
+      "percent": 75,
+      "withDuffel": 3,
+      "percentWithDuffel": 100
     },
     "COR": {
       "with": 1,
       "total": 31,
-      "percent": 3.2
+      "percent": 3.2,
+      "withDuffel": 0,
+      "percentWithDuffel": 3.2
     },
     "DUB": {
       "with": 4,
       "total": 12,
-      "percent": 33.3
+      "percent": 33.3,
+      "withDuffel": 0,
+      "percentWithDuffel": 33.3
     },
     "DUS": {
       "with": 2,
       "total": 12,
-      "percent": 16.7
+      "percent": 16.7,
+      "withDuffel": 0,
+      "percentWithDuffel": 16.7
     },
     "EZE": {
       "with": 23,
       "total": 31,
-      "percent": 74.2
+      "percent": 74.2,
+      "withDuffel": 0,
+      "percentWithDuffel": 74.2
     },
     "FCO": {
       "with": 6,
       "total": 12,
-      "percent": 50
+      "percent": 50,
+      "withDuffel": 6,
+      "percentWithDuffel": 100
     },
     "FRA": {
       "with": 6,
       "total": 12,
-      "percent": 50
+      "percent": 50,
+      "withDuffel": 6,
+      "percentWithDuffel": 100
     },
     "GIG": {
       "with": 11,
       "total": 31,
-      "percent": 35.5
+      "percent": 35.5,
+      "withDuffel": 20,
+      "percentWithDuffel": 100
     },
     "GRU": {
       "with": 20,
       "total": 31,
-      "percent": 64.5
+      "percent": 64.5,
+      "withDuffel": 11,
+      "percentWithDuffel": 100
     },
     "HAM": {
       "with": 3,
       "total": 12,
-      "percent": 25
+      "percent": 25,
+      "withDuffel": 0,
+      "percentWithDuffel": 25
     },
     "IST": {
       "with": 9,
       "total": 12,
-      "percent": 75
+      "percent": 75,
+      "withDuffel": 0,
+      "percentWithDuffel": 75
     },
     "LGW": {
       "with": 8,
       "total": 12,
-      "percent": 66.7
+      "percent": 66.7,
+      "withDuffel": 0,
+      "percentWithDuffel": 66.7
     },
     "LHR": {
       "with": 8,
       "total": 12,
-      "percent": 66.7
+      "percent": 66.7,
+      "withDuffel": 4,
+      "percentWithDuffel": 100
     },
     "LIM": {
       "with": 9,
       "total": 31,
-      "percent": 29
+      "percent": 29,
+      "withDuffel": 21,
+      "percentWithDuffel": 96.8
     },
     "LIS": {
       "with": 7,
       "total": 12,
-      "percent": 58.3
+      "percent": 58.3,
+      "withDuffel": 5,
+      "percentWithDuffel": 100
     },
     "LYS": {
       "with": 1,
       "total": 12,
-      "percent": 8.3
+      "percent": 8.3,
+      "withDuffel": 0,
+      "percentWithDuffel": 8.3
     },
     "MAD": {
       "with": 9,
       "total": 12,
-      "percent": 75
+      "percent": 75,
+      "withDuffel": 3,
+      "percentWithDuffel": 100
     },
     "MDQ": {
       "with": 0,
       "total": 31,
-      "percent": 0
+      "percent": 0,
+      "withDuffel": 0,
+      "percentWithDuffel": 0
     },
     "MEX": {
       "with": 14,
       "total": 31,
-      "percent": 45.2
+      "percent": 45.2,
+      "withDuffel": 16,
+      "percentWithDuffel": 96.8
     },
     "MUC": {
       "with": 3,
       "total": 12,
-      "percent": 25
+      "percent": 25,
+      "withDuffel": 0,
+      "percentWithDuffel": 25
     },
     "MVD": {
       "with": 5,
       "total": 31,
-      "percent": 16.1
+      "percent": 16.1,
+      "withDuffel": 25,
+      "percentWithDuffel": 96.8
     },
     "MXP": {
       "with": 5,
       "total": 12,
-      "percent": 41.7
+      "percent": 41.7,
+      "withDuffel": 7,
+      "percentWithDuffel": 100
     },
     "NAP": {
       "with": 0,
       "total": 12,
-      "percent": 0
+      "percent": 0,
+      "withDuffel": 0,
+      "percentWithDuffel": 0
     },
     "NCE": {
       "with": 2,
       "total": 12,
-      "percent": 16.7
+      "percent": 16.7,
+      "withDuffel": 0,
+      "percentWithDuffel": 16.7
     },
     "OPO": {
       "with": 5,
       "total": 12,
-      "percent": 41.7
+      "percent": 41.7,
+      "withDuffel": 0,
+      "percentWithDuffel": 41.7
     },
     "ORY": {
       "with": 9,
       "total": 12,
-      "percent": 75
+      "percent": 75,
+      "withDuffel": 0,
+      "percentWithDuffel": 75
     },
     "ROS": {
       "with": 2,
       "total": 31,
-      "percent": 6.5
+      "percent": 6.5,
+      "withDuffel": 0,
+      "percentWithDuffel": 6.5
     },
     "SCL": {
       "with": 9,
       "total": 31,
-      "percent": 29
+      "percent": 29,
+      "withDuffel": 21,
+      "percentWithDuffel": 96.8
     },
     "STN": {
       "with": 8,
       "total": 12,
-      "percent": 66.7
+      "percent": 66.7,
+      "withDuffel": 0,
+      "percentWithDuffel": 66.7
     },
     "SVQ": {
       "with": 2,
       "total": 12,
-      "percent": 16.7
+      "percent": 16.7,
+      "withDuffel": 0,
+      "percentWithDuffel": 16.7
     },
     "VCE": {
       "with": 4,
       "total": 12,
-      "percent": 33.3
+      "percent": 33.3,
+      "withDuffel": 0,
+      "percentWithDuffel": 33.3
     },
     "VIE": {
       "with": 4,
       "total": 12,
-      "percent": 33.3
+      "percent": 33.3,
+      "withDuffel": 0,
+      "percentWithDuffel": 33.3
     },
     "VLC": {
       "with": 4,
       "total": 12,
-      "percent": 33.3
+      "percent": 33.3,
+      "withDuffel": 0,
+      "percentWithDuffel": 33.3
     },
     "ZRH": {
       "with": 3,
       "total": 12,
-      "percent": 25
+      "percent": 25,
+      "withDuffel": 0,
+      "percentWithDuffel": 25
     }
   },
   "tested": [
@@ -6183,5 +6269,2123 @@
       "destination": "SCL"
     }
   ],
-  "checkedAt": "2026-10-23T21:45:27.285Z"
+  "checkedAt": "2026-10-23T21:45:27.285Z",
+  "withDuffel": [
+    {
+      "origin": "GIG",
+      "destination": "AMS",
+      "date": "2026-12-10",
+      "priceEur": 450
+    },
+    {
+      "origin": "GIG",
+      "destination": "ATH",
+      "date": "2026-12-10",
+      "priceEur": 582
+    },
+    {
+      "origin": "GIG",
+      "destination": "BCN",
+      "date": "2026-12-10",
+      "priceEur": 440
+    },
+    {
+      "origin": "GIG",
+      "destination": "BER",
+      "date": "2026-12-10",
+      "priceEur": 568
+    },
+    {
+      "origin": "GIG",
+      "destination": "BIO",
+      "date": "2026-12-10",
+      "priceEur": 523
+    },
+    {
+      "origin": "GIG",
+      "destination": "DUB",
+      "date": "2026-12-10",
+      "priceEur": 661
+    },
+    {
+      "origin": "GIG",
+      "destination": "DUS",
+      "date": "2026-12-10",
+      "priceEur": 486
+    },
+    {
+      "origin": "GIG",
+      "destination": "HAM",
+      "date": "2026-12-10",
+      "priceEur": 451
+    },
+    {
+      "origin": "GIG",
+      "destination": "LGW",
+      "date": "2026-12-10",
+      "priceEur": 459
+    },
+    {
+      "origin": "GIG",
+      "destination": "LHR",
+      "date": "2026-12-10",
+      "priceEur": 338
+    },
+    {
+      "origin": "GIG",
+      "destination": "LYS",
+      "date": "2026-12-10",
+      "priceEur": 728
+    },
+    {
+      "origin": "GIG",
+      "destination": "MUC",
+      "date": "2026-12-10",
+      "priceEur": 439
+    },
+    {
+      "origin": "GIG",
+      "destination": "NAP",
+      "date": "2026-12-10",
+      "priceEur": 480
+    },
+    {
+      "origin": "GIG",
+      "destination": "NCE",
+      "date": "2026-12-10",
+      "priceEur": 451
+    },
+    {
+      "origin": "GIG",
+      "destination": "STN",
+      "date": "2026-12-10",
+      "priceEur": 987
+    },
+    {
+      "origin": "GIG",
+      "destination": "SVQ",
+      "date": "2026-12-10",
+      "priceEur": 749
+    },
+    {
+      "origin": "GIG",
+      "destination": "VCE",
+      "date": "2026-12-10",
+      "priceEur": 480
+    },
+    {
+      "origin": "GIG",
+      "destination": "VIE",
+      "date": "2026-12-10",
+      "priceEur": 792
+    },
+    {
+      "origin": "GIG",
+      "destination": "VLC",
+      "date": "2026-12-10",
+      "priceEur": 473
+    },
+    {
+      "origin": "GIG",
+      "destination": "ZRH",
+      "date": "2026-12-10",
+      "priceEur": 518
+    },
+    {
+      "origin": "MVD",
+      "destination": "AMS",
+      "date": "2026-12-10",
+      "priceEur": 604
+    },
+    {
+      "origin": "MVD",
+      "destination": "ATH",
+      "date": "2026-12-10",
+      "priceEur": 926
+    },
+    {
+      "origin": "MVD",
+      "destination": "BER",
+      "date": "2026-12-10",
+      "priceEur": 689
+    },
+    {
+      "origin": "MVD",
+      "destination": "BRU",
+      "date": "2026-12-10",
+      "priceEur": 646
+    },
+    {
+      "origin": "MVD",
+      "destination": "CDG",
+      "date": "2026-12-10",
+      "priceEur": 643
+    },
+    {
+      "origin": "MVD",
+      "destination": "DUB",
+      "date": "2026-12-10",
+      "priceEur": 1011
+    },
+    {
+      "origin": "MVD",
+      "destination": "DUS",
+      "date": "2026-12-10",
+      "priceEur": 548
+    },
+    {
+      "origin": "MVD",
+      "destination": "FCO",
+      "date": "2026-12-10",
+      "priceEur": 594
+    },
+    {
+      "origin": "MVD",
+      "destination": "FRA",
+      "date": "2026-12-10",
+      "priceEur": 526
+    },
+    {
+      "origin": "MVD",
+      "destination": "HAM",
+      "date": "2026-12-10",
+      "priceEur": 620
+    },
+    {
+      "origin": "MVD",
+      "destination": "LGW",
+      "date": "2026-12-10",
+      "priceEur": 548
+    },
+    {
+      "origin": "MVD",
+      "destination": "LHR",
+      "date": "2026-12-10",
+      "priceEur": 598
+    },
+    {
+      "origin": "MVD",
+      "destination": "LIS",
+      "date": "2026-12-10",
+      "priceEur": 579
+    },
+    {
+      "origin": "MVD",
+      "destination": "LYS",
+      "date": "2026-12-10",
+      "priceEur": 933
+    },
+    {
+      "origin": "MVD",
+      "destination": "MUC",
+      "date": "2026-12-10",
+      "priceEur": 548
+    },
+    {
+      "origin": "MVD",
+      "destination": "MXP",
+      "date": "2026-12-10",
+      "priceEur": 705
+    },
+    {
+      "origin": "MVD",
+      "destination": "NAP",
+      "date": "2026-12-10",
+      "priceEur": 638
+    },
+    {
+      "origin": "MVD",
+      "destination": "NCE",
+      "date": "2026-12-10",
+      "priceEur": 765
+    },
+    {
+      "origin": "MVD",
+      "destination": "OPO",
+      "date": "2026-12-10",
+      "priceEur": 683
+    },
+    {
+      "origin": "MVD",
+      "destination": "ORY",
+      "date": "2026-12-10",
+      "priceEur": 674
+    },
+    {
+      "origin": "MVD",
+      "destination": "STN",
+      "date": "2026-12-10",
+      "priceEur": 982
+    },
+    {
+      "origin": "MVD",
+      "destination": "SVQ",
+      "date": "2026-12-10",
+      "priceEur": 604
+    },
+    {
+      "origin": "MVD",
+      "destination": "VCE",
+      "date": "2026-12-10",
+      "priceEur": 705
+    },
+    {
+      "origin": "MVD",
+      "destination": "VIE",
+      "date": "2026-12-10",
+      "priceEur": 947
+    },
+    {
+      "origin": "MVD",
+      "destination": "ZRH",
+      "date": "2026-12-10",
+      "priceEur": 672
+    },
+    {
+      "origin": "SCL",
+      "destination": "AMS",
+      "date": "2026-12-10",
+      "priceEur": 520
+    },
+    {
+      "origin": "SCL",
+      "destination": "ATH",
+      "date": "2026-12-10",
+      "priceEur": 872
+    },
+    {
+      "origin": "SCL",
+      "destination": "BER",
+      "date": "2026-12-10",
+      "priceEur": 569
+    },
+    {
+      "origin": "SCL",
+      "destination": "BIO",
+      "date": "2026-12-10",
+      "priceEur": 650
+    },
+    {
+      "origin": "SCL",
+      "destination": "BRU",
+      "date": "2026-12-10",
+      "priceEur": 668
+    },
+    {
+      "origin": "SCL",
+      "destination": "CDG",
+      "date": "2026-12-10",
+      "priceEur": 482
+    },
+    {
+      "origin": "SCL",
+      "destination": "DUB",
+      "date": "2026-12-10",
+      "priceEur": 718
+    },
+    {
+      "origin": "SCL",
+      "destination": "DUS",
+      "date": "2026-12-10",
+      "priceEur": 536
+    },
+    {
+      "origin": "SCL",
+      "destination": "FCO",
+      "date": "2026-12-10",
+      "priceEur": 490
+    },
+    {
+      "origin": "SCL",
+      "destination": "FRA",
+      "date": "2026-12-10",
+      "priceEur": 476
+    },
+    {
+      "origin": "SCL",
+      "destination": "HAM",
+      "date": "2026-12-10",
+      "priceEur": 536
+    },
+    {
+      "origin": "SCL",
+      "destination": "LYS",
+      "date": "2026-12-10",
+      "priceEur": 562
+    },
+    {
+      "origin": "SCL",
+      "destination": "MUC",
+      "date": "2026-12-10",
+      "priceEur": 569
+    },
+    {
+      "origin": "SCL",
+      "destination": "MXP",
+      "date": "2026-12-10",
+      "priceEur": 504
+    },
+    {
+      "origin": "SCL",
+      "destination": "NAP",
+      "date": "2026-12-10",
+      "priceEur": 721
+    },
+    {
+      "origin": "SCL",
+      "destination": "NCE",
+      "date": "2026-12-10",
+      "priceEur": 606
+    },
+    {
+      "origin": "SCL",
+      "destination": "SVQ",
+      "date": "2026-12-10",
+      "priceEur": 683
+    },
+    {
+      "origin": "SCL",
+      "destination": "VCE",
+      "date": "2026-12-10",
+      "priceEur": 554
+    },
+    {
+      "origin": "SCL",
+      "destination": "VIE",
+      "date": "2026-12-10",
+      "priceEur": 682
+    },
+    {
+      "origin": "SCL",
+      "destination": "VLC",
+      "date": "2026-12-10",
+      "priceEur": 539
+    },
+    {
+      "origin": "SCL",
+      "destination": "ZRH",
+      "date": "2026-12-10",
+      "priceEur": 665
+    },
+    {
+      "origin": "BOG",
+      "destination": "AMS",
+      "date": "2026-12-10",
+      "priceEur": 654
+    },
+    {
+      "origin": "BOG",
+      "destination": "ATH",
+      "date": "2026-12-10",
+      "priceEur": 744
+    },
+    {
+      "origin": "BOG",
+      "destination": "BER",
+      "date": "2026-12-10",
+      "priceEur": 732
+    },
+    {
+      "origin": "BOG",
+      "destination": "BIO",
+      "date": "2026-12-10",
+      "priceEur": 613
+    },
+    {
+      "origin": "BOG",
+      "destination": "DUB",
+      "date": "2026-12-10",
+      "priceEur": 819
+    },
+    {
+      "origin": "BOG",
+      "destination": "DUS",
+      "date": "2026-12-10",
+      "priceEur": 590
+    },
+    {
+      "origin": "BOG",
+      "destination": "FCO",
+      "date": "2026-12-10",
+      "priceEur": 588
+    },
+    {
+      "origin": "BOG",
+      "destination": "FRA",
+      "date": "2026-12-10",
+      "priceEur": 590
+    },
+    {
+      "origin": "BOG",
+      "destination": "HAM",
+      "date": "2026-12-10",
+      "priceEur": 697
+    },
+    {
+      "origin": "BOG",
+      "destination": "LGW",
+      "date": "2026-12-10",
+      "priceEur": 611
+    },
+    {
+      "origin": "BOG",
+      "destination": "LHR",
+      "date": "2026-12-10",
+      "priceEur": 564
+    },
+    {
+      "origin": "BOG",
+      "destination": "LIS",
+      "date": "2026-12-10",
+      "priceEur": 633
+    },
+    {
+      "origin": "BOG",
+      "destination": "LYS",
+      "date": "2026-12-10",
+      "priceEur": 715
+    },
+    {
+      "origin": "BOG",
+      "destination": "MUC",
+      "date": "2026-12-10",
+      "priceEur": 590
+    },
+    {
+      "origin": "BOG",
+      "destination": "NAP",
+      "date": "2026-12-10",
+      "priceEur": 757
+    },
+    {
+      "origin": "BOG",
+      "destination": "NCE",
+      "date": "2026-12-10",
+      "priceEur": 686
+    },
+    {
+      "origin": "BOG",
+      "destination": "OPO",
+      "date": "2026-12-10",
+      "priceEur": 621
+    },
+    {
+      "origin": "BOG",
+      "destination": "STN",
+      "date": "2026-12-10",
+      "priceEur": 767
+    },
+    {
+      "origin": "BOG",
+      "destination": "SVQ",
+      "date": "2026-12-10",
+      "priceEur": 613
+    },
+    {
+      "origin": "BOG",
+      "destination": "VCE",
+      "date": "2026-12-10",
+      "priceEur": 601
+    },
+    {
+      "origin": "BOG",
+      "destination": "VIE",
+      "date": "2026-12-10",
+      "priceEur": 665
+    },
+    {
+      "origin": "BOG",
+      "destination": "VLC",
+      "date": "2026-12-10",
+      "priceEur": 613
+    },
+    {
+      "origin": "BOG",
+      "destination": "ZRH",
+      "date": "2026-12-10",
+      "priceEur": 542
+    },
+    {
+      "origin": "GRU",
+      "destination": "ATH",
+      "date": "2026-12-10",
+      "priceEur": 494
+    },
+    {
+      "origin": "GRU",
+      "destination": "BER",
+      "date": "2026-12-10",
+      "priceEur": 466
+    },
+    {
+      "origin": "GRU",
+      "destination": "BIO",
+      "date": "2026-12-10",
+      "priceEur": 408
+    },
+    {
+      "origin": "GRU",
+      "destination": "BRU",
+      "date": "2026-12-10",
+      "priceEur": 338
+    },
+    {
+      "origin": "GRU",
+      "destination": "DUB",
+      "date": "2026-12-10",
+      "priceEur": 462
+    },
+    {
+      "origin": "GRU",
+      "destination": "DUS",
+      "date": "2026-12-10",
+      "priceEur": 395
+    },
+    {
+      "origin": "GRU",
+      "destination": "MUC",
+      "date": "2026-12-10",
+      "priceEur": 367
+    },
+    {
+      "origin": "GRU",
+      "destination": "NAP",
+      "date": "2026-12-10",
+      "priceEur": 390
+    },
+    {
+      "origin": "GRU",
+      "destination": "NCE",
+      "date": "2026-12-10",
+      "priceEur": 395
+    },
+    {
+      "origin": "GRU",
+      "destination": "SVQ",
+      "date": "2026-12-10",
+      "priceEur": 414
+    },
+    {
+      "origin": "GRU",
+      "destination": "VCE",
+      "date": "2026-12-10",
+      "priceEur": 376
+    },
+    {
+      "origin": "LIM",
+      "destination": "AMS",
+      "date": "2026-12-10",
+      "priceEur": 630
+    },
+    {
+      "origin": "LIM",
+      "destination": "ATH",
+      "date": "2026-12-10",
+      "priceEur": 753
+    },
+    {
+      "origin": "LIM",
+      "destination": "BER",
+      "date": "2026-12-10",
+      "priceEur": 730
+    },
+    {
+      "origin": "LIM",
+      "destination": "BIO",
+      "date": "2026-12-10",
+      "priceEur": 594
+    },
+    {
+      "origin": "LIM",
+      "destination": "BRU",
+      "date": "2026-12-10",
+      "priceEur": 656
+    },
+    {
+      "origin": "LIM",
+      "destination": "DUB",
+      "date": "2026-12-10",
+      "priceEur": 967
+    },
+    {
+      "origin": "LIM",
+      "destination": "DUS",
+      "date": "2026-12-10",
+      "priceEur": 630
+    },
+    {
+      "origin": "LIM",
+      "destination": "FRA",
+      "date": "2026-12-10",
+      "priceEur": 617
+    },
+    {
+      "origin": "LIM",
+      "destination": "HAM",
+      "date": "2026-12-10",
+      "priceEur": 672
+    },
+    {
+      "origin": "LIM",
+      "destination": "LGW",
+      "date": "2026-12-10",
+      "priceEur": 656
+    },
+    {
+      "origin": "LIM",
+      "destination": "LHR",
+      "date": "2026-12-10",
+      "priceEur": 630
+    },
+    {
+      "origin": "LIM",
+      "destination": "LIS",
+      "date": "2026-12-10",
+      "priceEur": 656
+    },
+    {
+      "origin": "LIM",
+      "destination": "LYS",
+      "date": "2026-12-10",
+      "priceEur": 630
+    },
+    {
+      "origin": "LIM",
+      "destination": "MUC",
+      "date": "2026-12-10",
+      "priceEur": 656
+    },
+    {
+      "origin": "LIM",
+      "destination": "NAP",
+      "date": "2026-12-10",
+      "priceEur": 688
+    },
+    {
+      "origin": "LIM",
+      "destination": "NCE",
+      "date": "2026-12-10",
+      "priceEur": 661
+    },
+    {
+      "origin": "LIM",
+      "destination": "SVQ",
+      "date": "2026-12-10",
+      "priceEur": 609
+    },
+    {
+      "origin": "LIM",
+      "destination": "VCE",
+      "date": "2026-12-10",
+      "priceEur": 630
+    },
+    {
+      "origin": "LIM",
+      "destination": "VIE",
+      "date": "2026-12-10",
+      "priceEur": 936
+    },
+    {
+      "origin": "LIM",
+      "destination": "VLC",
+      "date": "2026-12-10",
+      "priceEur": 594
+    },
+    {
+      "origin": "LIM",
+      "destination": "ZRH",
+      "date": "2026-12-10",
+      "priceEur": 656
+    },
+    {
+      "origin": "MEX",
+      "destination": "ATH",
+      "date": "2026-12-10",
+      "priceEur": 636
+    },
+    {
+      "origin": "MEX",
+      "destination": "BER",
+      "date": "2026-12-10",
+      "priceEur": 517
+    },
+    {
+      "origin": "MEX",
+      "destination": "BRU",
+      "date": "2026-12-10",
+      "priceEur": 636
+    },
+    {
+      "origin": "MEX",
+      "destination": "DUB",
+      "date": "2026-12-10",
+      "priceEur": 714
+    },
+    {
+      "origin": "MEX",
+      "destination": "DUS",
+      "date": "2026-12-10",
+      "priceEur": 633
+    },
+    {
+      "origin": "MEX",
+      "destination": "HAM",
+      "date": "2026-12-10",
+      "priceEur": 633
+    },
+    {
+      "origin": "MEX",
+      "destination": "LIS",
+      "date": "2026-12-10",
+      "priceEur": 704
+    },
+    {
+      "origin": "MEX",
+      "destination": "LYS",
+      "date": "2026-12-10",
+      "priceEur": 627
+    },
+    {
+      "origin": "MEX",
+      "destination": "MXP",
+      "date": "2026-12-10",
+      "priceEur": 571
+    },
+    {
+      "origin": "MEX",
+      "destination": "NAP",
+      "date": "2026-12-10",
+      "priceEur": 672
+    },
+    {
+      "origin": "MEX",
+      "destination": "NCE",
+      "date": "2026-12-10",
+      "priceEur": 627
+    },
+    {
+      "origin": "MEX",
+      "destination": "OPO",
+      "date": "2026-12-10",
+      "priceEur": 712
+    },
+    {
+      "origin": "MEX",
+      "destination": "ORY",
+      "date": "2026-12-10",
+      "priceEur": 539
+    },
+    {
+      "origin": "MEX",
+      "destination": "SVQ",
+      "date": "2026-12-10",
+      "priceEur": 705
+    },
+    {
+      "origin": "MEX",
+      "destination": "VCE",
+      "date": "2026-12-10",
+      "priceEur": 590
+    },
+    {
+      "origin": "MEX",
+      "destination": "VLC",
+      "date": "2026-12-10",
+      "priceEur": 719
+    },
+    {
+      "origin": "BCN",
+      "destination": "MDQ",
+      "date": "2026-12-10",
+      "priceEur": 978
+    },
+    {
+      "origin": "BCN",
+      "destination": "MVD",
+      "date": "2026-12-10",
+      "priceEur": 785
+    },
+    {
+      "origin": "BCN",
+      "destination": "ROS",
+      "date": "2026-12-10",
+      "priceEur": 865
+    },
+    {
+      "origin": "CDG",
+      "destination": "COR",
+      "date": "2026-12-10",
+      "priceEur": 939
+    },
+    {
+      "origin": "CDG",
+      "destination": "MDQ",
+      "date": "2026-12-10",
+      "priceEur": 922
+    },
+    {
+      "origin": "CDG",
+      "destination": "ROS",
+      "date": "2026-12-10",
+      "priceEur": 922
+    },
+    {
+      "origin": "FCO",
+      "destination": "BOG",
+      "date": "2026-12-10",
+      "priceEur": 803
+    },
+    {
+      "origin": "FCO",
+      "destination": "COR",
+      "date": "2026-12-10",
+      "priceEur": 906
+    },
+    {
+      "origin": "FCO",
+      "destination": "LIM",
+      "date": "2026-12-10",
+      "priceEur": 604
+    },
+    {
+      "origin": "FCO",
+      "destination": "MDQ",
+      "date": "2026-12-10",
+      "priceEur": 904
+    },
+    {
+      "origin": "FCO",
+      "destination": "MVD",
+      "date": "2026-12-10",
+      "priceEur": 927
+    },
+    {
+      "origin": "FCO",
+      "destination": "ROS",
+      "date": "2026-12-10",
+      "priceEur": 904
+    },
+    {
+      "origin": "FRA",
+      "destination": "BOG",
+      "date": "2026-12-10",
+      "priceEur": 845
+    },
+    {
+      "origin": "FRA",
+      "destination": "COR",
+      "date": "2026-12-10",
+      "priceEur": 1379
+    },
+    {
+      "origin": "FRA",
+      "destination": "MDQ",
+      "date": "2026-12-10",
+      "priceEur": 1187
+    },
+    {
+      "origin": "FRA",
+      "destination": "MVD",
+      "date": "2026-12-10",
+      "priceEur": 1086
+    },
+    {
+      "origin": "FRA",
+      "destination": "ROS",
+      "date": "2026-12-10",
+      "priceEur": 1135
+    },
+    {
+      "origin": "FRA",
+      "destination": "SCL",
+      "date": "2026-12-10",
+      "priceEur": 880
+    },
+    {
+      "origin": "LHR",
+      "destination": "COR",
+      "date": "2026-12-10",
+      "priceEur": 1011
+    },
+    {
+      "origin": "LHR",
+      "destination": "MDQ",
+      "date": "2026-12-10",
+      "priceEur": 960
+    },
+    {
+      "origin": "LHR",
+      "destination": "MVD",
+      "date": "2026-12-10",
+      "priceEur": 951
+    },
+    {
+      "origin": "LHR",
+      "destination": "ROS",
+      "date": "2026-12-10",
+      "priceEur": 960
+    },
+    {
+      "origin": "LIS",
+      "destination": "BOG",
+      "date": "2026-12-10",
+      "priceEur": 921
+    },
+    {
+      "origin": "LIS",
+      "destination": "COR",
+      "date": "2026-12-10",
+      "priceEur": 817
+    },
+    {
+      "origin": "LIS",
+      "destination": "MDQ",
+      "date": "2026-12-10",
+      "priceEur": 817
+    },
+    {
+      "origin": "LIS",
+      "destination": "MVD",
+      "date": "2026-12-10",
+      "priceEur": 792
+    },
+    {
+      "origin": "LIS",
+      "destination": "ROS",
+      "date": "2026-12-10",
+      "priceEur": 817
+    },
+    {
+      "origin": "MAD",
+      "destination": "COR",
+      "date": "2026-12-10",
+      "priceEur": 829
+    },
+    {
+      "origin": "MAD",
+      "destination": "MDQ",
+      "date": "2026-12-10",
+      "priceEur": 829
+    },
+    {
+      "origin": "MAD",
+      "destination": "ROS",
+      "date": "2026-12-10",
+      "priceEur": 1440
+    },
+    {
+      "origin": "MXP",
+      "destination": "BOG",
+      "date": "2026-12-10",
+      "priceEur": 978
+    },
+    {
+      "origin": "MXP",
+      "destination": "COR",
+      "date": "2026-12-10",
+      "priceEur": 1083
+    },
+    {
+      "origin": "MXP",
+      "destination": "LIM",
+      "date": "2026-12-10",
+      "priceEur": 717
+    },
+    {
+      "origin": "MXP",
+      "destination": "MDQ",
+      "date": "2026-12-10",
+      "priceEur": 1138
+    },
+    {
+      "origin": "MXP",
+      "destination": "MVD",
+      "date": "2026-12-10",
+      "priceEur": 879
+    },
+    {
+      "origin": "MXP",
+      "destination": "ROS",
+      "date": "2026-12-10",
+      "priceEur": 978
+    },
+    {
+      "origin": "MXP",
+      "destination": "SCL",
+      "date": "2026-12-10",
+      "priceEur": 815
+    }
+  ],
+  "duffelTested": [
+    {
+      "origin": "GIG",
+      "destination": "AMS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GIG",
+      "destination": "ATH",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GIG",
+      "destination": "BCN",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GIG",
+      "destination": "BER",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GIG",
+      "destination": "BIO",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GIG",
+      "destination": "DUB",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GIG",
+      "destination": "DUS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GIG",
+      "destination": "HAM",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GIG",
+      "destination": "LGW",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GIG",
+      "destination": "LHR",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GIG",
+      "destination": "LYS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GIG",
+      "destination": "MUC",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GIG",
+      "destination": "NAP",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GIG",
+      "destination": "NCE",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GIG",
+      "destination": "STN",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GIG",
+      "destination": "SVQ",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GIG",
+      "destination": "VCE",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GIG",
+      "destination": "VIE",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GIG",
+      "destination": "VLC",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GIG",
+      "destination": "ZRH",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "AMS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "ATH",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "BER",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "BGY",
+      "date": "2026-12-10",
+      "offers": false
+    },
+    {
+      "origin": "MVD",
+      "destination": "BRU",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "CDG",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "DUB",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "DUS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "FCO",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "FRA",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "HAM",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "LGW",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "LHR",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "LIS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "LYS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "MUC",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "MXP",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "NAP",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "NCE",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "OPO",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "ORY",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "STN",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "SVQ",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "VCE",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "VIE",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MVD",
+      "destination": "ZRH",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "AMS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "ATH",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "BER",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "BGY",
+      "date": "2026-12-10",
+      "offers": false
+    },
+    {
+      "origin": "SCL",
+      "destination": "BIO",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "BRU",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "CDG",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "DUB",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "DUS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "FCO",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "FRA",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "HAM",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "LYS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "MUC",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "MXP",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "NAP",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "NCE",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "SVQ",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "VCE",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "VIE",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "VLC",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "SCL",
+      "destination": "ZRH",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "AMS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "ATH",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "BER",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "BIO",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "DUB",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "DUS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "FCO",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "FRA",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "HAM",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "LGW",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "LHR",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "LIS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "LYS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "MUC",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "NAP",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "NCE",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "OPO",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "STN",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "SVQ",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "VCE",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "VIE",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "VLC",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BOG",
+      "destination": "ZRH",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GRU",
+      "destination": "ATH",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GRU",
+      "destination": "BER",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GRU",
+      "destination": "BIO",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GRU",
+      "destination": "BRU",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GRU",
+      "destination": "DUB",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GRU",
+      "destination": "DUS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GRU",
+      "destination": "MUC",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GRU",
+      "destination": "NAP",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GRU",
+      "destination": "NCE",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GRU",
+      "destination": "SVQ",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "GRU",
+      "destination": "VCE",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "AMS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "ATH",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "BER",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "BIO",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "BRU",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "DUB",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "DUS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "FRA",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "HAM",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "LGW",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "LHR",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "LIS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "LYS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "MUC",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "NAP",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "NCE",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "STN",
+      "date": "2026-12-10",
+      "offers": false
+    },
+    {
+      "origin": "LIM",
+      "destination": "SVQ",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "VCE",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "VIE",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "VLC",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIM",
+      "destination": "ZRH",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MEX",
+      "destination": "ATH",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MEX",
+      "destination": "BER",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MEX",
+      "destination": "BGY",
+      "date": "2026-12-10",
+      "offers": false
+    },
+    {
+      "origin": "MEX",
+      "destination": "BRU",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MEX",
+      "destination": "DUB",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MEX",
+      "destination": "DUS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MEX",
+      "destination": "HAM",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MEX",
+      "destination": "LIS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MEX",
+      "destination": "LYS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MEX",
+      "destination": "MXP",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MEX",
+      "destination": "NAP",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MEX",
+      "destination": "NCE",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MEX",
+      "destination": "OPO",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MEX",
+      "destination": "ORY",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MEX",
+      "destination": "SVQ",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MEX",
+      "destination": "VCE",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MEX",
+      "destination": "VLC",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BCN",
+      "destination": "MDQ",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BCN",
+      "destination": "MVD",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "BCN",
+      "destination": "ROS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "CDG",
+      "destination": "COR",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "CDG",
+      "destination": "MDQ",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "CDG",
+      "destination": "ROS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "FCO",
+      "destination": "BOG",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "FCO",
+      "destination": "COR",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "FCO",
+      "destination": "LIM",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "FCO",
+      "destination": "MDQ",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "FCO",
+      "destination": "MVD",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "FCO",
+      "destination": "ROS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "FRA",
+      "destination": "BOG",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "FRA",
+      "destination": "COR",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "FRA",
+      "destination": "MDQ",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "FRA",
+      "destination": "MVD",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "FRA",
+      "destination": "ROS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "FRA",
+      "destination": "SCL",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LHR",
+      "destination": "COR",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LHR",
+      "destination": "MDQ",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LHR",
+      "destination": "MVD",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LHR",
+      "destination": "ROS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIS",
+      "destination": "BOG",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIS",
+      "destination": "COR",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIS",
+      "destination": "MDQ",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIS",
+      "destination": "MVD",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "LIS",
+      "destination": "ROS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MAD",
+      "destination": "COR",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MAD",
+      "destination": "MDQ",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MAD",
+      "destination": "ROS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MXP",
+      "destination": "BOG",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MXP",
+      "destination": "COR",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MXP",
+      "destination": "LIM",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MXP",
+      "destination": "MDQ",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MXP",
+      "destination": "MVD",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MXP",
+      "destination": "ROS",
+      "date": "2026-12-10",
+      "offers": true
+    },
+    {
+      "origin": "MXP",
+      "destination": "SCL",
+      "date": "2026-12-10",
+      "offers": true
+    }
+  ],
+  "duffelPairs": 174,
+  "duffelCheckedAt": "2026-10-23T22:17:11.511Z"
 }
