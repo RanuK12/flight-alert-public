@@ -148,3 +148,13 @@ test('admins no cuentan en métricas ni pagos', async () => {
   expect(c.users).toMatchObject({ total: 1, pro: 0, free: 1 });
   expect(c.paymentsToday.stripe).toBe(1);
 });
+
+test('admin: botón 📊 Visitas muestra el resumen', async () => {
+  const bot = fakeBot();
+  await bot.cmd(ADMIN, '/admin');
+  expect(buttons(bot.sent[0]).some((b) => b.callback_data === 'adm:visits')).toBe(true);
+  await bot.tap(ADMIN, 'adm:visits');
+  expect(bot.sent[bot.sent.length - 1].text).toContain('📊 Visitas');
+  await bot.tap(ADMIN, 'adm:counts');
+  expect(bot.sent[bot.sent.length - 1].text).toContain('Visitas hoy:');
+});

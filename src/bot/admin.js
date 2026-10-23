@@ -34,6 +34,7 @@ function menu() {
   return {
     inline_keyboard: [
       [{ text: '📊 Estado', callback_data: `${PREFIX}status` }, { text: '👥 Usuarios y pagos', callback_data: `${PREFIX}counts` }],
+      [{ text: '📊 Visitas', callback_data: `${PREFIX}visits` }],
       [{ text: k ? '🟢 Apagar kill switch' : '🔴 Kill switch', callback_data: `${PREFIX}ask:kill:${k ? 'off' : 'on'}` }],
       [{ text: `⚡ Alertas instantáneas: ${ia ? 'ON → OFF' : 'OFF → ON'}`, callback_data: `${PREFIX}ia:${ia ? 'off' : 'on'}` }],
       [{ text: '🔁 Forzar chequeo de precios', callback_data: `${PREFIX}price` }, { text: '📜 Logs', callback_data: `${PREFIX}logs` }],
@@ -58,7 +59,7 @@ async function statusText() {
 async function countsText() {
   const c = await require('../web/admin').counts();
   const p = c.paymentsToday;
-  return `Usuarios: ${c.users.total} · Free ${c.users.free} · Pro ${c.users.pro} · Prueba ${c.users.trial}\nPagos hoy: Stripe ${p.stripe} · MP ${p.mp} · Stars ${p.stars}\n(sin admins ni owners)`;
+  return `Usuarios: ${c.users.total} · Free ${c.users.free} · Pro ${c.users.pro} · Prueba ${c.users.trial}\nPagos hoy: Stripe ${p.stripe} · MP ${p.mp} · Stars ${p.stars}\n${await require('../services/visits').todayLine()}\n(sin admins ni owners)`;
 }
 
 function ask(bot, chatId, adminId, action, target, label) {
@@ -125,6 +126,7 @@ async function onCallback(bot, cq) {
   await answer();
   try {
     if (cmd === 'status') { await audit(adminId, 'status'); await bot.sendMessage(chatId, await statusText()); return true; }
+    if (cmd === 'visits') { await audit(adminId, 'visits'); await bot.sendMessage(chatId, await require('../services/visits').statsText()); return true; }
     if (cmd === 'counts') { await audit(adminId, 'counts'); await bot.sendMessage(chatId, await countsText()); return true; }
     if (cmd === 'logs') {
       await audit(adminId, 'logs');
