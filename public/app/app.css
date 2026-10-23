@@ -83,3 +83,4 @@ input[type=range] { accent-color: var(--accent); width: 100%; }
 .cal-foot { margin: 8px 0 0; }
 /* PRISM P1-7: meta text in result cards and footer, 13px, >=4.5:1 */
 .card .seen, .card .row .muted, .res-foot { font-size: 13px !important; color: var(--hint-strong) !important; }
+.sugg-head{font-size:.8rem;opacity:.7;padding:.5rem .25rem .25rem;list-style:none}

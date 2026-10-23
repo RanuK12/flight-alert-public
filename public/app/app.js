@@ -3,7 +3,8 @@
   'use strict';
   var tg = window.Telegram && window.Telegram.WebApp;
   var initData = (tg && tg.initData) || '';
-  var lang = /^es/i.test((tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) || navigator.language || 'es') ? 'es' : 'en';
+  var langCode = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) || navigator.language || 'es';
+  var lang = /^es/i.test(langCode) ? 'es' : (/^pt/i.test(langCode) ? 'pt' : 'en');
   var S = {
     es: {
       search: 'Buscar vuelo', from: 'Desde', to: 'Hasta', swap: 'Invertir origen y destino', swapOff: 'La ruta invertida no está cubierta',
@@ -17,7 +18,21 @@
       alerts: 'Mis alertas', none: 'No tenés alertas todavía.', first: 'Crear la primera', active: 'Activa', paused: 'Pausada', pause: 'Pausar', resume: 'Reanudar',
       edit: 'Editar', del: 'Borrar', undo: 'Deshacer', confirmDel: '¿Borrar la alerta {r}?', delAlert: 'Borrar alerta {r}', ceiling: 'Techo', last: 'último', save: 'Guardar', created: 'Alerta creada',
       auth: 'Abrí esta pantalla desde el bot en Telegram.', months: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
-      dows: ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'], newSearch: 'Buscar vuelo', of: 'de'
+      dows: ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'], newSearch: 'Buscar vuelo', of: 'de', euReturn: '🇪🇺 Vuelta desde Europa'
+    },
+    pt: {
+      search: 'Buscar voo', from: 'De', to: 'Para', swap: 'Inverter origem e destino', swapOff: 'A rota invertida não está coberta',
+      oneway: 'Só ida', round: 'Ida e volta', dep: 'Ida', ret: 'Volta', pick: 'Escolher', pickDestFirst: 'Escolha o destino primeiro', adults: 'adulto(s)', go: 'Buscar', searching: 'Buscando…',
+      notCovered: 'Ainda não cobrimos {c}. Cobrimos:', calFoot: 'Preços vistos nas últimas horas. Podem mudar.',
+      cheap: 'barato', mid: 'médio', high: 'caro', nodata: 'sem dado', flex: 'Datas flexíveis: qualquer dia do mês', seen: 'visto há {h} h', seenLt: 'visto há menos de 1 h',
+      offer: 'Ver oferta ↗', alertMe: '🔔 Me avisar', cheapest: 'Mais barato', fewer: 'Menos escalas', direct: 'Direto', stops: '{n} escala(s)',
+      foot: 'Preço em cache, revisado a cada 2–3 h. O preço final é confirmado no site. Alguns links são de afiliado.',
+      empty: 'Não há preços salvos para estas datas', tryFlex: 'Tentar datas flexíveis', error: 'Não consegui trazer preços agora', retry: 'Tentar de novo', wait: 'Espere alguns segundos e tente de novo.',
+      paywall: 'Você usou suas 10 buscas deste mês. Elas renovam no dia 1º. Com o Pro são ilimitadas (uso justo).',
+      alerts: 'Meus alertas', none: 'Você ainda não tem alertas.', first: 'Criar o primeiro', active: 'Ativo', paused: 'Pausado', pause: 'Pausar', resume: 'Retomar',
+      edit: 'Editar', del: 'Apagar', undo: 'Desfazer', confirmDel: 'Apagar o alerta {r}?', delAlert: 'Apagar alerta {r}', ceiling: 'Teto', last: 'último', save: 'Salvar', created: 'Alerta criado',
+      auth: 'Abra esta tela pelo bot no Telegram.', months: ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'],
+      dows: ['Se', 'Te', 'Qa', 'Qi', 'Sx', 'Sá', 'Do'], newSearch: 'Buscar voo', of: 'de', euReturn: '🇪🇺 Volta da Europa'
     },
     en: {
       search: 'Search flight', from: 'From', to: 'To', swap: 'Swap origin and destination', swapOff: 'The reversed route is not covered',
@@ -31,7 +46,7 @@
       alerts: 'My alerts', none: 'You have no alerts yet.', first: 'Create the first one', active: 'Active', paused: 'Paused', pause: 'Pause', resume: 'Resume',
       edit: 'Edit', del: 'Delete', undo: 'Undo', confirmDel: 'Delete the alert {r}?', delAlert: 'Delete alert {r}', ceiling: 'Ceiling', last: 'last', save: 'Save', created: 'Alert created',
       auth: 'Open this screen from the bot in Telegram.', months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-      dows: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'], newSearch: 'Search flight', of: ''
+      dows: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'], newSearch: 'Search flight', of: '', euReturn: '🇪🇺 Return from Europe'
     }
   }[lang];
   function tr(k, v) { return String(S[k]).replace(/\{(\w+)\}/g, function (_, x) { return v && v[x] !== undefined ? v[x] : ''; }); }
@@ -94,9 +109,18 @@
   }
 
   function covered(list, side, code) { return list.some(function (p) { return p.code === code; }); }
+  function isEu(code) { return P.origins.some(function (p) { return p.code === code && p.eu; }); }
+  /** Destinos según el sentido: desde Europa solo la vuelta a Latinoamérica, y al revés. */
+  function sideList(side) {
+    if (side === 'o') return P.origins;
+    var back = st.o && isEu(st.o);
+    return P.destinations.filter(function (p) { return back ? p.ret : !p.ret; });
+  }
   function suggest(q, side) {
-    var list = side === 'o' ? P.origins : P.destinations;
-    var n = norm(q); if (!n) return list.slice(0, 6);
+    var list = sideList(side);
+    var n = norm(q);
+    if (!n && side === 'o') return list.filter(function (p) { return !p.eu; }).slice(0, 6);
+    if (!n) return list.slice(0, 6);
     var scored = [];
     list.forEach(function (p, i) {
       var names = [p.city, p.airport].concat(p.alias || []).map(norm);
@@ -123,13 +147,22 @@
       if (st[side] && labelOf(st[side]) === q) return;
       var res = suggest(q, side);
       if (!res.length && norm(q).length >= 3) {
-        var all = side === 'o' ? P.origins : P.destinations;
+        var all = sideList(side);
         ul.appendChild(h('li', { 'class': 'muted', text: tr('notCovered', { c: q }) }));
         res = all.slice(0, 6);
       }
-      res.forEach(function (p) {
-        ul.appendChild(h('li', null, h('button', { type: 'button', role: 'option', on: { click: function () { st[side] = p.code; hap('sel'); if (side === 'd') st.month = null; render(); } } }, p.label + ' · ' + p.country)));
-      });
+      var pickBtn = function (p) {
+        return h('li', null, h('button', { type: 'button', role: 'option', on: { click: function () { if (side === 'o' && isEu(p.code) !== isEu(st.o)) st.d = null; st[side] = p.code; hap('sel'); if (side === 'd') st.month = null; render(); } } }, p.label + ' · ' + p.country));
+      };
+      res.forEach(function (p) { ul.appendChild(pickBtn(p)); });
+      // Sección "Vuelta desde Europa": hubs europeos debajo de los orígenes de Latinoamérica.
+      if (side === 'o' && !norm(q)) {
+        var hubs = P.origins.filter(function (p) { return p.eu && p.hub; });
+        if (hubs.length) {
+          ul.appendChild(h('li', { 'class': 'sugg-head', role: 'presentation', text: S.euReturn }));
+          hubs.forEach(function (p) { ul.appendChild(pickBtn(p)); });
+        }
+      }
     }
     input.addEventListener('input', function () { st[side] = null; fill(); validMain(); });
     input.addEventListener('focus', fill);

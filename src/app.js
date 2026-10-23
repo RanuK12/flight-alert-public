@@ -44,6 +44,7 @@ function negotiate(header) {
   for (const item of items) {
     if (item.tag.startsWith('en')) return 'en';
     if (item.tag.startsWith('es')) return 'es';
+    if (item.tag.startsWith('pt')) return 'pt';
   }
   return 'es';
 }
@@ -127,7 +128,7 @@ function createApp() {
     const ip = clientIp(req);
     // Páginas públicas: admiten ráfagas (120/min). El resto sigue estricto (20/min).
     // La Mini App hace varias llamadas por pantalla: mismo cupo que las páginas.
-    const page = (req.method === 'GET' && (['/', '/es', '/en', '/pro', '/pro/listo'].includes(req.path) || Boolean(seo.byPath(req.path)))) || req.path === '/app' || req.path.startsWith('/app/');
+    const page = (req.method === 'GET' && (['/', '/es', '/en', '/pt', '/pro', '/pro/listo'].includes(req.path) || Boolean(seo.byPath(req.path)))) || req.path === '/app' || req.path.startsWith('/app/');
     const bucket = page ? 'ip-page' : 'ip';
     const limit = page ? 120 : 20;
     if (rateLimit.limited(bucket, String(ip), limit, 60 * 1000)) {
@@ -138,7 +139,7 @@ function createApp() {
   });
 
   // Contador de visitas propio (sin cookies). Nunca bloquea: registra al terminar la respuesta.
-  app.use(require('./services/visits').middleware((p) => ['/', '/es', '/en', '/pro', '/app', '/app/'].includes(p) || Boolean(seo.byPath(p))));
+  app.use(require('./services/visits').middleware((p) => ['/', '/es', '/en', '/pt', '/pro', '/app', '/app/'].includes(p) || Boolean(seo.byPath(p))));
 
   app.use('/public', express.static(path.join(__dirname, '..', 'public'), { maxAge: '30d' }));
   app.use('/app', require('./web/miniapp').router());
@@ -218,6 +219,7 @@ function createApp() {
   app.get('/', (req, res) => sendLanding(req, res, negotiate(req.headers['accept-language'])));
   app.get('/en', (req, res) => sendLanding(req, res, 'en'));
   app.get('/es', (req, res) => sendLanding(req, res, 'es'));
+  app.get('/pt', (req, res) => sendLanding(req, res, 'pt'));
 
   app.get(['/vuelos/:slug', '/en/flights/:slug'], async (req, res, next) => {
     const gone = seo.removedTarget(req.path);
@@ -236,7 +238,10 @@ function createApp() {
     if (req.query && req.query.s) {
       const token = String(req.query.s);
       if (webSession.verify(token)) webSession.setCookie(res, token);
-      const rest = req.query.pais ? `?pais=${encodeURIComponent(String(req.query.pais))}` : '';
+      const qs = new URLSearchParams();
+      if (req.query.pais) qs.set('pais', String(req.query.pais));
+      if (req.query.lang) qs.set('lang', String(req.query.lang));
+      const rest = qs.toString() ? `?${qs}` : '';
       return res.redirect(303, `/pro${rest}`);
     }
     deviceHash(req, res);
@@ -249,6 +254,7 @@ function createApp() {
       choice,
       ipCountry: geo,
       language: req.headers['accept-language'] || '',
+      lang: req.query && req.query.lang ? String(req.query.lang) : '',
       nonce: res.locals.cspNonce,
     }));
   });

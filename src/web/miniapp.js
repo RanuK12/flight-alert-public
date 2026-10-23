@@ -62,7 +62,10 @@ function html(nonce, lang) {
 }
 
 function langOfReq(req) {
-  return /^en/i.test(String(req.headers['accept-language'] || '')) ? 'en' : 'es';
+  const al = String(req.headers['accept-language'] || '');
+  if (/^en/i.test(al)) return 'en';
+  if (/^pt/i.test(al)) return 'pt-BR';
+  return 'es';
 }
 
 /** Envuelve handlers async: un throw/reject se loguea y responde 500 {error:'api'} (nunca cuelga la request). */
@@ -82,15 +85,24 @@ function auth(req, res, next) {
 }
 
 function placesPayload() {
-  const item = (code) => {
+  const item = (code, extra = {}) => {
     const p = places.PLACES[code] || { city: code, country: '', alias: [] };
-    return { code, label: places.label(code), city: p.city, country: p.country, alias: p.alias || [], airport: p.airport || '' };
+    return { code, label: places.label(code), city: p.city, country: p.country, alias: p.alias || [], airport: p.airport || '', ...extra };
   };
   const cov = require('../config/coverage');
-  return { origins: cov.latamOriginsAvailable().map(item), destinations: DESTINATIONS.filter((d) => cov.latamOriginsAvailable().some((o) => cov.pairAllowed(o, d))).map(item) };
+  const latam = cov.latamOriginsAvailable();
+  const hubs = cov.euHubsAvailable();
+  const euAll = cov.euOriginsAvailable();
+  // "Vuelta desde Europa": hubs primero (los muestra el selector), el resto se encuentra escribiendo.
+  const euOrigins = [...hubs, ...euAll.filter((c) => !hubs.includes(c))].map((c) => item(c, { eu: true, hub: hubs.includes(c) }));
+  const ret = latam.filter((o) => euAll.some((e) => cov.pairAllowed(e, o))).map((c) => item(c, { ret: true }));
+  return {
+    origins: latam.map((c) => item(c)).concat(euOrigins),
+    destinations: DESTINATIONS.filter((d) => latam.some((o) => cov.pairAllowed(o, d))).map((c) => item(c)).concat(ret),
+    euHubs: hubs,
+  };
 }
 
-/** "2611" → "2026-11". */
 function monthOf(code) {
   const m = /^(\d{2})(\d{2})$/.exec(String(code || ''));
   if (!m) return null;
