@@ -65,6 +65,11 @@ function securityHeaders(_req, res, next) {
   ].join('; '));
   res.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.set('X-Content-Type-Options', 'nosniff');
+  // HSTS: flightalert es DNS-only, Cloudflare no lo puede agregar. Solo en producción y sobre HTTPS.
+  // Sin includeSubDomains: no está verificado que todos los subdominios de ranuk.dev sirvan HTTPS.
+  if (process.env.NODE_ENV === 'production' && _req.secure) {
+    res.set('Strict-Transport-Security', 'max-age=31536000');
+  }
   next();
 }
 
