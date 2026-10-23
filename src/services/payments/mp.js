@@ -139,7 +139,7 @@ async function updatePreapprovalAmount(id, amount) {
   return res.data;
 }
 
-async function handleWebhook(req) {
+async function handleWebhookInner(req) {
   const secret = process.env.MP_WEBHOOK_SECRET || '';
   const dataId = (req.query && (req.query['data.id'] || req.query.id))
     || (req.body && req.body.data && req.body.data.id)
@@ -200,6 +200,19 @@ async function handleWebhook(req) {
     { $set: { country: 'AR', priceCurrency: 'ARS' } },
   );
   return { status: 200, activated: true };
+}
+
+/** Firma válida pero el pago/preapproval no existe en MP (p. ej. "Simular notificación"): 200 sin efecto, para que MP no reintente. */
+async function handleWebhook(req) {
+  try {
+    return await handleWebhookInner(req);
+  } catch (err) {
+    if (err && err.response && err.response.status === 404) {
+      logger.warn('mp webhook: recurso inexistente en MP', { status: 404 });
+      return { status: 200, ignored: true, notFound: true };
+    }
+    throw err;
+  }
 }
 
 module.exports = {
