@@ -197,3 +197,22 @@ test('P13. AR con IP de España ofrece Stripe; AR con IP de Argentina ofrece MP'
   expect(country.preselect('es-AR')).toBe('AR');
   expect(country.rail({ choice: country.preselect('es-AR'), ipCountry: 'ES' })).toBe('stripe');
 });
+
+test('P10b. MP: firma válida pero pago inexistente (simulación del panel) da 200 sin activar', async () => {
+  process.env.MP_WEBHOOK_SECRET = 'mp-test-secret';
+  process.env.MP_ACCESS_TOKEN = 'TEST-mp-token';
+  const ts = '17000000';
+  const manifest = `id:123456;request-id:req-sim;ts:${ts};`;
+  const v1 = crypto.createHmac('sha256', 'mp-test-secret').update(manifest).digest('hex');
+  const err = new Error('Request failed with status code 404');
+  err.response = { status: 404 };
+  axios.get.mockRejectedValue(err);
+  const res = await mp.handleWebhook({
+    query: { 'data.id': '123456', type: 'payment' },
+    headers: { 'x-signature': `ts=${ts},v1=${v1}`, 'x-request-id': 'req-sim' },
+    body: { type: 'payment', action: 'payment.updated', data: { id: '123456' } },
+  });
+  expect(res.status).toBe(200);
+  expect(res.notFound).toBe(true);
+  expect(await col('Payment').findOne({ provider: 'mp' })).toBeNull();
+});
