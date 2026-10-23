@@ -53,10 +53,10 @@ function securityHeaders(_req, res, next) {
   res.locals.cspNonce = nonce;
   res.set('Content-Security-Policy', [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}'`,
+    `script-src 'self' 'nonce-${nonce}' https://static.cloudflareinsights.com`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self'",
-    "connect-src 'self'",
+    "connect-src 'self' https://cloudflareinsights.com",
     "font-src 'self' https://fonts.gstatic.com",
     "object-src 'none'",
     "base-uri 'self'",
@@ -79,6 +79,7 @@ function createApp() {
   app.set('trust proxy', 1);
   app.use(require('./config/site').legacyRedirect);
   app.use(securityHeaders);
+  app.use(require('./web/cfBeacon').middleware);
   app.use(compress);
 
   app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
