@@ -123,7 +123,7 @@ function render(lang, flow, input, { now, extra, quota } = {}) {
   let rows = [];
   if (step === 'org') {
     text = t(lang, 'askOrigin');
-    rows = pairs(placeButtons(lang, flow, f, 'o', ORIGINS));
+    rows = places.originRows((code) => placeButtons(lang, flow, f, 'o', [code])[0]);
     rows.push([{ text: t(lang, 'cancel'), callback_data: cb.encode(flow, 'x') }]);
   } else if (step === 'dst') {
     text = t(lang, 'askDest');

@@ -407,7 +407,7 @@ async function onboarding(bot, ctx, s, fields) {
   const skip = [{ text: t(lang, 'skip'), callback_data: cb.encode('o', 'sk') }];
   const btn = (code, step, extra) => ({ text: places.label(code), callback_data: cb.encode('o', step, extra) });
   if (s === 'o1') {
-    const rows = flow.pairs(places.popular('o').map((c) => btn(c, 'o2', { o: c })));
+    const rows = places.originRows((c) => btn(c, 'o2', { o: c }));
     await show(bot, ctx.chatId, ctx.mid, t(lang, 'obHello'), { inline_keyboard: [...rows, skip] });
     return;
   }

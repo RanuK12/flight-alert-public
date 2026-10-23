@@ -60,7 +60,8 @@ function prompt(text) {
       content: 'Convertís pedidos de vuelos a JSON. Hoy es ' + t + '. Respondé SOLO un objeto JSON con claves '
         + 'origin, destination (códigos IATA de 3 letras), departDate (YYYY-MM-DD), returnDate (YYYY-MM-DD o null), '
         + 'adults (entero), y opcional flexibleMonth (YYYY-MM). Usá SOLO códigos IATA, nunca nombres de ciudad: '
-        + 'Buenos Aires=EZE, Córdoba=COR, Rosario=ROS, Mar del Plata=MDQ, Madrid=MAD, Barcelona=BCN, Roma=FCO, '
+        + 'Buenos Aires=EZE, Córdoba=COR, Rosario=ROS, Mar del Plata=MDQ, São Paulo=GRU, Río de Janeiro=GIG, '
+        + 'Santiago de Chile=SCL, Montevideo=MVD, Lima=LIM, Bogotá=BOG, Ciudad de México=MEX, Madrid=MAD, Barcelona=BCN, Roma=FCO, '
         + 'París=CDG, Londres=LHR, Lisboa=LIS. Si solo dice un mes ("en marzo"), usá la próxima vez que llega ese mes '
         + '(nunca una fecha pasada): flexibleMonth=YYYY-MM y departDate=el día 1 de ese mes. '
         + 'Ignorá precios y presupuestos: nunca los incluyas.',

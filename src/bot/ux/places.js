@@ -1,6 +1,6 @@
 'use strict';
 
-const { ORIGINS, DESTINATIONS } = require('../../config/airports');
+const { ORIGINS, DESTINATIONS, ORIGIN_GROUPS } = require('../../config/airports');
 
 /** Nombres de los aeropuertos cubiertos. Sin inventar: solo los códigos de la config. */
 const PLACES = {
@@ -9,6 +9,13 @@ const PLACES = {
   COR: { city: 'Córdoba', airport: 'Pajas Blancas', country: 'Argentina', alias: ['cba'] },
   MDQ: { city: 'Mar del Plata', airport: 'Astor Piazzolla', country: 'Argentina', alias: ['mdp', 'mar del plata'] },
   ROS: { city: 'Rosario', airport: 'Islas Malvinas', country: 'Argentina', alias: [] },
+  GRU: { city: 'São Paulo', airport: 'Guarulhos', country: 'Brasil', alias: ['sao paulo', 'san pablo', 'sp'] },
+  GIG: { city: 'Río de Janeiro', airport: 'Galeão', country: 'Brasil', alias: ['rio', 'rio de janeiro', 'galeao'] },
+  SCL: { city: 'Santiago de Chile', airport: 'Arturo Merino Benítez', country: 'Chile', alias: ['santiago', 'stgo'] },
+  MVD: { city: 'Montevideo', airport: 'Carrasco', country: 'Uruguay', alias: ['mvd'] },
+  LIM: { city: 'Lima', airport: 'Jorge Chávez', country: 'Perú', alias: [] },
+  BOG: { city: 'Bogotá', airport: 'El Dorado', country: 'Colombia', alias: ['bogota'] },
+  MEX: { city: 'Ciudad de México', airport: 'Benito Juárez', country: 'México', alias: ['cdmx', 'mexico', 'df'] },
   MAD: { city: 'Madrid', airport: 'Barajas', country: 'España', alias: [] },
   BCN: { city: 'Barcelona', airport: 'El Prat', country: 'España', alias: [] },
   SVQ: { city: 'Sevilla', airport: 'San Pablo', country: 'España', alias: ['seville'] },
@@ -131,4 +138,17 @@ function popular(side) {
   return side === 'o' ? ORIGINS.slice() : DESTINATIONS.slice(0, 6);
 }
 
-module.exports = { PLACES, match, label, norm, lev, popular, codesFor, coveredIn };
+/**
+ * Filas del selector de origen agrupadas por país: una fila-título (noop) y los botones del país.
+ * btn(code) arma el botón. Argentina va primero, igual que antes.
+ */
+function originRows(btn, per = 2) {
+  const rows = [];
+  for (const g of ORIGIN_GROUPS) {
+    rows.push([{ text: `${g.flag} ${g.name}`, callback_data: 'noop' }]);
+    for (let i = 0; i < g.codes.length; i += per) rows.push(g.codes.slice(i, i + per).map(btn));
+  }
+  return rows;
+}
+
+module.exports = { PLACES, match, label, norm, lev, popular, codesFor, coveredIn, originRows };
