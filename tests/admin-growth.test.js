@@ -93,3 +93,19 @@ test('status: sin datos devuelve ceros', async () => {
   expect(j.activeAlerts).toEqual({ total: 0, byOrigin: {} });
   expect(j.alertsSent).toEqual({ total: 0, today: 0, last7d: 0 });
 });
+
+test('status: si growth() falla responde 200 con growthError y conserva ok/users', async () => {
+  clock.setNow(new Date('2026-10-21T15:00:00.000Z'));
+  await col('User').create({ telegramUserId: '1', telegramChatId: '1' });
+  const R = col('Route');
+  const spy = jest.spyOn(R, 'find').mockImplementation(() => { throw new Error('boom'); });
+  try {
+    const j = await status();
+    expect(j.growthError).toBe('growth_unavailable');
+    expect(j.ok).toBe(true);
+    expect(j.users).toEqual({ total: 1, free: 1, pro: 0, trial: 0 });
+    expect(j.newUsers).toBeUndefined();
+  } finally {
+    spy.mockRestore();
+  }
+});
