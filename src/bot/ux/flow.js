@@ -5,7 +5,7 @@
  * El estado viaja en el callback_data; next() calcula el primer paso que falta, así
  * "Atrás" = sacar el campo del paso anterior y "Editar" = sacar ese campo y volver solo al resumen.
  */
-const { ORIGINS, DESTINATIONS } = require('../../config/airports');
+const { ALL_ORIGINS, destinationsFor, pairOk } = require('../../config/airports');
 const places = require('./places');
 const cal = require('./calendar');
 const cb = require('./cb');
@@ -127,7 +127,7 @@ function render(lang, flow, input, { now, extra, quota } = {}) {
     rows.push([{ text: t(lang, 'cancel'), callback_data: cb.encode(flow, 'x') }]);
   } else if (step === 'dst') {
     text = t(lang, 'askDest');
-    const all = DESTINATIONS.filter((c) => c !== f.o);
+    const all = destinationsFor(f.o).filter((c) => c !== f.o);
     if (f.p) {
       const per = 8;
       const pages = Math.ceil(all.length / per);
@@ -139,7 +139,7 @@ function render(lang, flow, input, { now, extra, quota } = {}) {
       if (page + 1 < pages) nav.push({ text: '▶', callback_data: nx(flow, { ...f, p: String(page + 2) }) });
       rows.push(nav);
     } else {
-      rows = pairs(placeButtons(lang, flow, f, 'd', places.popular('d').filter((c) => c !== f.o)));
+      rows = pairs(placeButtons(lang, flow, f, 'd', places.popular('d', f.o).filter((c) => c !== f.o)));
       rows.push([{ text: t(lang, 'seeAll'), callback_data: nx(flow, { ...f, p: '1' }) }]);
     }
     rows.push(navRow(lang, flow, f));
@@ -227,7 +227,7 @@ function applyText(lang, flow, f, text) {
   }
   if (step !== 'org' && step !== 'dst') return { fields: f, ignored: true };
   const side = step === 'org' ? 'o' : 'd';
-  const res = places.match(text, side);
+  const res = places.match(text, side, f.o);
   const pick = (code) => {
     if (side === 'd' && code === f.o) return { fields: f, extra: t(lang, 'sameCity') };
     return { fields: { ...f, [side]: code, p: undefined } };
@@ -241,8 +241,8 @@ function applyText(lang, flow, f, text) {
     return { fields: f, extra, choices: placeButtons(lang, flow, f, side, list) };
   }
   if (res.uncovered) {
-    const inCountry = places.coveredIn(res.uncovered.country, side);
-    const list = inCountry.length ? inCountry : places.codesFor(side).slice(0, 6);
+    const inCountry = places.coveredIn(res.uncovered.country, side, f.o);
+    const list = inCountry.length ? inCountry : places.codesFor(side, f.o).slice(0, 6);
     const names = list.map((c) => places.label(c)).join(', ');
     const extra = inCountry.length
       ? t(lang, 'notCovered', { city: res.uncovered.city, country: res.uncovered.country, list: names })
@@ -281,8 +281,8 @@ function validate(lang, f, now) {
   const dep = departIso(f);
   if (dep && dep < cal.todayIso(now)) return t(lang, 'expired');
   if (f.r && dep && cal.ymdToIso(f.r) <= dep) return t(lang, 'returnBefore');
-  if (f.o && !ORIGINS.includes(f.o)) return t(lang, 'expired');
-  if (f.d && !DESTINATIONS.includes(f.d)) return t(lang, 'expired');
+  if (f.o && !ALL_ORIGINS.includes(f.o)) return t(lang, 'expired');
+  if (f.o && f.d && !pairOk(f.o, f.d)) return t(lang, 'expired');
   return null;
 }
 

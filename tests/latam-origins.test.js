@@ -24,9 +24,10 @@ test('selector de origen agrupado por país: fila-título noop + botones del pa�
   const rows = places.originRows((c) => ({ text: c, callback_data: `x:${c}` }));
   const titles = rows.filter((r) => r.length === 1 && r[0].callback_data === 'noop').map((r) => r[0].text);
   expect(titles[0]).toBe('🇦🇷 Argentina');
-  expect(titles).toHaveLength(ORIGIN_GROUPS.length);
+  expect(titles).toHaveLength(ORIGIN_GROUPS.length + 1);
+  expect(titles[titles.length - 1]).toBe('🇪🇺 Vuelta desde Europa');
   const codes = rows.flat().filter((b) => b.callback_data !== 'noop').map((b) => b.text);
-  expect(codes).toEqual(ORIGINS);
+  expect(codes).toEqual([...ORIGINS, 'MAD', 'BCN', 'FCO', 'MXP', 'LIS', 'CDG', 'LHR', 'FRA']);
 });
 
 test('búsqueda por texto y la IA resuelven las ciudades nuevas', () => {

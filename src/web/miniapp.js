@@ -12,7 +12,7 @@ const crypto = require('crypto');
 const initData = require('./initData');
 const clock = require('../utils/clock');
 const { col } = require('../database');
-const { ORIGINS, DESTINATIONS } = require('../config/airports');
+const { ORIGINS, DESTINATIONS, pairOk } = require('../config/airports');
 const { pairAllowed } = require('../config/coverage');
 const places = require('../bot/ux/places');
 const travelpayouts = require('../providers/travelpayouts');
@@ -130,7 +130,7 @@ async function calendar(o, d, month, oneway) {
 }
 
 function validRoute(o, d) {
-  return ORIGINS.includes(o) && DESTINATIONS.includes(d) && pairAllowed(o, d);
+  return pairOk(o, d) && pairAllowed(o, d);
 }
 
 function card(x, adults) {

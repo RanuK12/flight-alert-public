@@ -249,7 +249,7 @@ describe('/app', () => {
       { day: '2026-11-05', price: 700, currency: 'EUR', seen_at: seen, level: 'mid' },
       { day: '2026-11-09', price: 900, currency: 'EUR', seen_at: seen, level: 'high' },
     ]);
-    const bad = await call(createApp(), 'GET', '/app/api/calendar?o=MAD&d=COR&m=2611', { headers: { 'X-Telegram-Init-Data': authFor({ id: 501 }) } });
+    const bad = await call(createApp(), 'GET', '/app/api/calendar?o=MAD&d=BCN&m=2611', { headers: { 'X-Telegram-Init-Data': authFor({ id: 501 }) } });
     expect(bad.status).toBe(400);
   });
 

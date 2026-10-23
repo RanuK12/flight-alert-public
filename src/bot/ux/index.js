@@ -412,7 +412,7 @@ async function onboarding(bot, ctx, s, fields) {
     return;
   }
   if (s === 'o2' && fields.o) {
-    const rows = flow.pairs(places.popular('d').map((c) => btn(c, 'o3', { o: fields.o, d: c })));
+    const rows = flow.pairs(places.popular('d', fields.o).map((c) => btn(c, 'o3', { o: fields.o, d: c })));
     rows.push([{ text: t(lang, 'obOther'), callback_data: cb.encode('b', 'nx', { o: fields.o }) }]);
     await show(bot, ctx.chatId, ctx.mid, t(lang, 'obDest'), { inline_keyboard: [...rows, skip] });
     return;

@@ -1,6 +1,6 @@
 'use strict';
 
-const { ORIGINS, DESTINATIONS } = require('../../config/airports');
+const { ORIGINS, DESTINATIONS, pairOk } = require('../../config/airports');
 
 const IATA = new Set([...ORIGINS, ...DESTINATIONS]);
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -55,7 +55,7 @@ function validate(obj, opts = {}) {
   if (typeof obj.departDate === 'string' && obj.departDate.slice(0, 7) === today.slice(0, 7) && obj.departDate < today
     && typeof obj.flexibleMonth === 'string') obj.departDate = today;
   if (!IATA.has(origin)) return { ok: false, error: 'origin' };
-  if (!IATA.has(destination) || destination === origin) return { ok: false, error: 'destination' };
+  if (!IATA.has(destination) || destination === origin || !pairOk(origin, destination)) return { ok: false, error: 'destination' };
   if (typeof obj.departDate !== 'string' || !validDate(obj.departDate)) return { ok: false, error: 'departDate' };
   if (obj.departDate < today) return { ok: false, error: 'past' };
   let returnDate = null;

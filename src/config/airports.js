@@ -38,8 +38,28 @@ function allPairs() {
   return pairs;
 }
 
+/** Vuelta Europa → Latinoamérica: hubs que se muestran en el selector (el resto de los 31 se encuentra escribiendo). */
+const EU_RETURN_HUBS = ['MAD', 'BCN', 'FCO', 'MXP', 'LIS', 'CDG', 'LHR', 'FRA'];
+const ALL_ORIGINS = [...ORIGINS, ...DESTINATIONS];
+
+function isEurope(code) {
+  return DESTINATIONS.includes(code);
+}
+
+/** Destinos válidos para un origen: desde LATAM → Europa; desde Europa → LATAM (vuelta). */
+function destinationsFor(origin) {
+  if (isEurope(origin)) return ORIGINS.slice();
+  return DESTINATIONS.slice();
+}
+
+/** Par válido: LATAM→Europa o Europa→LATAM. Nunca Europa↔Europa ni LATAM↔LATAM. */
+function pairOk(origin, destination) {
+  return (ORIGINS.includes(origin) && DESTINATIONS.includes(destination))
+    || (DESTINATIONS.includes(origin) && ORIGINS.includes(destination));
+}
+
 function groupOf(code) {
   return ORIGIN_GROUPS.find((g) => g.codes.includes(code)) || null;
 }
 
-module.exports = { ORIGINS, AR_ORIGINS, ORIGIN_GROUPS, DESTINATIONS, allPairs, groupOf };
+module.exports = { ORIGINS, AR_ORIGINS, ORIGIN_GROUPS, DESTINATIONS, EU_RETURN_HUBS, ALL_ORIGINS, allPairs, groupOf, isEurope, destinationsFor, pairOk };

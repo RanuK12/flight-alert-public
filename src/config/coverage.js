@@ -22,7 +22,10 @@ function report() {
 function pairAllowed(origin, destination) {
   const r = report();
   if (!r || typeof r.percent !== 'number' || r.percent >= 60) return true;
-  return (r.withData || []).some((p) => p.origin === origin && p.destination === destination);
+  const same = (p) => p.origin === origin && p.destination === destination;
+  // Pares que el informe no midió (p. ej. la vuelta Europa→LATAM) no se esconden.
+  if (Array.isArray(r.tested) && !r.tested.some(same)) return true;
+  return (r.withData || []).some(same);
 }
 
 module.exports = { pairAllowed, report, allPairs, REPORT };

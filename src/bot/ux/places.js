@@ -1,6 +1,6 @@
 'use strict';
 
-const { ORIGINS, DESTINATIONS, ORIGIN_GROUPS } = require('../../config/airports');
+const { ORIGINS, DESTINATIONS, ORIGIN_GROUPS, ALL_ORIGINS, EU_RETURN_HUBS, destinationsFor } = require('../../config/airports');
 
 /** Nombres de los aeropuertos cubiertos. Sin inventar: solo los códigos de la config. */
 const PLACES = {
@@ -81,8 +81,10 @@ function lev(a, b) {
   return d[m][n];
 }
 
-function codesFor(side) {
-  return side === 'o' ? ORIGINS : DESTINATIONS;
+/** side 'o': LATAM + Europa (vuelta). side 'd': según el origen elegido (sin origen, Europa como siempre). */
+function codesFor(side, origin) {
+  if (side === 'o') return ALL_ORIGINS;
+  return origin ? destinationsFor(origin) : DESTINATIONS;
 }
 
 function label(code) {
@@ -96,9 +98,9 @@ function label(code) {
  * Orden: IATA exacto > ciudad/alias empieza con > contiene > Levenshtein ≤ 2.
  * Devuelve { exact, matches, uncovered }.
  */
-function match(text, side) {
+function match(text, side, origin) {
   const q = norm(text);
-  const codes = codesFor(side);
+  const codes = codesFor(side, origin);
   if (!q) return { exact: null, matches: [], uncovered: null };
   const up = q.toUpperCase();
   if (q.length === 3 && codes.includes(up)) return { exact: up, matches: [up], uncovered: null };
@@ -119,10 +121,12 @@ function match(text, side) {
   scored.sort((a, b) => a.score - b.score || codes.indexOf(a.code) - codes.indexOf(b.code));
   const matches = scored.map((s) => s.code);
   const exactOnes = scored.filter((s) => s.score === 0).map((s) => s.code);
-  const exact = matches.length === 1 ? matches[0] : (exactOnes.length === 1 && matches.length === 1 ? exactOnes[0] : null);
+  // Un único nombre exacto gana si el resto son sólo parecidos tipográficos (p. ej. "sao paulo" vs aeropuerto "San Pablo" de SVQ).
+  const closeOthers = scored.filter((s) => s.score > 0 && s.score < 3).length;
+  const exact = matches.length === 1 ? matches[0] : (exactOnes.length === 1 && !closeOthers ? exactOnes[0] : null);
   let uncovered = null;
   if (!matches.length) {
-    const other = side === 'o' ? DESTINATIONS : ORIGINS;
+    const other = side === 'o' ? [] : ALL_ORIGINS.filter((c) => !codes.includes(c));
     if (q.length === 3 && other.includes(up)) uncovered = { city: label(up), country: (PLACES[up] || {}).country || '' };
     const known = Object.keys(KNOWN_UNCOVERED).find((k) => k === q || lev(k, q) <= 1);
     if (known) uncovered = KNOWN_UNCOVERED[known];
@@ -130,25 +134,30 @@ function match(text, side) {
   return { exact, matches, uncovered };
 }
 
-function coveredIn(country, side) {
-  return codesFor(side).filter((c) => (PLACES[c] || {}).country === country);
+function coveredIn(country, side, origin) {
+  return codesFor(side, origin).filter((c) => (PLACES[c] || {}).country === country);
 }
 
-function popular(side) {
-  return side === 'o' ? ORIGINS.slice() : DESTINATIONS.slice(0, 6);
+function popular(side, origin) {
+  if (side === 'o') return ORIGINS.slice();
+  return (origin ? destinationsFor(origin) : DESTINATIONS).slice(0, 6);
 }
 
 /**
  * Filas del selector de origen agrupadas por país: una fila-título (noop) y los botones del país.
  * btn(code) arma el botón. Argentina va primero, igual que antes.
  */
+const EU_RETURN_TITLE = '🇪🇺 Vuelta desde Europa';
+
 function originRows(btn, per = 2) {
   const rows = [];
   for (const g of ORIGIN_GROUPS) {
     rows.push([{ text: `${g.flag} ${g.name}`, callback_data: 'noop' }]);
     for (let i = 0; i < g.codes.length; i += per) rows.push(g.codes.slice(i, i + per).map(btn));
   }
+  rows.push([{ text: EU_RETURN_TITLE, callback_data: 'noop' }]);
+  for (let i = 0; i < EU_RETURN_HUBS.length; i += per) rows.push(EU_RETURN_HUBS.slice(i, i + per).map(btn));
   return rows;
 }
 
-module.exports = { PLACES, match, label, norm, lev, popular, codesFor, coveredIn, originRows };
+module.exports = { EU_RETURN_TITLE, PLACES, match, label, norm, lev, popular, codesFor, coveredIn, originRows };
