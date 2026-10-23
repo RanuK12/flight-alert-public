@@ -131,6 +131,9 @@ function createApp() {
     return next();
   });
 
+  // Contador de visitas propio (sin cookies). Nunca bloquea: registra al terminar la respuesta.
+  app.use(require('./services/visits').middleware((p) => ['/', '/es', '/en', '/pro', '/app', '/app/'].includes(p) || Boolean(seo.byPath(p))));
+
   app.use('/public', express.static(path.join(__dirname, '..', 'public'), { maxAge: '30d' }));
   app.use('/app', require('./web/miniapp').router());
 
