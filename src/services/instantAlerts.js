@@ -86,9 +86,9 @@ function matchesRoute(r, f) {
 }
 
 const ALERT_TEXT = {
-  es: { title: 'Bajó el precio', ceiling: 'Tu techo', cached: 'Precio en caché; el final lo ves en Aviasales.', live: 'Precio verificado recién; el final lo ves en Aviasales.' },
-  en: { title: 'Price drop', ceiling: 'Your ceiling', cached: 'Cached price; see the final price on Aviasales.', live: 'Price just verified; see the final price on Aviasales.' },
-  pt: { title: 'O preço caiu', ceiling: 'Seu teto', cached: 'Preço em cache; o final você vê na Aviasales.', live: 'Preço verificado agora; o final você vê na Aviasales.' },
+  es: { title: 'Bajó el precio', ceiling: 'Tu techo', cached: 'Precio en caché; el final lo ves en Aviasales.', live: 'Precio de referencia; el final lo ves en Aviasales.' },
+  en: { title: 'Price drop', ceiling: 'Your ceiling', cached: 'Cached price; see the final price on Aviasales.', live: 'Reference price; see the final price on Aviasales.' },
+  pt: { title: 'O preço caiu', ceiling: 'Seu teto', cached: 'Preço em cache; o final você vê na Aviasales.', live: 'Preço de referência; o final você vê na Aviasales.' },
 };
 
 function messageFor(route, flight, now) {
@@ -107,6 +107,15 @@ function messageFor(route, flight, now) {
  * aunque varias alertas la compartan. Avisa si el precio está en o debajo del techo.
  */
 async function run(bot, opts = {}) {
+  duffel.beginTick();
+  try {
+    return await runTick(bot, opts);
+  } finally {
+    duffel.endTick();
+  }
+}
+
+async function runTick(bot, opts = {}) {
   if (flags.kill() || !flags.instantAlerts()) return { skipped: true };
   const now = clock.now();
   // Forzado desde /admin: revisa igual, pero no manda nada en horario de silencio.

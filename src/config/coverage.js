@@ -7,6 +7,8 @@ const { allPairs, ORIGINS, DESTINATIONS, ORIGIN_GROUPS, EU_RETURN_HUBS, destinat
 const REPORT = path.join(__dirname, '..', '..', 'data', 'coverage.json');
 
 const MIN_ORIGIN_PERCENT = 60;
+/** Método de medición válido: ≥3 fechas en 4 meses, par cuenta con ofertas de aerolínea real en ≥2 fechas. */
+const DUFFEL_METHOD = 'multidate-real-airline-v1';
 /** Fallback sin informe (fail-closed): solo Argentina → Europa, la ruta histórica. */
 const FALLBACK_ORIGINS = (ORIGIN_GROUPS.find((g) => g.country === 'AR') || { codes: ['EZE'] }).codes;
 
@@ -39,7 +41,8 @@ function report() {
  * pero Duffel cotizó en el chequeo (withDuffel), y el umbral usa percentWithDuffel.
  */
 function allowedSet(data) {
-  const live = Boolean(process.env.DUFFEL_ACCESS_TOKEN);
+  // Duffel solo cuenta si la cobertura se midió bien (varias fechas, aerolíneas reales).
+  const live = Boolean(process.env.DUFFEL_ACCESS_TOKEN) && data.duffelMethod === DUFFEL_METHOD;
   const k = live ? 'live' : 'tp';
   if (cache.sets[k]) return cache.sets[k];
   const min = Number(data.minOriginPercent) || MIN_ORIGIN_PERCENT;
@@ -98,6 +101,6 @@ function euOriginsAvailable() {
 }
 
 module.exports = {
-  pairAllowed, report, MIN_ORIGIN_PERCENT, FALLBACK_ORIGINS, GRANDFATHERED_ORIGINS, allPairs, REPORT,
+  pairAllowed, report, MIN_ORIGIN_PERCENT, DUFFEL_METHOD, FALLBACK_ORIGINS, GRANDFATHERED_ORIGINS, allPairs, REPORT,
   destinationsAvailable, originAvailable, latamOriginsAvailable, groupsAvailable, euHubsAvailable, euOriginsAvailable,
 };

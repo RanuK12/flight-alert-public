@@ -21,10 +21,24 @@ const fxCache = new Map();
 let calls = [];
 let blockedUntil = 0;
 let skipped = false;
+let tickCalls = null; // null = fuera de un tick de alertas (búsquedas del usuario no usan este tope)
 
-function enabled() {
-  return Boolean(process.env.DUFFEL_ACCESS_TOKEN);
+/** En producción un token de prueba (duffel_test_…) se rechaza: solo devuelve la aerolínea ficticia. */
+function testTokenInProd() {
+  const t = process.env.DUFFEL_ACCESS_TOKEN || '';
+  return process.env.NODE_ENV === 'production' && t.startsWith('duffel_test_');
 }
+function enabled() {
+  return Boolean(process.env.DUFFEL_ACCESS_TOKEN) && !testTokenInProd();
+}
+/** Ofertas de prueba de Duffel ("Duffel Airways", IATA ZZ): nunca cuentan como precio real. */
+function isTestOffer(o) {
+  const owner = (o && o.owner) || {};
+  return /duffel airways/i.test(String(owner.name || '')) || String(owner.iata_code || '').toUpperCase() === 'ZZ';
+}
+/** Vuelta (tick) de alertas: tope DUFFEL_MAX_PER_TICK (por defecto 20) llamadas por vuelta. */
+function beginTick() { tickCalls = 0; }
+function endTick() { tickCalls = null; }
 const num = (k, d) => (Number.isFinite(Number(process.env[k])) && process.env[k] !== '' ? Number(process.env[k]) : d);
 
 function reset() {
@@ -32,6 +46,7 @@ function reset() {
   fxCache.clear();
   calls = [];
   blockedUntil = 0;
+  tickCalls = null;
 }
 
 function takeSlot(now) {
@@ -90,7 +105,9 @@ async function cheapest(q) {
   const hit = cache.get(key);
   if (hit && now.getTime() - hit.at < num('DUFFEL_CACHE_MIN', 30) * 60000) return hit.value;
   skipped = false;
+  if (tickCalls !== null && tickCalls >= num('DUFFEL_MAX_PER_TICK', 20)) { skipped = true; return null; }
   if (!takeSlot(now.getTime())) { skipped = true; return null; }
+  if (tickCalls !== null) tickCalls += 1;
   try {
     const slices = [{ origin: q.origin, destination: q.destination, departure_date: q.departureDate }];
     if (q.returnDate) slices.push({ origin: q.destination, destination: q.origin, departure_date: q.returnDate });
@@ -100,7 +117,7 @@ async function cheapest(q) {
       timeout: num('DUFFEL_TIMEOUT_MS', 25000),
     });
     const offers = ((res.data && res.data.data && res.data.data.offers) || [])
-      .filter((o) => Number(o.total_amount) > 0)
+      .filter((o) => Number(o.total_amount) > 0 && !isTestOffer(o))
       .sort((a, b) => Number(a.total_amount) - Number(b.total_amount));
     let value = null;
     if (offers.length) {
@@ -119,4 +136,4 @@ async function cheapest(q) {
 
 function lastSkipped() { return skipped; }
 
-module.exports = { lastSkipped, enabled, cheapest, reset, OFFER_PATH, BASE };
+module.exports = { lastSkipped, enabled, isTestOffer, beginTick, endTick, cheapest, reset, OFFER_PATH, BASE };

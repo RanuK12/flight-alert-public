@@ -165,7 +165,8 @@ describe('re-verificación antes de avisar', () => {
     const text = notifier.send.mock.calls[0][2];
     expect(text).toMatch(/€470/);
     expect(text).toMatch(/visto hace 0 h/);
-    expect(text).toMatch(/verificado/);
+    expect(text).toMatch(/Precio de referencia/);
+    expect(text).not.toMatch(/verificado/);
   });
   test('Duffel arriba del techo: no avisa', async () => {
     process.env.DUFFEL_ACCESS_TOKEN = 'duffel_test_x';
@@ -211,6 +212,7 @@ describe('cobertura con Duffel', () => {
       withData: [{ origin: 'MEX', destination: 'MAD' }],
       withDuffel: [{ origin: 'MEX', destination: 'BCN' }],
       byOrigin: { MEX: { with: 1, total: 2, percent: 50, percentWithDuffel: 100 } },
+      duffelMethod: cov.DUFFEL_METHOD,
     }));
     process.env.COVERAGE_FILE = f;
     try {
@@ -218,6 +220,80 @@ describe('cobertura con Duffel', () => {
       process.env.DUFFEL_ACCESS_TOKEN = 'duffel_test_x';
       expect(cov.pairAllowed('MEX', 'MAD')).toBe(true);
       expect(cov.pairAllowed('MEX', 'BCN')).toBe(true);
+    } finally { process.env.COVERAGE_FILE = 'off'; fs.unlinkSync(f); }
+  });
+});
+
+describe('blindaje de producción (OVERSEER)', () => {
+  test('en producción rechaza tokens duffel_test_ y no llama', async () => {
+    process.env.NODE_ENV = 'production';
+    process.env.DUFFEL_ACCESS_TOKEN = 'duffel_test_x';
+    routeAxios();
+    try {
+      expect(duffel.enabled()).toBe(false);
+      expect(await duffel.cheapest(Q)).toBeNull();
+      expect(axios.post).not.toHaveBeenCalled();
+      process.env.DUFFEL_ACCESS_TOKEN = 'duffel_live_x';
+      expect(duffel.enabled()).toBe(true);
+    } finally { process.env.NODE_ENV = 'test'; }
+  });
+
+  test('filtra ofertas de "Duffel Airways" (ZZ): si solo hay esas, null', async () => {
+    process.env.DUFFEL_ACCESS_TOKEN = 'duffel_live_x';
+    const dz = (amt) => ({ total_amount: String(amt), total_currency: 'EUR', owner: { name: 'Duffel Airways', iata_code: 'ZZ' }, slices: [{ duration: 'PT10H', segments: [{}] }] });
+    routeAxios({ duffelImpl: async () => ({ data: { data: { offers: [dz(100), { ...dz(300), owner: { name: 'Iberia', iata_code: 'IB' } }] } }, headers: {} }) });
+    const row = await duffel.cheapest(Q);
+    expect(row.price).toBe(300);
+    expect(row.gate).toBe('IB');
+    duffel.reset();
+    routeAxios({ duffelImpl: async () => ({ data: { data: { offers: [dz(100), { ...dz(90), owner: { name: 'Duffel Airways' } }] } }, headers: {} }) });
+    expect(await duffel.cheapest({ ...Q, departureDate: '2026-12-11' })).toBeNull();
+    expect(duffel.isTestOffer({ owner: { iata_code: 'zz' } })).toBe(true);
+    expect(duffel.isTestOffer({ owner: { name: 'LATAM', iata_code: 'LA' } })).toBe(false);
+  });
+
+  test('precio de 152 h vía instant.run: no avisa (con y sin Duffel)', async () => {
+    await col('Entitlement').create({ telegramUserId: '1', plan: 'pro', searchesUsed: 0, proUntil: '2026-12-31T00:00:00Z' });
+    await col('Route').create({ telegramUserId: '1', telegramChatId: '1', origin: 'MEX', destination: 'MAD', tripType: 'oneway', outboundDate: '2026-12-10', returnDate: null, priceThreshold: 500, paused: false });
+    routeAxios({ tp: tpRows({ o: 'MEX', d: 'MAD' }, 300, 152) });
+    expect((await instant.run({})).sent).toBe(0);
+    process.env.DUFFEL_ACCESS_TOKEN = 'duffel_live_x';
+    routeAxios({ tp: tpRows({ o: 'MEX', d: 'MAD' }, 300, 152), duffelImpl: async () => { throw new Error('down'); } });
+    expect((await instant.run({})).sent).toBe(0);
+    expect(notifier.send).not.toHaveBeenCalled();
+    expect(await col('Notification').countDocuments({})).toBe(0);
+  });
+
+  test('tope de llamadas a Duffel por tick (DUFFEL_MAX_PER_TICK), solo dentro de instant.run', async () => {
+    process.env.DUFFEL_ACCESS_TOKEN = 'duffel_live_x';
+    process.env.DUFFEL_MAX_PER_TICK = '2';
+    process.env.DUFFEL_MAX_PER_MIN = '100';
+    await col('Entitlement').create({ telegramUserId: '1', plan: 'pro', searchesUsed: 0, proUntil: '2026-12-31T00:00:00Z' });
+    for (const d of ['2026-12-10', '2026-12-11', '2026-12-12', '2026-12-13']) {
+      await col('Route').create({ telegramUserId: '1', telegramChatId: '1', origin: 'MEX', destination: 'MAD', tripType: 'oneway', outboundDate: d, returnDate: null, priceThreshold: 500, paused: false });
+    }
+    routeAxios({ duffelImpl: async () => offerResponse(470, 'EUR') });
+    await instant.run({});
+    expect(axios.post).toHaveBeenCalledTimes(2);
+    // Fuera del tick, las búsquedas no quedan frenadas por el tope.
+    expect(await duffel.cheapest({ ...Q, departureDate: '2027-01-05' })).not.toBeNull();
+    expect(axios.post).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('cobertura Duffel solo si está bien medida', () => {
+  test('withDuffel sin duffelMethod válido no cuenta para allowedSet', () => {
+    const f = path.join(os.tmpdir(), `cov-duffel-nm-${process.pid}.json`);
+    fs.writeFileSync(f, JSON.stringify({
+      withData: [{ origin: 'MEX', destination: 'MAD' }],
+      withDuffel: [{ origin: 'MEX', destination: 'BCN' }],
+      byOrigin: { MEX: { with: 1, total: 2, percent: 50, percentWithDuffel: 100 } },
+    }));
+    process.env.COVERAGE_FILE = f;
+    process.env.DUFFEL_ACCESS_TOKEN = 'duffel_live_x';
+    try {
+      expect(cov.pairAllowed('MEX', 'MAD')).toBe(false);
+      expect(cov.pairAllowed('MEX', 'BCN')).toBe(false);
     } finally { process.env.COVERAGE_FILE = 'off'; fs.unlinkSync(f); }
   });
 });
