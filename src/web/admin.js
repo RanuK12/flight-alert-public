@@ -83,6 +83,52 @@ async function counts() {
   return { users: { total, free: total - pro, pro, trial }, paymentsToday: today };
 }
 
+/** Métricas de crecimiento y uso (solo lecturas; staff excluido). Fechas en ART. */
+async function growth(staff) {
+  const staffSet = new Set(staff.map(String));
+  const real = (doc) => !staffSet.has(String(doc.telegramUserId));
+  const now = clock.now();
+  const todayStart = art.startOfArtDay(now);
+  const since7 = new Date(todayStart.getTime() - 6 * art.DAY_MS);
+
+  // Usuarios nuevos: countDocuments por día ART (no carga la colección).
+  const U = col('User');
+  const byDay = {};
+  let new7 = 0;
+  for (let i = 13; i >= 0; i -= 1) {
+    const from = new Date(todayStart.getTime() - i * art.DAY_MS);
+    const to = new Date(from.getTime() + art.DAY_MS);
+    const n = await countReal(U, { createdAt: { $gte: from, $lt: to } }, staff);
+    byDay[art.parts(from).day] = n;
+    if (from >= since7) new7 += n;
+  }
+  const newToday = byDay[art.parts(todayStart).day];
+
+  // Alertas activas: solo origin + telegramUserId de rutas no pausadas.
+  const routes = (await col('Route').find(
+    { paused: { $ne: true }, pausedByBilling: { $ne: true } },
+    { telegramUserId: 1, origin: 1 },
+  ).lean()).filter(real);
+  const byOrigin = {};
+  for (const r of routes) {
+    const o = String(r.origin || '?').toUpperCase();
+    byOrigin[o] = (byOrigin[o] || 0) + 1;
+  }
+
+  const N = col('Notification');
+  const sent = {
+    total: await countReal(N, {}, staff),
+    today: await countReal(N, { sentAt: { $gte: todayStart } }, staff),
+    last7d: await countReal(N, { sentAt: { $gte: since7 } }, staff),
+  };
+
+  return {
+    newUsers: { today: newToday, last7d: new7, byDay },
+    activeAlerts: { total: routes.length, byOrigin },
+    alertsSent: sent,
+  };
+}
+
 function router({ clientIp, priceCheck }) {
   const r = express.Router();
   r.use(auth(clientIp));
@@ -91,6 +137,7 @@ function router({ clientIp, priceCheck }) {
     const h = health();
     let data = {};
     try { data = await counts(); } catch (err) { data = { error: 'counts_unavailable' }; }
+    try { Object.assign(data, await growth(flags.staffIds())); } catch (err) { data.growthError = 'growth_unavailable'; }
     res.json({
       ok: h.ok,
       db: h.db,
@@ -144,4 +191,4 @@ function router({ clientIp, priceCheck }) {
   return r;
 }
 
-module.exports = { router, tokenOk, counts };
+module.exports = { router, tokenOk, counts, growth };
