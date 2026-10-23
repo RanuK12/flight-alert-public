@@ -38,3 +38,72 @@ test('selector de destino desde Europa muestra LATAM', () => {
   expect(txt).toMatch(/Buenos Aires|EZE/);
   expect(txt).not.toMatch(/"MAD"|Madrid/);
 });
+
+describe('auditoría OVERSEER', () => {
+  const fs = require('fs');
+  const os = require('os');
+  const path = require('path');
+  const cov = require('../src/config/coverage');
+  const { allPairs } = require('../src/config/airports');
+  const ux = require('../src/bot/ux/places');
+
+  function withReport(withData, fn) {
+    const f = path.join(os.tmpdir(), `cov-${process.pid}-${Math.random()}.json`);
+    fs.writeFileSync(f, JSON.stringify({ percent: 10, tested: [], withData }));
+    process.env.COVERAGE_FILE = f;
+    try { return fn(); } finally { process.env.COVERAGE_FILE = ''; fs.unlinkSync(f); }
+  }
+
+  test('allPairs incluye la vuelta Europa→LATAM (744 pares)', () => {
+    const all = allPairs();
+    expect(all).toHaveLength(12 * 31 * 2);
+    expect(all).toContainEqual({ origin: 'MAD', destination: 'EZE' });
+    expect(all).toContainEqual({ origin: 'FRA', destination: 'MEX' });
+  });
+
+  test('pairAllowed por par: con informe, un par no medido o sin datos NO se ofrece; AR no se esconde', () => {
+    withReport([{ origin: 'EZE', destination: 'MAD' }, { origin: 'MVD', destination: 'MAD' }], () => {
+      expect(cov.pairAllowed('EZE', 'MAD')).toBe(true);
+      expect(cov.pairAllowed('MVD', 'MAD')).toBe(true);
+      expect(cov.pairAllowed('MVD', 'BCN')).toBe(false);
+      expect(cov.pairAllowed('MAD', 'EZE')).toBe(false); // no medido
+      expect(cov.latamOriginsAvailable()).toEqual(['EZE', 'MVD']);
+      expect(ux.codesFor('d', 'MVD')).toEqual(['MAD']);
+      const titles = ux.originRows((c) => ({ text: c, callback_data: c })).filter((r) => r[0].callback_data === 'noop').map((r) => r[0].text);
+      expect(titles).toEqual(['🇦🇷 Argentina', '🇺🇾 Uruguay']); // sin vuelta: ningún hub medido
+    });
+    expect(cov.pairAllowed('MAD', 'EZE')).toBe(true); // sin informe: todo
+  });
+
+  test('landing: lista de países y conteos salen del informe', () => {
+    withReport([{ origin: 'EZE', destination: 'MAD' }, { origin: 'GRU', destination: 'LIS' }], () => {
+      const html = require('../src/web/landing').renderLanding({ lang: 'es' });
+      expect(html).toMatch(/Argentina y Brasil/);
+      expect(html).not.toMatch(/monitoreadas todos los días/);
+      expect(html).toMatch(/2 orígenes/);
+      const en = require('../src/web/landing').renderLanding({ lang: 'en' });
+      expect(en).toMatch(/Argentina &amp; Brazil|Argentina & Brazil/);
+      expect(en).not.toMatch(/daily price checks/);
+    });
+  });
+
+  test('título de la vuelta en EN', () => {
+    const rows = ux.originRows((c) => ({ text: c, callback_data: c }), 2, 'en');
+    expect(rows.flat().map((b) => b.text)).toContain('🇪🇺 Return from Europe');
+    expect(rows.flat().map((b) => b.text)).toContain('🇧🇷 Brazil');
+  });
+
+  test('validate: destino desconocido o fuera de la red', () => {
+    expect(flow.validate('es', { o: 'EZE', d: 'JFK' }, new Date())).not.toBeNull();
+    expect(flow.validate('es', { o: 'XXX', d: 'MAD' }, new Date())).not.toBeNull();
+  });
+
+  test('schema IA: IATA desconocido y misma ciudad', () => {
+    const v = (o, d) => schema.validate({ origin: o, destination: d, departDate: '2026-12-10', adults: 1 });
+    expect(v('EZE', 'JFK').ok).toBe(false);
+    expect(v('ZZZ', 'MAD').ok).toBe(false);
+    expect(v('MAD', 'MAD').ok).toBe(false);
+    expect(v('MAD', 'BCN').ok).toBe(false);
+    expect(v('MAD', 'EZE').ok).toBe(true);
+  });
+});

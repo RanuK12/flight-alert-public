@@ -6,7 +6,16 @@ const entitlements = require('../services/entitlements');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { ORIGINS, DESTINATIONS } = require('../config/airports');
+const { DESTINATIONS } = require('../config/airports');
+const coverage = require('../config/coverage');
+
+const COUNTRY_EN = { AR: 'Argentina', BR: 'Brazil', CL: 'Chile', UY: 'Uruguay', PE: 'Peru', CO: 'Colombia', MX: 'Mexico' };
+/** Países con al menos un origen medido con datos (sale del informe de cobertura). */
+function countryList(lang) {
+  const names = coverage.groupsAvailable().map((g) => (lang === 'en' ? COUNTRY_EN[g.country] || g.name : g.name));
+  if (names.length < 2) return names.join('');
+  return `${names.slice(0, -1).join(', ')}${lang === 'en' ? ' & ' : ' y '}${names[names.length - 1]}`;
+}
 const { EU } = require('../services/country');
 const fx = require('../services/fx');
 
@@ -191,8 +200,8 @@ const POPULAR_DESTINATIONS = [
 
 function copy(lang) {
   const en = lang === 'en';
-  const nO = ORIGINS.length;
-  const nD = DESTINATIONS.length;
+  const nO = coverage.latamOriginsAvailable().length;
+  const nD = DESTINATIONS.filter((d) => coverage.latamOriginsAvailable().some((o) => coverage.pairAllowed(o, d))).length;
   if (en) {
     return {
       htmlLang: 'en',
@@ -266,10 +275,10 @@ function copy(lang) {
       usdFigure: 'US$5',
       usdWords: '5 US dollars.',
       destinationsTitle: 'Popular destinations in Europe',
-      destinationsSub: 'Top monitored routes from Latin America with daily price checks.',
+      destinationsSub: 'Most searched routes from Latin America.',
       trustOrigins: `${nO} origins`,
-      trustOriginsList: 'Argentina, Brazil, Chile, Uruguay, Peru, Colombia & Mexico',
-      trustDestinations: '31 destinations',
+      trustOriginsList: countryList('en'),
+      trustDestinations: `${nD} destinations`,
       trustDestinationsList: 'Madrid, Rome, Paris, London & more',
       trustData: 'Travelpayouts',
       trustDataDesc: 'Real cached fares',
@@ -366,10 +375,10 @@ function copy(lang) {
     usdFigure: 'US$5',
     usdWords: '5 dólares estadounidenses.',
     destinationsTitle: 'Destinos populares en Europa',
-    destinationsSub: 'Las rutas más buscadas desde Latinoamérica, monitoreadas todos los días.',
+    destinationsSub: 'Las rutas más buscadas desde Latinoamérica.',
     trustOrigins: `${nO} orígenes`,
-    trustOriginsList: 'Argentina, Brasil, Chile, Uruguay, Perú, Colombia y México',
-    trustDestinations: '31 destinos',
+    trustOriginsList: countryList('es'),
+    trustDestinations: `${nD} destinos`,
     trustDestinationsList: 'Madrid, Barcelona, Roma, París y más',
     trustData: 'Datos de Travelpayouts',
     trustDataDesc: 'Precios reales en caché',
@@ -423,9 +432,9 @@ function priceBlocks(lang, region, ars) {
 
 function panels(lang) {
   const t = copy(lang);
-  return ORIGINS.map((origin, index) => {
+  return coverage.latamOriginsAvailable().map((origin, index) => {
     const active = index === 0 ? ' is-active' : '';
-    const items = DESTINATIONS.map((code) => `<li>${abbr(code, lang)}</li>`).join('');
+    const items = coverage.destinationsAvailable(origin).map((code) => `<li>${abbr(code, lang)}</li>`).join('');
     return `<div class="tab-panel${active}" id="panel-${origin}" role="tabpanel" aria-labelledby="tab-${origin}">`
       + `<h3>${esc(t.from)} ${abbr(origin, lang)}</h3>`
       + `<ul class="dest-grid">${items}</ul>`
@@ -435,7 +444,7 @@ function panels(lang) {
 
 function tabs(lang) {
   const t = copy(lang);
-  const buttons = ORIGINS.map((origin, index) => {
+  const buttons = coverage.latamOriginsAvailable().map((origin, index) => {
     const selected = index === 0;
     return `<button type="button" role="tab" id="tab-${origin}" aria-controls="panel-${origin}" aria-selected="${selected ? 'true' : 'false'}" tabindex="${selected ? '0' : '-1'}">${abbr(origin, lang)}</button>`;
   }).join('');

@@ -86,7 +86,8 @@ function placesPayload() {
     const p = places.PLACES[code] || { city: code, country: '', alias: [] };
     return { code, label: places.label(code), city: p.city, country: p.country, alias: p.alias || [], airport: p.airport || '' };
   };
-  return { origins: ORIGINS.map(item), destinations: DESTINATIONS.map(item) };
+  const cov = require('../config/coverage');
+  return { origins: cov.latamOriginsAvailable().map(item), destinations: DESTINATIONS.filter((d) => cov.latamOriginsAvailable().some((o) => cov.pairAllowed(o, d))).map(item) };
 }
 
 /** "2611" → "2026-11". */

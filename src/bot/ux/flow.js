@@ -123,11 +123,11 @@ function render(lang, flow, input, { now, extra, quota } = {}) {
   let rows = [];
   if (step === 'org') {
     text = t(lang, 'askOrigin');
-    rows = places.originRows((code) => placeButtons(lang, flow, f, 'o', [code])[0]);
+    rows = places.originRows((code) => placeButtons(lang, flow, f, 'o', [code])[0], 2, lang);
     rows.push([{ text: t(lang, 'cancel'), callback_data: cb.encode(flow, 'x') }]);
   } else if (step === 'dst') {
     text = t(lang, 'askDest');
-    const all = destinationsFor(f.o).filter((c) => c !== f.o);
+    const all = require('../../config/coverage').destinationsAvailable(f.o).filter((c) => c !== f.o);
     if (f.p) {
       const per = 8;
       const pages = Math.ceil(all.length / per);
@@ -282,6 +282,7 @@ function validate(lang, f, now) {
   if (dep && dep < cal.todayIso(now)) return t(lang, 'expired');
   if (f.r && dep && cal.ymdToIso(f.r) <= dep) return t(lang, 'returnBefore');
   if (f.o && !ALL_ORIGINS.includes(f.o)) return t(lang, 'expired');
+  if (f.d && !ALL_ORIGINS.includes(f.d)) return t(lang, 'expired');
   if (f.o && f.d && !pairOk(f.o, f.d)) return t(lang, 'expired');
   return null;
 }

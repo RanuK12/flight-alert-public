@@ -83,8 +83,9 @@ function lev(a, b) {
 
 /** side 'o': LATAM + Europa (vuelta). side 'd': según el origen elegido (sin origen, Europa como siempre). */
 function codesFor(side, origin) {
-  if (side === 'o') return ALL_ORIGINS;
-  return origin ? destinationsFor(origin) : DESTINATIONS;
+  const cov = require('../../config/coverage');
+  if (side === 'o') return ALL_ORIGINS.filter(cov.originAvailable);
+  return origin ? cov.destinationsAvailable(origin) : DESTINATIONS;
 }
 
 function label(code) {
@@ -139,25 +140,33 @@ function coveredIn(country, side, origin) {
 }
 
 function popular(side, origin) {
-  if (side === 'o') return ORIGINS.slice();
-  return (origin ? destinationsFor(origin) : DESTINATIONS).slice(0, 6);
+  const cov = require('../../config/coverage');
+  if (side === 'o') return cov.latamOriginsAvailable();
+  return (origin ? cov.destinationsAvailable(origin) : DESTINATIONS).slice(0, 6);
 }
 
 /**
  * Filas del selector de origen agrupadas por país: una fila-título (noop) y los botones del país.
  * btn(code) arma el botón. Argentina va primero, igual que antes.
  */
-const EU_RETURN_TITLE = '🇪🇺 Vuelta desde Europa';
+const EU_RETURN_TITLES = { es: '🇪🇺 Vuelta desde Europa', en: '🇪🇺 Return from Europe', pt: '🇪🇺 Volta da Europa' };
+const EU_RETURN_TITLE = EU_RETURN_TITLES.es;
+const GROUP_NAMES_EN = { BR: 'Brazil', PE: 'Peru', MX: 'Mexico' };
 
-function originRows(btn, per = 2) {
+function originRows(btn, per = 2, lang = 'es') {
+  const cov = require('../../config/coverage');
   const rows = [];
-  for (const g of ORIGIN_GROUPS) {
-    rows.push([{ text: `${g.flag} ${g.name}`, callback_data: 'noop' }]);
+  for (const g of cov.groupsAvailable()) {
+    const name = lang === 'en' ? (GROUP_NAMES_EN[g.country] || g.name) : g.name;
+    rows.push([{ text: `${g.flag} ${name}`, callback_data: 'noop' }]);
     for (let i = 0; i < g.codes.length; i += per) rows.push(g.codes.slice(i, i + per).map(btn));
   }
-  rows.push([{ text: EU_RETURN_TITLE, callback_data: 'noop' }]);
-  for (let i = 0; i < EU_RETURN_HUBS.length; i += per) rows.push(EU_RETURN_HUBS.slice(i, i + per).map(btn));
+  const hubs = cov.euHubsAvailable();
+  if (hubs.length) {
+    rows.push([{ text: EU_RETURN_TITLES[lang] || EU_RETURN_TITLE, callback_data: 'noop' }]);
+    for (let i = 0; i < hubs.length; i += per) rows.push(hubs.slice(i, i + per).map(btn));
+  }
   return rows;
 }
 
-module.exports = { EU_RETURN_TITLE, PLACES, match, label, norm, lev, popular, codesFor, coveredIn, originRows };
+module.exports = { EU_RETURN_TITLE, EU_RETURN_TITLES, PLACES, match, label, norm, lev, popular, codesFor, coveredIn, originRows };

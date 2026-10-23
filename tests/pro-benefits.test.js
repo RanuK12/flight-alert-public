@@ -188,6 +188,16 @@ describe('alerta instantánea', () => {
     expect(extra.reply_markup.inline_keyboard[0][0].url).toMatch(/EZE1012MAD1\?marker=793462&currency=eur/);
   });
 
+  test('vuelta Europa→LATAM: el monitor consulta MAD→EZE y avisa', async () => {
+    at('2026-10-21T15:00:00.000Z');
+    await makePro('9');
+    await route('9', { origin: 'MAD', destination: 'EZE' });
+    const out = await instant.run({});
+    expect(travelpayouts.search).toHaveBeenCalledWith(expect.objectContaining({ origin: 'MAD', destination: 'EZE' }));
+    expect(out.sent).toBe(1);
+    expect(notifier.send.mock.calls[0][3].reply_markup.inline_keyboard[0][0].url).toMatch(/MAD1012EZE1/);
+  });
+
   test('arriba del techo no avisa', async () => {
     at('2026-10-21T15:00:00.000Z');
     await makePro('1'); await route('1', { priceThreshold: 400 });

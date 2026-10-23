@@ -28,10 +28,16 @@ const DESTINATIONS = [
   'VIE', 'ZRH', 'ATH', 'IST',
 ];
 
+/** Ida LATAM→Europa y vuelta Europa→LATAM (lo que mide el chequeo de cobertura). */
 function allPairs() {
   const pairs = [];
   for (const origin of ORIGINS) {
     for (const destination of DESTINATIONS) {
+      pairs.push({ origin, destination });
+    }
+  }
+  for (const origin of DESTINATIONS) {
+    for (const destination of ORIGINS) {
       pairs.push({ origin, destination });
     }
   }
