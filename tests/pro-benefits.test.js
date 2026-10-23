@@ -198,6 +198,17 @@ describe('alerta instantánea', () => {
     expect(notifier.send.mock.calls[0][3].reply_markup.inline_keyboard[0][0].url).toMatch(/MAD1012EZE1/);
   });
 
+  test('el scheduler refresca la vuelta MAD→EZE: el job instant del tick la consulta', async () => {
+    at('2026-10-21T15:00:30.000Z'); // 12:00 ART, ventana de 3 h
+    await makePro('9');
+    await route('9', { origin: 'MAD', destination: 'EZE' });
+    const jobs = scheduler.buildJobs({ instant: (o) => instant.run(o) });
+    const out = await scheduler.tick(jobs);
+    expect(out.instant).toBe('ran');
+    expect(travelpayouts.search).toHaveBeenCalledWith(expect.objectContaining({ origin: 'MAD', destination: 'EZE' }));
+    expect(notifier.send).toHaveBeenCalled();
+  });
+
   test('arriba del techo no avisa', async () => {
     at('2026-10-21T15:00:00.000Z');
     await makePro('1'); await route('1', { priceThreshold: 400 });

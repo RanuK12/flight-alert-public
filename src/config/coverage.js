@@ -6,20 +6,28 @@ const { allPairs, ORIGINS, DESTINATIONS, ORIGIN_GROUPS, EU_RETURN_HUBS, destinat
 
 const REPORT = path.join(__dirname, '..', '..', 'data', 'coverage.json');
 
-/** COVERAGE_FILE='' (tests) apaga el filtro; sin definir usa data/coverage.json. */
+const MIN_ORIGIN_PERCENT = 60;
+/** Fallback sin informe (fail-closed): solo Argentina → Europa, la ruta histórica. */
+const FALLBACK_ORIGINS = (ORIGIN_GROUPS.find((g) => g.country === 'AR') || { codes: ['EZE'] }).codes;
+
+/** Ruta del informe. COVERAGE_FILE='off' desactiva el filtro (solo tests de UI ajenos a cobertura). */
 function file() {
-  return process.env.COVERAGE_FILE !== undefined ? process.env.COVERAGE_FILE : REPORT;
+  return process.env.COVERAGE_FILE || REPORT;
+}
+function disabled() {
+  return process.env.COVERAGE_FILE === 'off';
 }
 
 let cache = { file: null, mtime: 0, data: null, set: null };
 function report() {
   const f = file();
-  if (!f) return null;
   try {
     const mtime = fs.statSync(f).mtimeMs;
     if (cache.file !== f || cache.mtime !== mtime) {
       const data = JSON.parse(fs.readFileSync(f, 'utf8'));
-      cache = { file: f, mtime, data, set: new Set((data.withData || []).map((p) => `${p.origin}-${p.destination}`)) };
+      const min = Number(data.minOriginPercent) || MIN_ORIGIN_PERCENT;
+      const okOrigin = (o) => data.byOrigin && data.byOrigin[o] && data.byOrigin[o].percent >= min;
+      cache = { file: f, mtime, data, set: new Set((data.withData || []).filter((p) => okOrigin(p.origin)).map((p) => `${p.origin}-${p.destination}`)) };
     }
     return cache.data;
   } catch {
@@ -29,14 +37,14 @@ function report() {
 }
 
 /**
- * Filtro por par, no global: con informe, solo se ofrecen los pares que tuvieron precio
- * fresco (≤48 h) en el último chequeo. Un par no medido no se ofrece (hay que medirlo antes).
- * Sin informe (dev/tests), cobertura completa.
- * Así un origen flojo (p. ej. MVD) solo muestra sus destinos con datos y no esconde los de Argentina.
+ * Umbral prometido: un origen se ofrece solo si ≥60 % de sus destinos tuvo precio fresco (≤48 h)
+ * en el último chequeo, y dentro de ese origen solo los pares que tuvieron datos.
+ * Sin informe legible: fail-closed, solo Argentina → Europa.
  */
 function pairAllowed(origin, destination) {
+  if (disabled()) return true;
   const r = report();
-  if (!r) return true;
+  if (!r) return FALLBACK_ORIGINS.includes(origin) && DESTINATIONS.includes(destination);
   return cache.set.has(`${origin}-${destination}`);
 }
 
@@ -68,6 +76,6 @@ function euOriginsAvailable() {
 }
 
 module.exports = {
-  pairAllowed, report, allPairs, REPORT,
+  pairAllowed, report, MIN_ORIGIN_PERCENT, FALLBACK_ORIGINS, allPairs, REPORT,
   destinationsAvailable, originAvailable, latamOriginsAvailable, groupsAvailable, euHubsAvailable, euOriginsAvailable,
 };

@@ -47,11 +47,14 @@ describe('auditoría OVERSEER', () => {
   const { allPairs } = require('../src/config/airports');
   const ux = require('../src/bot/ux/places');
 
-  function withReport(withData, fn) {
+  function withReport(withData, fn, extraByOrigin = {}) {
     const f = path.join(os.tmpdir(), `cov-${process.pid}-${Math.random()}.json`);
-    fs.writeFileSync(f, JSON.stringify({ percent: 10, tested: [], withData }));
+    const byOrigin = {};
+    for (const p of withData) byOrigin[p.origin] = { with: 1, total: 1, percent: 100 };
+    Object.assign(byOrigin, extraByOrigin);
+    fs.writeFileSync(f, JSON.stringify({ percent: 10, tested: [], withData, byOrigin }));
     process.env.COVERAGE_FILE = f;
-    try { return fn(); } finally { process.env.COVERAGE_FILE = ''; fs.unlinkSync(f); }
+    try { return fn(); } finally { process.env.COVERAGE_FILE = 'off'; fs.unlinkSync(f); }
   }
 
   test('allPairs incluye la vuelta Europa→LATAM (744 pares)', () => {
@@ -72,7 +75,44 @@ describe('auditoría OVERSEER', () => {
       const titles = ux.originRows((c) => ({ text: c, callback_data: c })).filter((r) => r[0].callback_data === 'noop').map((r) => r[0].text);
       expect(titles).toEqual(['🇦🇷 Argentina', '🇺🇾 Uruguay']); // sin vuelta: ningún hub medido
     });
-    expect(cov.pairAllowed('MAD', 'EZE')).toBe(true); // sin informe: todo
+  });
+
+  test('umbral 60 % por origen: un origen bajo el umbral no se ofrece aunque tenga algún par', () => {
+    withReport([{ origin: 'EZE', destination: 'MAD' }, { origin: 'MVD', destination: 'MAD' }], () => {
+      expect(cov.pairAllowed('MVD', 'MAD')).toBe(false);
+      expect(cov.latamOriginsAvailable()).toEqual(['EZE']);
+    }, { MVD: { with: 5, total: 31, percent: 16.1 } });
+  });
+
+  test('sin informe: fail-closed, solo Argentina→Europa; MVD no se ofrece; landing solo Argentina', () => {
+    process.env.COVERAGE_FILE = path.join(os.tmpdir(), 'no-existe-coverage.json');
+    try {
+      expect(cov.report()).toBeNull();
+      expect(cov.pairAllowed('EZE', 'MAD')).toBe(true);
+      expect(cov.pairAllowed('MVD', 'MAD')).toBe(false);
+      expect(cov.pairAllowed('GRU', 'LIS')).toBe(false);
+      expect(cov.pairAllowed('MAD', 'EZE')).toBe(false);
+      expect(ux.codesFor('o')).not.toContain('MVD');
+      const titles = ux.originRows((c) => ({ text: c, callback_data: c })).filter((r) => r[0].callback_data === 'noop').map((r) => r[0].text);
+      expect(titles).toEqual(['🇦🇷 Argentina']);
+      const html = require('../src/web/landing').renderLanding({ lang: 'es' });
+      for (const c of ['Uruguay', 'Brasil', 'Chile', 'Perú', 'Colombia', 'México']) expect(html).not.toMatch(new RegExp(`trust[^<]*${c}`));
+      expect(html).not.toMatch(/data-origin="MVD"|>MVD</);
+    } finally { process.env.COVERAGE_FILE = 'off'; }
+  });
+
+  test('informe real commiteado (data/coverage.json): medido, con umbral aplicado', () => {
+    process.env.COVERAGE_FILE = cov.REPORT;
+    try {
+      const r = cov.report();
+      expect(r).toBeTruthy();
+      expect(r.tested).toHaveLength(744);
+      expect(r.freshHours).toBe(48);
+      for (const o of cov.latamOriginsAvailable()) expect(r.byOrigin[o].percent).toBeGreaterThanOrEqual(60);
+      expect(cov.latamOriginsAvailable()).not.toContain('MVD');
+      expect(cov.latamOriginsAvailable()).toContain('EZE');
+      for (const h of cov.euHubsAvailable()) expect(r.byOrigin[h].percent).toBeGreaterThanOrEqual(60);
+    } finally { process.env.COVERAGE_FILE = 'off'; }
   });
 
   test('landing: lista de países y conteos salen del informe', () => {

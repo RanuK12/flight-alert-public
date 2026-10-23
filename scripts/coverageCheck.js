@@ -37,11 +37,12 @@ async function pace(headers, sleep) {
   await sleep(Math.max(0, ms));
 }
 
-async function getWithRetry(fn, sleep, tries = 3) {
+async function getWithRetry(fn, sleep, tries = 8) {
   for (let i = 0; ; i += 1) {
     try { return await fn(); } catch (err) {
       if (i + 1 >= tries) throw err;
-      await sleep(2000 * (i + 1));
+      const is429 = err.response && err.response.status === 429;
+      await sleep(is429 ? 15000 * (i + 1) : 2000 * (i + 1));
     }
   }
 }
@@ -55,8 +56,12 @@ async function main() {
   const months = monthsAhead(Number(process.env.COVERAGE_MONTHS) || 4);
   const withData = [];
   const withoutData = [];
-  for (const { origin, destination } of allPairs()) {
-    {
+  const only = (process.env.COVERAGE_ORIGINS || '').split(',').filter(Boolean);
+  const queue = allPairs().filter((p) => !only.length || only.includes(p.origin));
+  const workers = Math.max(1, Number(process.env.COVERAGE_CONCURRENCY) || 2);
+  async function worker() {
+    for (let next = queue.shift(); next; next = queue.shift()) {
+      const { origin, destination } = next;
       let fresh = false;
       for (const month of months) {
         const res = await getWithRetry(() => axios.get(`${BASE}/v2/prices/month-matrix`, {
@@ -76,13 +81,17 @@ async function main() {
           const at = new Date(row.found_at || 0).getTime();
           return Number(row.value) > 0 && Date.now() - at <= FRESH_MS;
         });
-        if (hit) fresh = true;
+        if (hit) { fresh = true; break; }
       }
       const pair = { origin, destination };
       if (fresh) withData.push(pair);
       else withoutData.push(pair);
     }
   }
+  await Promise.all(Array.from({ length: workers }, worker));
+  const key = (p) => `${p.origin}-${p.destination}`;
+  withData.sort((a, b) => key(a).localeCompare(key(b)));
+  withoutData.sort((a, b) => key(a).localeCompare(key(b)));
   const total = withData.length + withoutData.length;
   const percent = total ? Math.round((withData.length / total) * 1000) / 10 : 0;
   const byOrigin = {};
@@ -95,7 +104,7 @@ async function main() {
   console.log(JSON.stringify({ percent, without: withoutData.length, with: withData.length, byOrigin }));
   const dir = path.join(__dirname, '..', 'data');
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(path.join(dir, 'coverage.json'), JSON.stringify(report, null, 2));
+  fs.writeFileSync(process.env.COVERAGE_OUT || path.join(dir, 'coverage.json'), JSON.stringify(report, null, 2));
 }
 
 if (require.main === module) {

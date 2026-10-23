@@ -126,3 +126,29 @@ test('Stars: crea la factura XTR de 250 para un usuario de cualquier país', asy
   expect(args[5][0].amount).toBe(250);
   expect(bot.sendMessage).toHaveBeenCalled();
 });
+
+describe.each([['GRU', 'MAD'], ['MAD', 'EZE']])('e2e bot %s→%s: botones → consulta → alerta', (o, d) => {
+  test('se elige por callbacks, valida, arma la consulta y el monitor la busca', async () => {
+    const now = new Date('2026-10-23T15:00:00Z');
+    const kb = (r) => (r.keyboard || r.reply_markup || r).inline_keyboard.flat();
+    const pick = (r, key, val) => kb(r).map((b) => { try { return cb.decode(b.callback_data).fields; } catch { return null; } })
+      .find((f) => f && f[key] === val);
+    let f = pick(flow.render('es', 'b', {}, { now }), 'o', o);
+    expect(f).toBeTruthy();
+    f = pick(flow.render('es', 'b', f, { now }), 'd', d);
+    expect(f).toBeTruthy();
+    f = { ...f, m: '2612', t: '1' };
+    expect(flow.validate('es', f, now)).toBeNull();
+    const q = flow.toQuery(f, now);
+    expect([q.origin, q.destination]).toEqual([o, d]);
+    clock.setNow(new Date('2026-10-21T15:00:00Z'));
+    process.env.FEATURE_INSTANT_ALERTS = 'on';
+    await col('Entitlement').create({ telegramUserId: '5', plan: 'pro', searchesUsed: 0, proUntil: '2026-12-31T00:00:00Z' });
+    await col('Route').create({ telegramUserId: '5', telegramChatId: '5', origin: o, destination: d, tripType: 'oneway', outboundDate: '2026-12-10', returnDate: null, priceThreshold: 500, paused: false });
+    const tp = require('../src/providers/travelpayouts');
+    const spy = jest.spyOn(tp, 'search').mockResolvedValue([]);
+    await instant.run({});
+    expect(spy).toHaveBeenCalledWith(expect.objectContaining({ origin: o, destination: d }));
+    spy.mockRestore();
+  });
+});

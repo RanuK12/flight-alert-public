@@ -1,2 +1,2 @@
-// Los tests corren sin el filtro de data/coverage.json salvo que un test lo pida.
-process.env.COVERAGE_FILE = '';
+// Tests de UI ajenos a cobertura corren sin filtro; los de cobertura fijan COVERAGE_FILE.
+process.env.COVERAGE_FILE = 'off';
