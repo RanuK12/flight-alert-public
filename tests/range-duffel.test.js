@@ -125,3 +125,38 @@ describe('alerta instantánea en par solo-Duffel', () => {
     expect(notifier.send.mock.calls[0][2]).toMatch(/€450/);
   });
 });
+
+describe('latencia y topes (review OVERSEER)', () => {
+  test('vuelta fija anterior a todas las fechas de muestra → [] sin llamar a Duffel', async () => {
+    process.env.DUFFEL_ACCESS_TOKEN = 'duffel_test_x';
+    routeAxios();
+    expect(await travelpayouts.searchRange({ ...BASE, oneway: false, returnDate: '2026-11-15', stay: null })).toEqual([]);
+    expect(axios.post).not.toHaveBeenCalled();
+  });
+  test('llamadas en paralelo con presupuesto global: devuelve lo que llegó a tiempo', async () => {
+    process.env.DUFFEL_ACCESS_TOKEN = 'duffel_test_x';
+    process.env.DUFFEL_RANGE_BUDGET_MS = '150';
+    routeAxios();
+    axios.post.mockImplementation(async (url, body) => {
+      const d = body.data.slices[0].departure_date;
+      if (d === '2026-12-20') await new Promise((r) => setTimeout(r, 400));
+      return offerResponse(400);
+    });
+    const t0 = Date.now();
+    const rows = await travelpayouts.searchRange({ ...BASE, oneway: true });
+    expect(Date.now() - t0).toBeLessThan(1000);
+    expect(axios.post).toHaveBeenCalledTimes(3);
+    expect(rows.map((r) => r.departureDate)).toEqual(['2026-12-01', '2026-12-10']);
+  });
+  test('en ticks, tope de llamadas Duffel por ruta (DUFFEL_TICK_RANGE_MAX)', async () => {
+    process.env.DUFFEL_ACCESS_TOKEN = 'duffel_test_x';
+    process.env.DUFFEL_TICK_RANGE_MAX = '2';
+    routeAxios({ amount: 450 });
+    await col('Entitlement').create({ telegramUserId: '1', plan: 'pro', searchesUsed: 0, proUntil: '2026-12-31T00:00:00Z' });
+    await col('Route').create({ telegramUserId: '1', telegramChatId: '1', origin: 'ROS', destination: 'MAD', tripType: 'oneway', flexMonth: 'next3', outboundDate: null, returnDate: null, priceThreshold: 500, paused: false });
+    await instant.run({});
+    expect(axios.post).toHaveBeenCalledTimes(2);
+    delete process.env.DUFFEL_TICK_RANGE_MAX;
+    expect(instant.queryFor({ origin: 'ROS', destination: 'MAD', flexMonth: '2026-12' }, new Date(NOW)).q.duffelMax).toBe(3);
+  });
+});

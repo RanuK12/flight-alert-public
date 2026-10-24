@@ -43,6 +43,11 @@ function addMonthsYm(y, m, i) {
  * Consulta para una alerta. Las flexibles (mes o próximos 3 meses) usan el rango y
  * también respetan la vuelta: misma fecha de vuelta, o misma cantidad de noches.
  */
+function tickRangeMax() {
+  const n = Number(process.env.DUFFEL_TICK_RANGE_MAX);
+  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 3;
+}
+
 function queryFor(r, now) {
   const roundtrip = r.tripType === 'roundtrip' || Boolean(r.returnDate) || Boolean(r.stayDays);
   if (!r.flexMonth) {
@@ -68,6 +73,8 @@ function queryFor(r, now) {
       // Con noches fijas, la vuelta depende de la ida; si no, se respeta la fecha de vuelta guardada.
       returnDate: r.stayDays ? null : (roundtrip ? r.returnDate || null : null),
       stay: r.stayDays ? Number(r.stayDays) : null,
+      // En ticks, pocas llamadas a Duffel por ruta para no agotar el tope por tick.
+      duffelMax: tickRangeMax(),
     },
   };
 }

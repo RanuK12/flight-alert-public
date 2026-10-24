@@ -159,16 +159,32 @@ function returnFor(q, date) {
   return addDays(date, q.stay ? Number(q.stay) : 14);
 }
 
-/** Relleno por rango: Duffel por fechas de muestra cuando Travelpayouts no tiene nada para el mes. */
+function budgetMs() {
+  const n = Number(process.env.DUFFEL_RANGE_BUDGET_MS);
+  return Number.isFinite(n) && n > 0 ? n : 20000;
+}
+
+/**
+ * Relleno por rango: Duffel por fechas de muestra cuando Travelpayouts no tiene nada para el mes.
+ * Llamadas en paralelo con presupuesto global (DUFFEL_RANGE_BUDGET_MS); devuelve lo que llegó a tiempo.
+ * q.duffelMax (ej. desde los ticks de alertas) achica el tope de llamadas por búsqueda.
+ */
 async function rangeFill(q, now) {
+  let jobs = sampleDates(q, now)
+    .map((date) => ({ date, returnDate: returnFor(q, date) }))
+    .filter((j) => !j.returnDate || j.returnDate > j.date);
+  const max = Number(q.duffelMax);
+  if (Number.isFinite(max) && max >= 0) jobs = jobs.slice(0, Math.floor(max));
+  if (!jobs.length) return [];
   const out = [];
-  for (const date of sampleDates(q, now)) {
-    const returnDate = returnFor(q, date);
-    if (returnDate && returnDate <= date) continue;
-    const row = await duffel.cheapest({ origin: q.origin, destination: q.destination, departureDate: date, returnDate });
-    if (row) out.push(row);
-  }
-  return out;
+  const calls = jobs.map((j) => duffel.cheapest({ origin: q.origin, destination: q.destination, departureDate: j.date, returnDate: j.returnDate })
+    .then((row) => { if (row) out.push(row); })
+    .catch(() => {}));
+  let timer;
+  const budget = new Promise((resolve) => { timer = setTimeout(resolve, budgetMs()); });
+  await Promise.race([Promise.allSettled(calls), budget]);
+  clearTimeout(timer);
+  return out.slice().sort((x, y) => String(x.departureDate).localeCompare(String(y.departureDate)));
 }
 
 module.exports = { enabled, search, searchRange, sampleDates, rangeMax, get, mapRow, market, CURRENCY };
