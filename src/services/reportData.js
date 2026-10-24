@@ -65,6 +65,15 @@ function hoursAgo(iso, now) {
   return Math.max(0, Math.round((now.getTime() - t) / HOUR));
 }
 
+/** "hace minutos" si pasó menos de 1 h; si no, "hace N h" (nunca "hace 0 h"). */
+function agoLabel(lang, iso, now) {
+  const t = Date.parse(iso || '');
+  if (!Number.isFinite(t)) return null;
+  const ms = Math.max(0, now.getTime() - t);
+  if (ms < HOUR) return tr(lang, 'minutesAgo');
+  return tr(lang, 'hoursAgo', { h: Math.max(1, Math.round(ms / HOUR)) });
+}
+
 function isRoundtrip(r) {
   return r.tripType === 'roundtrip' || Boolean(r.returnDate) || Boolean(r.stayDays);
 }
@@ -132,7 +141,7 @@ function cardFor(route, hist, now, lang, links) {
     if (lastPrice && lastAt) {
       const h = hoursAgo(lastAt, now);
       lastSeen = h < 48
-        ? tr(lang, 'lastSeenToday', { price: money(lastPrice, currency, lang), h })
+        ? tr(lang, 'lastSeenToday', { price: money(lastPrice, currency, lang), ago: agoLabel(lang, lastAt, now) })
         : tr(lang, 'lastSeen', { price: money(lastPrice, currency, lang), d: Math.round(h / 24) });
     }
     const trend = trendOf(hist);
@@ -156,8 +165,8 @@ function cardFor(route, hist, now, lang, links) {
     if (Math.round(pct) === 0) vsCeiling = tr(lang, 'atCeiling');
     else vsCeiling = tr(lang, pct < 0 ? 'below' : 'above', { pct: signedPct(pct) });
   }
-  const seenH = hoursAgo(route.foundAt, now);
-  const confirmedH = route.source === 'duffel' ? hoursAgo(route.confirmedAt || route.foundAt, now) : null;
+  const seenAgo = agoLabel(lang, route.foundAt, now);
+  const confirmedAgo = route.source === 'duffel' ? agoLabel(lang, route.confirmedAt || route.foundAt, now) : null;
   const dep = route.bestDepartureDate || route.outboundDate;
   const ret = route.bestReturnDate || (route.stayDays ? null : route.returnDate);
   const url = bookingUrl({ origin: route.origin, destination: route.destination, departureDate: dep, returnDate: ret || null });
@@ -180,8 +189,8 @@ function cardFor(route, hist, now, lang, links) {
     dates: [shortDate(dep, lang), ret ? shortDate(ret, lang) : null].filter(Boolean).join(' \u2192 '),
     airline: route.gate || null,
     stops: stopsLabel(route.stops, lang),
-    sourceLine: tr(lang, 'source', { source: sourceName(route.source), h: seenH }),
-    confirmed: confirmedH !== null ? tr(lang, 'confirmed', { h: confirmedH }) : null,
+    sourceLine: tr(lang, 'source', { source: sourceName(route.source), ago: seenAgo || '' }),
+    confirmed: confirmedAgo ? tr(lang, 'confirmed', { ago: confirmedAgo }) : null,
     disclaimer: tr(lang, 'disclaimer'),
     cta: tr(lang, 'seeDeal'),
     url,
@@ -203,7 +212,20 @@ function orderCards(cards) {
  * Arma el DTO del informe. `routes` deben venir ya con el mejor precio (ver liveFill).
  * `histByKey` es un Map routeKey → historial (compartido entre usuarios).
  */
-function buildReport({ routes, user = {}, now, lang, histByKey = new Map(), links = {}, maxAlerts = null }) {
+/** Cuántas tarjetas completas y cuántas filas compactas como máximo (acota páginas y memoria). */
+function layoutLimits() {
+  return { full: Math.max(1, num('REPORT_FULL_CARDS', 5)), rows: Math.max(0, num('REPORT_MAX_ROWS', 40)) };
+}
+
+function compactRow(c, lang) {
+  let status;
+  if (c.state === 'deal') status = tr(lang, 'statusDeal');
+  else if (c.state === 'above') status = c.pct !== null ? tr(lang, 'statusAboveShort', { pct: signedPct(c.pct) }) : tr(lang, 'stateAbove');
+  else status = tr(lang, 'statusEmpty');
+  return { title: c.title, price: c.priceLabel || '\u2014', status, state: c.state, url: c.url || null };
+}
+
+function buildReport({ routes, user = {}, now, lang, histByKey = new Map(), links = {}, maxAlerts = null, note = null }) {
   const L = langFor(lang);
   const cards = orderCards(routes.map((r) => cardFor(r, histByKey.get(priceHistory.routeKey(r)) || [], now, L, links)));
   const priced = cards.filter((c) => c.state !== 'empty');
@@ -212,6 +234,11 @@ function buildReport({ routes, user = {}, now, lang, histByKey = new Map(), link
   const hasHistory = routes.some((r) => (histByKey.get(priceHistory.routeKey(r)) || []).length >= 2);
   const dropped = hasHistory ? priced.filter((c) => c.deltaDay && c.deltaDay.dir === 'down').length : null;
   const n = cards.length;
+  const lim = layoutLimits();
+  const full = cards.slice(0, lim.full);
+  const restAll = cards.slice(lim.full);
+  const compact = restAll.slice(0, lim.rows).map((c) => compactRow(c, L));
+  const hidden = restAll.length - compact.length;
   return {
     lang: L,
     brand: tr(L, 'brand'),
@@ -230,6 +257,12 @@ function buildReport({ routes, user = {}, now, lang, histByKey = new Map(), link
     counts: { n, deals: deals.length, priced: priced.length },
     best,
     cards,
+    full,
+    compact,
+    compactTitle: tr(L, 'compactTitle'),
+    more: restAll.length,
+    moreText: hidden > 0 ? tr(L, 'moreRoutes', { m: hidden }) : null,
+    note,
     footer: {
       watch: tr(L, 'footerWatch'),
       manage: tr(L, 'footerManage'),
@@ -256,6 +289,7 @@ function captionFor(report) {
     lines.push(tr(L, 'captionNoDeal', { n: priced, route: report.best.title, price: report.best.priceLabel }));
     lines.push(tr(L, 'captionRef'));
   }
+  if (report.more > 0) lines[1] += tr(L, 'captionMore', { m: report.more });
   return lines.join('\n').slice(0, 1024);
 }
 
@@ -374,9 +408,13 @@ function liveLookup(route, now, budget, queryFor, matchesRoute) {
  */
 async function liveFill(routes, now, budget, deps) {
   const { queryFor, matchesRoute } = deps;
+  // Tope por usuario: con muchas alertas no se gasta todo el presupuesto global en una sola persona.
+  let userLive = deps.maxLive ?? num('DIGEST_LIVE_PER_USER', 6);
   const out = await Promise.all(routes.map(async (r) => {
     const fresh = Number(r.lastPriceEur) > 0 && r.foundAt && isFresh({ foundAt: r.foundAt }, now);
     if (fresh) return r;
+    if (userLive <= 0) { budget.stats.skipped += 1; return r; }
+    userLive -= 1;
     const best = await liveLookup(r, now, budget, queryFor, matchesRoute);
     if (!best) return r;
     const set = {
@@ -413,5 +451,5 @@ async function historyFor(routes, now, budget) {
 
 module.exports = {
   I18N, tr, money, signedPct, longDate, shortDate, buildReport, captionFor, keyboardFor, fileName, textFor,
-  createBudget, liveFill, liveLookup, historyFor, cardFor, orderCards,
+  createBudget, liveFill, layoutLimits, agoLabel, liveLookup, historyFor, cardFor, orderCards,
 };

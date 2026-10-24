@@ -32,6 +32,11 @@ function applyUpdate(doc, update, isInsert) {
       next[key] = (Number(next[key]) || 0) + n;
     }
   }
+  if (update.$min) {
+    for (const [key, v] of Object.entries(update.$min)) {
+      if (next[key] === undefined || next[key] === null || v < next[key]) next[key] = v;
+    }
+  }
   if (update.$unset) {
     for (const key of Object.keys(update.$unset)) delete next[key];
   }

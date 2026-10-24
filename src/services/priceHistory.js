@@ -20,25 +20,30 @@ async function record(route, flight, now) {
   if (!Number.isFinite(price) || price <= 0) return false;
   const key = routeKey(route);
   const date = dayOf(now);
-  const C = col('PriceHistory');
-  const prev = await C.findOne({ routeKey: key, date });
-  if (prev && Number(prev.minPrice) <= price) return false;
-  await C.updateOne(
-    { routeKey: key, date },
-    {
-      $set: {
-        minPrice: price,
-        currency: flight.currency || 'EUR',
-        source: flight.source || 'travelpayouts',
-        departureDate: flight.departureDate || null,
-        returnDate: flight.returnDate || null,
-        oneway: route.tripType !== 'roundtrip' && !route.returnDate && !route.stayDays,
-        expiresAt: new Date(now.getTime() + TTL_DAYS * art.DAY_MS),
-      },
-      $setOnInsert: { routeKey: key, date },
+  const filter = { routeKey: key, date };
+  // Un solo upsert atómico: $min conserva el precio más bajo aunque haya ticks en paralelo.
+  // Los metadatos (fuente, fechas) se fijan al insertar; el resto del día solo baja el mínimo.
+  const update = {
+    $min: { minPrice: price },
+    $set: { expiresAt: new Date(now.getTime() + TTL_DAYS * art.DAY_MS) },
+    $setOnInsert: {
+      routeKey: key,
+      date,
+      currency: flight.currency || 'EUR',
+      source: flight.source || 'travelpayouts',
+      departureDate: flight.departureDate || null,
+      returnDate: flight.returnDate || null,
+      oneway: route.tripType !== 'roundtrip' && !route.returnDate && !route.stayDays,
     },
-    { upsert: true },
-  );
+  };
+  const C = col('PriceHistory');
+  try {
+    await C.updateOne(filter, update, { upsert: true });
+  } catch (err) {
+    // Dos upserts simultáneos sobre el índice único: el perdedor reintenta como update.
+    if (err && err.code === 11000) await C.updateOne(filter, update);
+    else throw err;
+  }
   return true;
 }
 

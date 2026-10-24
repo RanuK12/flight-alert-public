@@ -18,6 +18,7 @@ const M = 16;
 const CW = W - 2 * M;
 const PAD = 16;
 const PER_PAGE = 3;
+const ROWS_PER_PAGE = 20;
 
 function fonts(doc) {
   doc.registerFont('R', path.join(FONTS, 'Inter-Regular.ttf'));
@@ -191,9 +192,33 @@ function card(doc, c, y, draw) {
   return h;
 }
 
+/** Tabla compacta para las rutas que no entran como tarjeta: ruta · precio · estado. */
+function table(doc, r, rows, y, draw, withTitle, withMore) {
+  let cy = y;
+  if (withTitle) cy += text(doc, draw, r.compactTitle, M, cy, { font: 'S', size: 14, width: CW }) + 8;
+  const rowH = 28;
+  const h = rows.length * rowH;
+  if (draw && rows.length) doc.roundedRect(M, cy, CW, h, 12).lineWidth(1).fillAndStroke(C.card, C.border);
+  rows.forEach((row, i) => {
+    const ry = cy + i * rowH;
+    if (draw) {
+      if (i > 0) doc.moveTo(M + 8, ry).lineTo(M + CW - 8, ry).lineWidth(0.5).stroke(C.border);
+      const color = row.state === 'deal' ? C.accent : row.state === 'above' ? C.warnText : C.muted;
+      doc.font('S').fontSize(12).fillColor(C.text).text(row.title, M + 12, ry + 8, { width: 150, lineBreak: false, ellipsis: true });
+      doc.font('B').fontSize(12).fillColor(C.text).text(row.price, M + 160, ry + 8, { width: 70, align: 'right', lineBreak: false, features: ['tnum'] });
+      doc.font('R').fontSize(12).fillColor(color).text(row.status, M + 240, ry + 8, { width: CW - 252, align: 'right', lineBreak: false, ellipsis: true });
+      if (row.url) doc.link(M, ry, CW, rowH, row.url);
+    }
+  });
+  cy += h + 8;
+  if (withMore && r.moreText) cy += text(doc, draw, r.moreText, M, cy, { size: 12, color: C.muted, width: CW }) + 4;
+  return cy - y + 8;
+}
+
 function footer(doc, r, y, draw) {
   const x = M;
   let cy = y + 8;
+  if (r.note) cy += text(doc, draw, r.note, x, cy, { font: 'B', size: 12, color: C.warnText, width: CW }) + 6;
   cy += text(doc, draw, r.footer.watch, x, cy, { font: 'S', size: 14, width: CW }) + 4;
   if (r.footer.upsell) cy += text(doc, draw, r.footer.upsell, x, cy, { size: 12, color: C.accent, width: CW }) + 4;
   if (r.footer.manageUrl) {
@@ -206,10 +231,16 @@ function footer(doc, r, y, draw) {
   return cy - y + 8;
 }
 
-function pagesOf(cards) {
+/** Páginas: tarjetas completas (3 por página) y después la tabla compacta (20 filas por página). */
+function pagesOf(report) {
+  const cards = report.full || report.cards;
+  const rows = report.compact || [];
   const pages = [];
-  for (let i = 0; i < cards.length; i += PER_PAGE) pages.push(cards.slice(i, i + PER_PAGE));
-  return pages.length ? pages : [[]];
+  for (let i = 0; i < cards.length; i += PER_PAGE) pages.push({ cards: cards.slice(i, i + PER_PAGE), rows: [] });
+  for (let i = 0; i < rows.length; i += ROWS_PER_PAGE) pages.push({ cards: [], rows: rows.slice(i, i + ROWS_PER_PAGE), firstRows: i === 0 });
+  if (!pages.length) pages.push({ cards: [], rows: [] });
+  if (!rows.length && report.moreText) pages[pages.length - 1].firstRows = true;
+  return pages;
 }
 
 let scratchDoc = null;
@@ -234,16 +265,18 @@ function renderReport(report) {
       doc.on('data', (b) => chunks.push(b));
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
-      const pages = pagesOf(report.cards);
+      const pages = pagesOf(report);
       // Medición en un documento auxiliar (pdfkit fija el alto al crear la página).
       const scratch = measurer();
-      pages.forEach((list, pi) => {
+      pages.forEach((pg, pi) => {
         const first = pi === 0;
         const last = pi === pages.length - 1;
         const plan = (d, draw) => {
           let y = first ? (draw ? header(d, report) : 72) + 16 : 16;
           if (first) y += kpis(d, report, y, draw);
-          for (const c of list) y += card(d, c, y, draw) + 12;
+          if (first && report.note) y += text(d, draw, report.note, M, y, { font: 'B', size: 12, color: C.warnText, width: CW }) + 8;
+          for (const c of pg.cards) y += card(d, c, y, draw) + 12;
+          if (pg.rows.length) y += table(d, report, pg.rows, y, draw, pg.firstRows, last);
           if (last) y += footer(d, report, y, draw);
           if (pages.length > 1) y += text(d, draw, report.pageLabel(pi + 1, pages.length), M, y, { size: 12, color: C.muted, width: CW, align: 'center' });
           return y + 16;
@@ -260,4 +293,4 @@ function renderReport(report) {
   });
 }
 
-module.exports = { renderReport, COLORS: C, PER_PAGE };
+module.exports = { renderReport, pagesOf, COLORS: C, PER_PAGE, ROWS_PER_PAGE };

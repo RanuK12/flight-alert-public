@@ -288,3 +288,119 @@ describe('tick de alertas guarda el mejor precio siempre', () => {
     expect(new Date(rows[0].expiresAt).getTime() - Date.parse(NOW) - 3 * HOUR).toBe(35 * 864e5);
   });
 });
+
+describe('PriceHistory.record atómico', () => {
+  test('records en paralelo: una sola fila y queda el precio más bajo', async () => {
+    const prices = [980, 1200, 870, 1500, 905, 870, 1010, 1300, 860, 990];
+    await Promise.all(prices.map((p) => ph.record(DEAL, { price: p, currency: 'EUR', source: 'travelpayouts' }, now())));
+    const rows = await col('PriceHistory').find({ routeKey: ph.routeKey(DEAL) }).lean();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].minPrice).toBe(860);
+    await ph.record(DEAL, { price: 2000 }, now());
+    const again = await col('PriceHistory').find({ routeKey: ph.routeKey(DEAL) }).lean();
+    expect(again).toHaveLength(1);
+    expect(again[0].minPrice).toBe(860);
+  });
+  test('usa un solo updateOne con $min y upsert (sin findOne previo)', async () => {
+    const C = col('PriceHistory');
+    const find = jest.spyOn(C, 'findOne');
+    const upd = jest.spyOn(C, 'updateOne');
+    await ph.record(DEAL, { price: 999 }, now());
+    expect(find).not.toHaveBeenCalled();
+    expect(upd).toHaveBeenCalledTimes(1);
+    const [, update, opts] = upd.mock.calls[0];
+    expect(update.$min).toEqual({ minPrice: 999 });
+    expect(update.$setOnInsert.routeKey).toBe(ph.routeKey(DEAL));
+    expect(opts).toEqual({ upsert: true });
+    find.mockRestore(); upd.mockRestore();
+  });
+});
+
+describe('"hace minutos" en vez de "hace 0 h"', () => {
+  test.each([
+    ['es', 'hace minutos', 'hace 2 h'],
+    ['en', 'minutes ago', '2 h ago'],
+    ['pt', 'há minutos', 'há 2 h'],
+  ])('%s: visto y Confirmado < 1 h', (lang, mins, two) => {
+    const fresh = { ...DEAL, foundAt: ago(0.3), confirmedAt: ago(0.9) };
+    const c = rd.cardFor(fresh, [], now(), lang, {});
+    expect(c.sourceLine).toContain(mins);
+    expect(c.confirmed).toContain(mins);
+    expect(`${c.sourceLine} ${c.confirmed}`).not.toMatch(/\b0 h\b/);
+    const older = rd.cardFor({ ...DEAL, foundAt: ago(2), confirmedAt: ago(2) }, [], now(), lang, {});
+    expect(older.sourceLine).toContain(two);
+    expect(older.confirmed).toContain(two);
+  });
+});
+
+describe('muchas alertas', () => {
+  const CODES = ['MAD', 'BCN', 'FCO', 'LIS', 'MIA', 'CDG', 'LHR', 'AMS', 'FRA', 'MUC', 'ZRH', 'VIE', 'PRG', 'BER', 'ATH', 'IST', 'DUB', 'CPH', 'OSL', 'ARN'];
+  function many(n) {
+    const out = [];
+    for (let i = 0; i < n; i += 1) {
+      const kind = i % 3; // 0 deal, 1 arriba, 2 sin precio
+      const ceiling = 800 + (i % 7) * 50;
+      const r = { _id: `m${i}`, origin: ['COR', 'ROS', 'EZE'][i % 3], destination: CODES[i % CODES.length], tripType: 'oneway', outboundDate: `2026-12-${String((i % 27) + 1).padStart(2, '0')}`, priceThreshold: ceiling };
+      if (kind === 0) Object.assign(r, { lastPriceEur: ceiling - 10 - i, foundAt: ago(2), source: 'travelpayouts' });
+      if (kind === 1) Object.assign(r, { lastPriceEur: ceiling + 5 + i * 3, foundAt: ago(2), source: 'travelpayouts' });
+      out.push(r);
+    }
+    return out;
+  }
+  const pagesIn = (buf) => (buf.toString('latin1').match(/\/Type \/Page\b/g) || []).length;
+
+  test.each([1, 8, 25, 60])('%i alertas: orden, páginas acotadas, tiempo', async (n) => {
+    const routes = many(n);
+    const r = rd.buildReport({ routes, now: now(), lang: 'es', links: { manage: 'https://x/m' } });
+    // 5 tarjetas completas como máximo; primero las ofertas (más abajo del tope primero), después las más cerca del tope.
+    expect(r.full.length).toBe(Math.min(5, n));
+    const order = r.cards.map((c) => c.sort);
+    expect(order).toEqual(order.slice().sort((a, b) => a - b));
+    for (const st of [1, 2]) {
+      const pcts = r.cards.filter((c) => c.sort === st).map((c) => c.pct);
+      expect(pcts).toEqual(pcts.slice().sort((a, b) => a - b));
+    }
+    expect(r.compact.length).toBe(Math.min(Math.max(0, n - 5), 40));
+    expect(r.more).toBe(Math.max(0, n - 5));
+    if (n > 45) expect(r.moreText).toContain(String(n - 45));
+    else expect(r.moreText).toBeNull();
+    const cap = rd.captionFor(r);
+    expect(cap.split('\n').length).toBeLessThanOrEqual(3);
+    if (n > 5) expect(cap).toContain(`y ${n - 5} más`);
+    else expect(cap).not.toContain('más');
+    const t0 = Date.now();
+    const buf = await renderReport(r);
+    expect(Date.now() - t0).toBeLessThan(3000);
+    expect(buf.length).toBeLessThan(400 * 1024);
+    expect(pagesIn(buf)).toBeLessThanOrEqual(4); // 2 de tarjetas + 2 de tabla, aunque haya 60 alertas
+    // "Gestionar alertas" al final (última página).
+    const s = buf.toString('latin1');
+    expect(s.lastIndexOf('https://x/m')).toBeGreaterThan(-1);
+  });
+
+  test('60 alertas: RSS acotado en 20 renders', async () => {
+    const r = rd.buildReport({ routes: many(60), now: now(), lang: 'es' });
+    for (let i = 0; i < 5; i += 1) await renderReport(r);
+    const before = process.memoryUsage().rss;
+    for (let i = 0; i < 20; i += 1) await renderReport(r);
+    expect((process.memoryUsage().rss - before) / 1024 / 1024).toBeLessThan(128);
+  });
+
+  test('búsquedas en vivo acotadas por usuario aunque tenga 60 rutas sin precio', async () => {
+    process.env.DIGEST_LIVE_MAX = '100';
+    const b = rd.createBudget(now());
+    const routes = Array.from({ length: 60 }, (_, i) => ({ _id: `z${i}`, origin: 'COR', destination: CODES[i % 20], tripType: 'oneway', outboundDate: `2026-12-${String((i % 27) + 1).padStart(2, '0')}`, priceThreshold: 900 }));
+    const queryFor = jest.fn(() => ({ kind: 'single', q: {} }));
+    await rd.liveFill(routes, now(), b, { queryFor, matchesRoute: () => true });
+    expect(queryFor.mock.calls.length).toBeLessThanOrEqual(6);
+    expect(b.stats.live).toBeLessThanOrEqual(6);
+    expect(b.duffelLeft).toBeGreaterThanOrEqual(8 - 6);
+  });
+
+  test('nota de datos de prueba se dibuja cuando se pide', async () => {
+    const r = rd.buildReport({ routes: many(3), now: now(), lang: 'es', note: rd.tr('es', 'testData') });
+    expect(r.note).toMatch(/DATOS DE PRUEBA/);
+    const buf = await renderReport(r);
+    expect(buf.slice(0, 5).toString()).toBe('%PDF-');
+  });
+});
