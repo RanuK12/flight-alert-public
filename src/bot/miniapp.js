@@ -17,16 +17,16 @@ function miniAppUrl(env = process.env) {
 }
 
 /** Acciones del teclado persistente; cada una va al mismo handler que su comando. */
-const ACTIONS = ['search', 'alerts', 'pro', 'help', 'settings', 'admin'];
+const ACTIONS = ['search', 'alerts', 'report', 'pro', 'help', 'settings', 'admin'];
 const KEY_TEXT = {
-  es: { search: '🔎 Buscar vuelo', alerts: '🔔 Mis alertas', pro: '⭐ Pro', help: '❓ Ayuda', settings: '⚙️ Ajustes', admin: '🛠 Admin' },
-  en: { search: '🔎 Search flight', alerts: '🔔 My alerts', pro: '⭐ Pro', help: '❓ Help', settings: '⚙️ Settings', admin: '🛠 Admin' },
-  pt: { search: '🔎 Buscar voo', alerts: '🔔 Meus alertas', pro: '⭐ Pro', help: '❓ Ajuda', settings: '⚙️ Configurações', admin: '🛠 Admin' },
+  es: { search: '🔎 Buscar vuelo', alerts: '🔔 Mis alertas', report: '📊 Informe', pro: '⭐ Pro', help: '❓ Ayuda', settings: '⚙️ Ajustes', admin: '🛠 Admin' },
+  en: { search: '🔎 Search flight', alerts: '🔔 My alerts', report: '📊 Report', pro: '⭐ Pro', help: '❓ Help', settings: '⚙️ Settings', admin: '🛠 Admin' },
+  pt: { search: '🔎 Buscar voo', alerts: '🔔 Meus alertas', report: '📊 Relatório', pro: '⭐ Pro', help: '❓ Ajuda', settings: '⚙️ Configurações', admin: '🛠 Admin' },
 };
 const PLACEHOLDER = { es: 'Escribí una ciudad o tocá un botón', en: 'Type a city or tap a button', pt: 'Escreva uma cidade ou toque em um botão' };
 
 /** Comando equivalente de cada acción (mismo handler). */
-const COMMAND_OF = { search: 'buscar', alerts: 'alertas', pro: 'pro', help: 'ayuda', settings: 'ajustes', admin: 'admin' };
+const COMMAND_OF = { search: 'buscar', alerts: 'alertas', report: 'informe', pro: 'pro', help: 'ayuda', settings: 'ajustes', admin: 'admin' };
 
 function keyboard(lang, env = process.env, opts = {}) {
   const k = KEY_TEXT[lang] || KEY_TEXT.es;
@@ -35,7 +35,8 @@ function keyboard(lang, env = process.env, opts = {}) {
   return {
     keyboard: [
       [search],
-      [{ text: k.alerts }, { text: k.pro }],
+      [{ text: k.alerts }, { text: k.report }],
+      [{ text: k.pro }],
       [{ text: k.help }, { text: k.settings }],
       ...(opts.admin ? [[{ text: k.admin }]] : []),
     ],
@@ -65,11 +66,11 @@ function menuButton(lang, env = process.env) {
 }
 
 /** Comandos visibles: ES por defecto y EN para language_code 'en'. Los alias siguen funcionando. */
-const COMMANDS = ['start', 'buscar', 'alertas', 'pro', 'ayuda'];
+const COMMANDS = ['start', 'buscar', 'alertas', 'informe', 'pro', 'ayuda'];
 const DESCRIPTIONS = {
-  es: { start: 'Inicio y menú', buscar: 'Buscar un vuelo', alertas: 'Ver tus alertas', pro: 'Flight Alert Pro', ayuda: 'Ayuda' },
-  en: { start: 'Home and menu', buscar: 'Search a flight', alertas: 'Your alerts', pro: 'Flight Alert Pro', ayuda: 'Help' },
-  pt: { start: 'Início e menu', buscar: 'Buscar um voo', alertas: 'Ver seus alertas', pro: 'Flight Alert Pro', ayuda: 'Ajuda' },
+  es: { start: 'Inicio y menú', buscar: 'Buscar un vuelo', alertas: 'Ver tus alertas', informe: 'Tu informe de precios', pro: 'Flight Alert Pro', ayuda: 'Ayuda' },
+  en: { start: 'Home and menu', buscar: 'Search a flight', alertas: 'Your alerts', informe: 'Your price report', pro: 'Flight Alert Pro', ayuda: 'Help' },
+  pt: { start: 'Início e menu', buscar: 'Buscar um voo', alertas: 'Ver seus alertas', informe: 'Seu relatório de preços', pro: 'Flight Alert Pro', ayuda: 'Ajuda' },
 };
 function commands() {
   const out = {};
@@ -99,7 +100,8 @@ function homeInline(lang, cbEncode, env = process.env) {
   return {
     inline_keyboard: [
       [search],
-      [{ text: (KEY_TEXT[lang] || KEY_TEXT.es).alerts, callback_data: cbEncode('m', 'ls') }, { text: t(lang, 'btnPro'), callback_data: cbEncode('p', 'show') }],
+      [{ text: (KEY_TEXT[lang] || KEY_TEXT.es).alerts, callback_data: cbEncode('m', 'ls') }, { text: (KEY_TEXT[lang] || KEY_TEXT.es).report, callback_data: cbEncode('r', 'go') }],
+      [{ text: t(lang, 'btnPro'), callback_data: cbEncode('p', 'show') }],
     ],
   };
 }

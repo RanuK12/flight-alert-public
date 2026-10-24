@@ -106,7 +106,7 @@ describe('/start, /pro y teclado para Pro/admin', () => {
   });
 
   test('keyboard(): variante admin agrega una fila Admin', () => {
-    expect(miniapp.keyboard('es', {}).keyboard.flat().map((b) => b.text)).toEqual(['🔎 Buscar vuelo', '🔔 Mis alertas', '⭐ Pro', '❓ Ayuda', '⚙️ Ajustes']);
+    expect(miniapp.keyboard('es', {}).keyboard.flat().map((b) => b.text)).toEqual(['🔎 Buscar vuelo', '🔔 Mis alertas', '📊 Informe', '⭐ Pro', '❓ Ayuda', '⚙️ Ajustes']);
     expect(miniapp.keyboard('es', {}, { admin: true }).keyboard.at(-1)).toEqual([{ text: '🛠 Admin' }]);
   });
 
