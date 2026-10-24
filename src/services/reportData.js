@@ -289,7 +289,7 @@ function captionFor(report) {
     lines.push(tr(L, 'captionNoDeal', { n: priced, route: report.best.title, price: report.best.priceLabel }));
     lines.push(tr(L, 'captionRef'));
   }
-  if (report.more > 0) lines[1] += tr(L, 'captionMore', { m: report.more });
+  if (report.more > 0) lines[1] = lines[1].replace(/\.?$/, `${tr(L, 'captionMore', { m: report.more })}.`);
   return lines.join('\n').slice(0, 1024);
 }
 

@@ -64,7 +64,7 @@
     "statusAboveShort": "{pct} vs tope",
     "statusEmpty": "Sin precio hoy",
     "moreRoutes": "… y {m} más en Gestionar alertas",
-    "captionMore": " · y {m} más",
+    "captionMore": " · y {m} más en el PDF",
     "testData": "DATOS DE PRUEBA (sintéticos) — no son precios reales"
   },
   "en": {
@@ -132,7 +132,7 @@
     "statusAboveShort": "{pct} vs ceiling",
     "statusEmpty": "No price today",
     "moreRoutes": "… and {m} more in Manage alerts",
-    "captionMore": " · and {m} more",
+    "captionMore": " · and {m} more in the PDF",
     "testData": "TEST DATA (synthetic) — not real prices"
   },
   "pt": {
@@ -200,7 +200,7 @@
     "statusAboveShort": "{pct} vs teto",
     "statusEmpty": "Sem preço hoje",
     "moreRoutes": "… e mais {m} em Gerenciar alertas",
-    "captionMore": " · e mais {m}",
+    "captionMore": " · e mais {m} no PDF",
     "testData": "DADOS DE TESTE (sintéticos) — não são preços reais"
   }
 }
