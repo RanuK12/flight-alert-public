@@ -5,6 +5,7 @@ const copy = require('../copy');
 const link = require('../../services/payments/link');
 const sessions = require('../sessions');
 const ux = require('../ux');
+const { langOf } = require('../ux/i18n');
 
 const logger = require('../../utils/logger').child('start');
 
@@ -41,7 +42,7 @@ function register(bot) {
     await col('User').updateOne(
       { telegramUserId: String(userId) },
       {
-        $set: { telegramChatId: String(chatId) },
+        $set: { telegramChatId: String(chatId), lang: langOf(msg.from), firstName: msg.from.first_name ? String(msg.from.first_name).slice(0, 64) : null },
         $setOnInsert: { telegramUserId: String(userId), currency: 'EUR', alertMinLevel: 'good' },
       },
       { upsert: true },

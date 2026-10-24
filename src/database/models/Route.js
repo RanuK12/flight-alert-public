@@ -21,6 +21,19 @@ const schema = new mongoose.Schema({
   foundAt: { type: String, default: null },
   hour: { type: String, default: '21:00' },
   instantLastAt: { type: String, default: null },
+  // Búsqueda flexible: 'YYYY-MM' o 'next3'; noches fijas. Sin esto Mongoose (strict) los descartaba
+  // y las alertas flexibles se trataban como fecha exacta.
+  flexMonth: { type: String, default: null },
+  stayDays: { type: Number, default: null },
+  notify: { type: String, default: 'daily' },
+  lang: { type: String, default: null },
+  // Mejor precio visto en el último tick (se guarda en cada tick, haya o no aviso).
+  bestDepartureDate: { type: String, default: null },
+  bestReturnDate: { type: String, default: null },
+  gate: { type: String, default: null },
+  source: { type: String, default: null },
+  checkedAt: { type: String, default: null },
+  confirmedAt: { type: String, default: null },
 }, { timestamps: true });
 
 module.exports = mongoose.models.Route || mongoose.model('Route', schema);

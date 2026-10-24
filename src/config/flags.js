@@ -8,6 +8,7 @@ const FEATURES = [
   'FEATURE_PAYMENTS_STRIPE',
   'FEATURE_CHANNELS',
   'FEATURE_INSTANT_ALERTS',
+  'FEATURE_REPORT_PDF',
 ];
 
 function on(name) {
