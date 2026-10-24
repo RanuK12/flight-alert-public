@@ -1,5 +1,7 @@
 'use strict';
 
+const duffel = require('../providers/duffel');
+
 const { col } = require('../database');
 const clock = require('../utils/clock');
 const art = require('../utils/art');
@@ -83,12 +85,20 @@ function matchesRoute(r, f) {
   return !r.returnDate || f.returnDate === r.returnDate;
 }
 
+const ALERT_TEXT = {
+  es: { title: 'Bajó el precio', ceiling: 'Tu techo', cached: 'Precio en caché; el final lo ves en Aviasales.', live: 'Precio de referencia; el final lo ves en Aviasales.' },
+  en: { title: 'Price drop', ceiling: 'Your ceiling', cached: 'Cached price; see the final price on Aviasales.', live: 'Reference price; see the final price on Aviasales.' },
+  pt: { title: 'O preço caiu', ceiling: 'Seu teto', cached: 'Preço em cache; o final você vê na Aviasales.', live: 'Preço de referência; o final você vê na Aviasales.' },
+};
+
 function messageFor(route, flight, now) {
+  const lang = ALERT_TEXT[route.lang] ? route.lang : 'es';
+  const T = ALERT_TEXT[lang];
   return [
-    `Bajó el precio: ${flight.origin} → ${flight.destination}`,
+    `${T.title}: ${flight.origin} → ${flight.destination}`,
     `€${flight.price} · ${flight.departureDate}${flight.returnDate ? ` → ${flight.returnDate}` : ''}`,
-    `Tu techo: €${route.priceThreshold} · ${seenLabel(flight.foundAt, now)}`,
-    'Precio en caché; el final lo ves en Aviasales.',
+    `${T.ceiling}: €${route.priceThreshold} · ${seenLabel(flight.foundAt, now, lang)}`,
+    flight.source === 'duffel' ? T.live : T.cached,
   ].join('\n');
 }
 
@@ -97,6 +107,15 @@ function messageFor(route, flight, now) {
  * aunque varias alertas la compartan. Avisa si el precio está en o debajo del techo.
  */
 async function run(bot, opts = {}) {
+  duffel.beginTick();
+  try {
+    return await runTick(bot, opts);
+  } finally {
+    duffel.endTick();
+  }
+}
+
+async function runTick(bot, opts = {}) {
   if (flags.kill() || !flags.instantAlerts()) return { skipped: true };
   const now = clock.now();
   // Forzado desde /admin: revisa igual, pero no manda nada en horario de silencio.
@@ -131,6 +150,14 @@ async function run(bot, opts = {}) {
       continue;
     }
     if (!best) continue;
+    // Re-verificación en tiempo real antes de avisar (si hay DUFFEL_ACCESS_TOKEN y algún techo lo permite).
+    // Si Duffel responde, manda el precio verificado (o nada si supera el techo); si no, sigue con Travelpayouts.
+    if (best.source !== 'duffel' && duffel.enabled() && list.some((r) => best.price <= Number(r.priceThreshold))) {
+      const verified = await duffel.cheapest({
+        origin: first.origin, destination: first.destination, departureDate: best.departureDate, returnDate: best.returnDate || null,
+      });
+      if (verified) best = verified;
+    }
     for (const route of list) {
       if (best.price > Number(route.priceThreshold)) continue;
       if (route.instantLastAt && now.getTime() - new Date(route.instantLastAt).getTime() < cooldownMs()) continue;

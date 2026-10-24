@@ -178,6 +178,7 @@ async function createAlert(bot, ctx, f) {
     hour: '21:00',
     paused: false,
     name: `${f.o}→${f.d}`,
+    lang: ctx.lang || 'es',
   };
   if (ctx.editId) {
     await col('Route').updateOne({ _id: ctx.editId, telegramUserId: String(ctx.userId) }, { $set: doc });

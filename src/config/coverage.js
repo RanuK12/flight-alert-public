@@ -7,6 +7,8 @@ const { allPairs, ORIGINS, DESTINATIONS, ORIGIN_GROUPS, EU_RETURN_HUBS, destinat
 const REPORT = path.join(__dirname, '..', '..', 'data', 'coverage.json');
 
 const MIN_ORIGIN_PERCENT = 60;
+/** Método de medición válido: ≥3 fechas en 4 meses, par cuenta con ofertas de aerolínea real en ≥2 fechas. */
+const DUFFEL_METHOD = 'multidate-real-airline-v1';
 /** Fallback sin informe (fail-closed): solo Argentina → Europa, la ruta histórica. */
 const FALLBACK_ORIGINS = (ORIGIN_GROUPS.find((g) => g.country === 'AR') || { codes: ['EZE'] }).codes;
 
@@ -18,22 +20,40 @@ function disabled() {
   return process.env.COVERAGE_FILE === 'off';
 }
 
-let cache = { file: null, mtime: 0, data: null, set: null };
+let cache = { file: null, mtime: 0, data: null, sets: null };
 function report() {
   const f = file();
   try {
     const mtime = fs.statSync(f).mtimeMs;
-    if (cache.file !== f || cache.mtime !== mtime) {
+    if (cache.file !== f || cache.mtime !== mtime || !cache.sets) {
       const data = JSON.parse(fs.readFileSync(f, 'utf8'));
-      const min = Number(data.minOriginPercent) || MIN_ORIGIN_PERCENT;
-      const okOrigin = (o) => data.byOrigin && data.byOrigin[o] && data.byOrigin[o].percent >= min;
-      cache = { file: f, mtime, data, set: new Set((data.withData || []).filter((p) => okOrigin(p.origin)).map((p) => `${p.origin}-${p.destination}`)) };
+      cache = { file: f, mtime, data, sets: {} };
     }
     return cache.data;
   } catch {
-    cache = { file: null, mtime: 0, data: null, set: null };
+    cache = { file: null, mtime: 0, data: null, sets: null };
     return null;
   }
+}
+
+/**
+ * Pares habilitados. Con DUFFEL_ACCESS_TOKEN también cuentan los pares que Travelpayouts no tiene
+ * pero Duffel cotizó en el chequeo (withDuffel), y el umbral usa percentWithDuffel.
+ */
+function allowedSet(data) {
+  // Duffel solo cuenta si la cobertura se midió bien (varias fechas, aerolíneas reales).
+  const live = Boolean(process.env.DUFFEL_ACCESS_TOKEN) && data.duffelMethod === DUFFEL_METHOD;
+  const k = live ? 'live' : 'tp';
+  if (cache.sets[k]) return cache.sets[k];
+  const min = Number(data.minOriginPercent) || MIN_ORIGIN_PERCENT;
+  const pct = (o) => {
+    const b = data.byOrigin && data.byOrigin[o];
+    if (!b) return 0;
+    return live && typeof b.percentWithDuffel === 'number' ? b.percentWithDuffel : b.percent;
+  };
+  const pairs = [...(data.withData || []), ...(live ? data.withDuffel || [] : [])];
+  cache.sets[k] = new Set(pairs.filter((p) => pct(p.origin) >= min).map((p) => `${p.origin}-${p.destination}`));
+  return cache.sets[k];
 }
 
 /**
@@ -50,7 +70,7 @@ function pairAllowed(origin, destination) {
   if (GRANDFATHERED_ORIGINS.includes(origin) && DESTINATIONS.includes(destination)) return true;
   const r = report();
   if (!r) return FALLBACK_ORIGINS.includes(origin) && DESTINATIONS.includes(destination);
-  return cache.set.has(`${origin}-${destination}`);
+  return allowedSet(r).has(`${origin}-${destination}`);
 }
 
 function destinationsAvailable(origin) {
@@ -81,6 +101,6 @@ function euOriginsAvailable() {
 }
 
 module.exports = {
-  pairAllowed, report, MIN_ORIGIN_PERCENT, FALLBACK_ORIGINS, GRANDFATHERED_ORIGINS, allPairs, REPORT,
+  pairAllowed, report, MIN_ORIGIN_PERCENT, DUFFEL_METHOD, FALLBACK_ORIGINS, GRANDFATHERED_ORIGINS, allPairs, REPORT,
   destinationsAvailable, originAvailable, latamOriginsAvailable, groupsAvailable, euHubsAvailable, euOriginsAvailable,
 };

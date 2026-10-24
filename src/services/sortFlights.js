@@ -1,6 +1,7 @@
 'use strict';
 
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+/** Solo precios vistos en las últimas 48 h (antes 7 días). */
+const FRESH_MS = 48 * 60 * 60 * 1000;
 
 function ageMs(foundAt, now) {
   if (!foundAt) return Number.POSITIVE_INFINITY;
@@ -8,11 +9,13 @@ function ageMs(foundAt, now) {
 }
 
 function isFresh(flight, now) {
-  return ageMs(flight.foundAt, now) <= WEEK_MS;
+  return ageMs(flight.foundAt, now) <= FRESH_MS;
 }
 
-function seenLabel(foundAt, now) {
+function seenLabel(foundAt, now, lang = 'es') {
   const h = Math.max(0, Math.round(ageMs(foundAt, now) / (60 * 60 * 1000)));
+  if (lang === 'en') return `seen ${h} h ago`;
+  if (lang === 'pt') return `visto há ${h} h`;
   return `visto hace ${h} h`;
 }
 
@@ -32,4 +35,4 @@ function sortFlights(list) {
   });
 }
 
-module.exports = { sortFlights, isFresh, seenLabel, ageMs };
+module.exports = { sortFlights, isFresh, seenLabel, ageMs, FRESH_MS };

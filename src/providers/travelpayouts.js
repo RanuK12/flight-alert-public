@@ -6,6 +6,14 @@ const { pairAllowed } = require('../config/coverage');
 const { isFresh } = require('../services/sortFlights');
 const clock = require('../utils/clock');
 const samplePrice = require('../services/samplePrice');
+const duffel = require('./duffel');
+
+/** Relleno en tiempo real cuando Travelpayouts no tiene precio fresco para una fecha exacta. */
+async function fill(q) {
+  if (!duffel.enabled()) return [];
+  const row = await duffel.cheapest(q);
+  return row ? [row] : [];
+}
 
 const BASE = 'https://api.travelpayouts.com';
 // La misma moneda y el mismo mercado van en el link (src/bot/deepLinks.js).
@@ -55,14 +63,15 @@ async function search(query) {
   const origin = String(query.origin || '').toUpperCase();
   const destination = String(query.destination || '').toUpperCase();
   if (!pairAllowed(origin, destination)) return [];
-  if (!enabled()) return [];
+  const exact = { origin, destination, departureDate: query.departureDate, returnDate: query.returnDate || null };
+  if (!enabled()) return fill(exact);
   const month = `${String(query.departureDate).slice(0, 7)}-01`;
   let payload;
   try {
     payload = await get('/v2/prices/month-matrix', { origin, destination, month });
   } catch (err) {
     logger.warn('travelpayouts no respondió', { error: err.message });
-    return [];
+    return fill(exact);
   }
   const now = clock.now();
   const rows = payload.rows
@@ -72,7 +81,7 @@ async function search(query) {
     .filter((row) => (query.returnDate ? row.returnDate === query.returnDate : !row.returnDate))
     .filter((row) => isFresh(row, now));
   rows.forEach((row) => samplePrice.remember(row));
-  return rows;
+  return rows.length ? rows : fill(exact);
 }
 
 /**
@@ -110,6 +119,9 @@ async function searchRange(q) {
     }
   }
   out.forEach((row) => samplePrice.remember(row));
+  if (!out.length && q.day) {
+    return fill({ origin, destination, departureDate: q.day, returnDate: q.oneway ? null : (q.returnDate || null) });
+  }
   return out;
 }
 
