@@ -13,17 +13,18 @@ function enabled() {
 
 const LABELS = {
   es: { stripe: 'Tarjeta (Stripe)', mp: 'Mercado Pago', stars: 'Estrellas de Telegram' },
+  pt: { stripe: 'Cartão (Stripe)', mp: 'Mercado Pago', stars: 'Estrelas do Telegram' },
   en: { stripe: 'Card (Stripe)', mp: 'Mercado Pago', stars: 'Telegram Stars' },
 };
 
 function labels(lang) {
-  const l = LABELS[lang === 'en' ? 'en' : 'es'];
+  const l = LABELS[LABELS[lang] ? lang : 'es'];
   return enabled().map((k) => l[k]);
 }
 
 function line(lang) {
   const list = labels(lang);
-  if (!list.length) return lang === 'en' ? 'Payments are paused right now.' : 'Los pagos están pausados por ahora.';
+  if (!list.length) return { en: 'Payments are paused right now.', pt: 'Os pagamentos estão pausados no momento.' }[lang] || 'Los pagos están pausados por ahora.';
   return list.join(' · ');
 }
 

@@ -140,7 +140,7 @@ describe('teclado persistente de abajo', () => {
 });
 
 describe('menú, comandos y /start', () => {
-  test('setup: setMyCommands ES y EN con 4 comandos y botón Menu web_app', async () => {
+  test('setup: setMyCommands ES, EN y PT con 4 comandos y botón Menu web_app', async () => {
     const bot = fakeBot();
     await miniapp.setup(bot);
     const names = ['start', 'buscar', 'alertas', 'pro', 'ayuda'];
@@ -150,10 +150,14 @@ describe('menú, comandos y /start', () => {
     expect(bot.setMyCommands.mock.calls[1][0].map((c) => c.command)).toEqual(names);
     expect(bot.setMyCommands.mock.calls[1][0][1].description).toBe('Search a flight');
     expect(bot.setMyCommands.mock.calls[1][1]).toEqual({ language_code: 'en' });
+    expect(bot.setMyCommands.mock.calls[2][0].map((c) => c.command)).toEqual(names);
+    expect(bot.setMyCommands.mock.calls[2][0][1].description).toBe('Buscar um voo');
+    expect(bot.setMyCommands.mock.calls[2][1]).toEqual({ language_code: 'pt' });
     // Idempotente: correrlo de nuevo hace las mismas llamadas.
     await miniapp.setup(bot);
-    expect(bot.setMyCommands.mock.calls[2]).toEqual(bot.setMyCommands.mock.calls[0]);
-    expect(bot.setMyCommands.mock.calls[3]).toEqual(bot.setMyCommands.mock.calls[1]);
+    expect(bot.setMyCommands.mock.calls[3]).toEqual(bot.setMyCommands.mock.calls[0]);
+    expect(bot.setMyCommands.mock.calls[4]).toEqual(bot.setMyCommands.mock.calls[1]);
+    expect(bot.setMyCommands.mock.calls[5]).toEqual(bot.setMyCommands.mock.calls[2]);
     expect(bot.setChatMenuButton).toHaveBeenCalledWith({ menu_button: JSON.stringify({ type: 'web_app', text: 'Buscar ✈', web_app: { url: `${BASE}/app` } }) });
     expect(miniapp.menuButton('en').text).toBe('Search ✈');
   });
@@ -236,6 +240,22 @@ describe('/app', () => {
     const ok = await call(app, 'GET', '/app/api/places', { headers: { 'X-Telegram-Init-Data': authFor({ id: 501 }) } });
     expect(ok.status).toBe(200);
     expect(ok.json.origins.map((p) => p.code)).toContain('COR');
+  });
+
+  test('places: sección "Vuelta desde Europa" con hubs EU y destinos de vuelta solo LATAM', async () => {
+    const res = await call(createApp(), 'GET', '/app/api/places', { headers: { 'X-Telegram-Init-Data': authFor({ id: 501 }) } });
+    expect(res.status).toBe(200);
+    const { DESTINATIONS, ORIGINS, EU_RETURN_HUBS } = require('../src/config/airports');
+    const eu = res.json.origins.filter((p) => p.eu);
+    expect(Array.isArray(res.json.euHubs)).toBe(true);
+    for (const c of res.json.euHubs) expect(EU_RETURN_HUBS).toContain(c);
+    for (const p of eu) expect(DESTINATIONS).toContain(p.code);
+    expect(eu.filter((p) => p.hub).map((p) => p.code)).toEqual(res.json.euHubs);
+    for (const p of res.json.destinations.filter((d) => d.ret)) expect(ORIGINS).toContain(p.code);
+    for (const p of res.json.destinations.filter((d) => !d.ret)) expect(DESTINATIONS).toContain(p.code);
+    const js = require('fs').readFileSync(require('path').join(__dirname, '..', 'public', 'app', 'app.js'), 'utf8');
+    expect(js).toContain("euReturn: '🇪🇺 Vuelta desde Europa'");
+    expect(js).toContain("euReturn: '🇪🇺 Volta da Europa'");
   });
 
   test('calendario: solo precios reales, terciles, sin inventar días', async () => {

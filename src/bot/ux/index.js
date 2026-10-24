@@ -102,7 +102,7 @@ function shortcut(args) {
   if (words[1] && f.o) { const r = places.match(words[1], 'd'); if (r.exact && r.exact !== f.o) f.d = r.exact; }
   if (words[2] && f.d) {
     const w = places.norm(words[2]).slice(0, 3);
-    const idx = ['es', 'en'].map((l) => t(l, 'monthsShort').map((m) => places.norm(m))).map((list) => list.indexOf(w)).find((i) => i >= 0);
+    const idx = ['es', 'en', 'pt'].map((l) => t(l, 'monthsShort').map((m) => places.norm(m))).map((list) => list.indexOf(w)).find((i) => i >= 0);
     if (idx !== undefined) {
       const hit = cal.months().find((m) => m.m === idx + 1);
       if (hit) f.m = cal.ymCode(hit.y, hit.m);
@@ -317,6 +317,7 @@ async function onCallback(bot, cq) {
   try {
     if (!parsed.ok) { await expired(bot, ctx); return true; }
     const { flow: fl, step: s, fields } = parsed;
+    ctx.lang = langOf(cq.from, { origin: fields && fields.o });
     if (s === 'x') {
       await sessions.clearSession(chatId);
       await show(bot, chatId, ctx.mid, t(ctx.lang, 'cancelled'));
@@ -359,7 +360,7 @@ async function onText(bot, msg) {
   const draft = await sessions.getSession(msg.chat.id);
   if (!draft || draft.state !== 'ux') return false;
   const d = draft.data || {};
-  const ctx = { chatId: msg.chat.id, userId: msg.from.id, lang: d.lang || langOf(msg.from), mid: d.mid, editId: d.editId };
+  const ctx = { chatId: msg.chat.id, userId: msg.from.id, lang: d.lang || langOf(msg.from, { origin: d.fields && d.fields.o }), mid: d.mid, editId: d.editId };
   const res = flow.applyText(ctx.lang, d.flow, d.fields || {}, msg.text);
   if (res.ignored) return false;
   if (res.choices) {

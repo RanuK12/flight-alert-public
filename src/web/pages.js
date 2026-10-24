@@ -16,7 +16,8 @@ function esc(v) {
 function layout(title, body, opts = {}) {
   const nonce = opts.nonce ? ` nonce="${esc(opts.nonce)}"` : '';
   const css = `/assets/styles.${landing.hashes.css}.css`;
-  return '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+  return `<!doctype html><html lang="${esc(opts.lang || 'es')}"><head>`
+    + '<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
     + `<title>${opts.fullTitle ? esc(opts.fullTitle) : `${title} | Flight Alert`}</title>${opts.head || ''}`
     + `<script${nonce}>(function(){try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>`
     + `<style${nonce}>${landing.criticalCss()}</style>`
@@ -82,36 +83,68 @@ em.addEventListener('blur',function(){if(em.value)check();});
 f.addEventListener('submit',function(e){if(!check()){e.preventDefault();em.focus();}});
 })();`;
 
-function pro({ choice = '', ipCountry: geo = '', language = '', nonce = '', ars = null } = {}) {
+const PRO_TEXT = {
+  es: {
+    b1: 'Búsquedas ilimitadas (uso justo).', b2: 'Te avisamos cuando un precio baja de tu techo.', b3: 'Informe de las 21:00 (hora de Argentina).',
+    mp: 'Podés pagar en pesos con Mercado Pago.', noMp: 'El pago en pesos solo aparece si elegís Argentina y estás en Argentina.',
+    country: 'País', emailError: 'Escribí un email válido, por ejemplo nombre@dominio.com.',
+    btnMp: 'Seguir con Mercado Pago', btnCard: 'Seguir con tarjeta', methods: 'Medios de pago',
+    trial: (d) => `Prueba de Pro: ${d} días gratis, una vez por cuenta, desde el bot.`,
+  },
+  pt: {
+    b1: 'Buscas ilimitadas (uso justo).', b2: 'Avisamos quando um preço fica abaixo do seu teto.', b3: 'Relatório das 21:00 (horário da Argentina).',
+    mp: 'Você pode pagar em pesos com o Mercado Pago.', noMp: 'O pagamento em pesos só aparece se você escolher Argentina e estiver na Argentina.',
+    country: 'País', emailError: 'Digite um email válido, por exemplo nome@dominio.com.',
+    btnMp: 'Seguir com Mercado Pago', btnCard: 'Seguir com cartão', methods: 'Formas de pagamento',
+    trial: (d) => `Teste do Pro: ${d} dias grátis, uma vez por conta, pelo bot.`,
+  },
+};
+
+function ptPrices(lines) {
+  const tr = (v) => String(v).replace(/ por mes/g, ' por mês').replace(/al dólar oficial de hoy/g, 'ao dólar oficial de hoje')
+    .replace(/IVA incluido/g, 'IVA incluído').replace(/Sin cotización del dólar oficial/g, 'Sem cotação do dólar oficial');
+  return Object.fromEntries(Object.entries(lines).map(([k, v]) => [k, tr(v)]));
+}
+
+/** pt-BR se ?lang=pt, Accept-Language pt* ou país sugerido Brasil. */
+function proLang({ lang = '', language = '', country = '' } = {}) {
+  if (lang === 'pt' || lang === 'es') return lang;
+  const first = String(language || '').split(',')[0].trim().toLowerCase();
+  if (first.startsWith('pt') || String(country).toUpperCase() === 'BR') return 'pt';
+  return 'es';
+}
+
+function pro({ choice = '', ipCountry: geo = '', language = '', nonce = '', ars = null, lang = '' } = {}) {
   const suggested = String(choice || preselect(language) || '').toUpperCase();
   const offer = currencyFor(suggested, geo);
-  const lines = priceLines(Number.isInteger(ars) && ars > 0 ? ars : null);
+  const L = proLang({ lang, language, country: suggested });
+  const raw = priceLines(Number.isInteger(ars) && ars > 0 ? ars : null);
+  const lines = L === 'pt' ? ptPrices(raw) : raw;
   const key = priceKey(suggested);
-  const note = offer.rail === 'mp'
-    ? 'Podés pagar en pesos con Mercado Pago.'
-    : 'El pago en pesos solo aparece si elegís Argentina y estás en Argentina.';
+  const t = PRO_TEXT[L];
+  const note = offer.rail === 'mp' ? t.mp : t.noMp;
   return layout('Pro', `
     <h1>Pro</h1>
     <ul class="pro-benefits">
-      <li>Búsquedas ilimitadas (uso justo).</li>
-      <li>Te avisamos cuando un precio baja de tu techo.</li>
-      <li>Informe de las 21:00 (hora de Argentina).</li>${require('./aiSoon').li('es')}
+      <li>${t.b1}</li>
+      <li>${t.b2}</li>
+      <li>${t.b3}</li>${require('./aiSoon').li(L)}
     </ul>
     <p class="pro-price" id="pro-price" aria-live="polite" data-ars="${esc(lines.ars)}" data-eur="${esc(lines.eur)}" data-usd="${esc(lines.usd)}">${esc(lines[key])}</p>
     <p class="fine">${note}</p>
     <form class="pro-form" id="pro-form" method="post" action="/pro/checkout" novalidate data-eu="${EU_COUNTRIES.map(([c]) => c).join(',')}">
-      <label for="pro-pais">País</label>
+      <label for="pro-pais">${t.country}</label>
       <select id="pro-pais" name="pais">
         ${countryOptions(suggested)}
       </select>
       <label for="pro-email">Email</label>
       <input id="pro-email" name="email" type="email" autocomplete="email" inputmode="email" required aria-describedby="pro-email-error">
-      <p class="form-error" id="pro-email-error" role="alert" hidden>Escribí un email válido, por ejemplo nombre@dominio.com.</p>
-      <button class="btn btn--primary pro-submit" type="submit">${offer.rail === 'mp' ? 'Seguir con Mercado Pago' : 'Seguir con tarjeta'}</button>
+      <p class="form-error" id="pro-email-error" role="alert" hidden>${t.emailError}</p>
+      <button class="btn btn--primary pro-submit" type="submit">${offer.rail === 'mp' ? t.btnMp : t.btnCard}</button>
     </form>
-    <p class="fine">Medios de pago: ${esc(require('./payMethods').line('es'))}.</p>
-    <p class="fine">Prueba de Pro: ${entitlements.TRIAL_DAYS} días gratis, una vez por cuenta, desde el bot.</p>
-  `, { nonce, script: PRO_SCRIPT, fullTitle: require('./seo').PRO_META.title, head: require('./seo').proHead() });
+    <p class="fine">${t.methods}: ${esc(require('./payMethods').line(L).replace(/\.$/, ''))}.</p>
+    <p class="fine">${t.trial(entitlements.TRIAL_DAYS)}</p>
+  `, { nonce, script: PRO_SCRIPT, fullTitle: require('./seo').PRO_META.title, head: require('./seo').proHead(), lang: L === 'pt' ? 'pt-BR' : 'es' });
 }
 
 function listo(url, opts = {}) {
@@ -125,4 +158,4 @@ function maintenance(opts = {}) {
   return layout('Mantenimiento', `<p>${copy.maintenance}</p>`, { nonce: opts.nonce });
 }
 
-module.exports = { home, pro, listo, maintenance };
+module.exports = { home, pro, proLang, listo, maintenance };
