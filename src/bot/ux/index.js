@@ -294,10 +294,34 @@ async function alerts(bot, ctx, stepName, fields) {
 
 async function report(bot, msg) {
   const lang = langOf(msg.from);
-  const routes = await col('Route').find({ telegramUserId: String(msg.from.id) }).lean();
+  const userId = msg.from.id;
+  const routes = await col('Route').find({ telegramUserId: String(userId) }).lean();
+  const newAlertKb = { reply_markup: { inline_keyboard: [[{ text: t(lang, 'newAlert'), callback_data: cb.encode('a', 'nx') }]] } };
+  if (await entitlements.isPro(userId)) {
+    // Pro: informe a pedido con datos al momento (búsquedas en vivo), tope diario en fecha ART.
+    if (!routes.some((r) => !r.paused)) {
+      await bot.sendMessage(msg.chat.id, t(lang, 'reportNoAlerts'), newAlertKb);
+      return { empty: true };
+    }
+    if (!(await entitlements.reserveOnDemandReport(userId))) {
+      await bot.sendMessage(msg.chat.id, t(lang, 'reportLimit', { n: entitlements.reportCap() }));
+      return { limited: true };
+    }
+    await bot.sendMessage(msg.chat.id, t(lang, 'reportWorking')).catch(() => {});
+    try {
+      await col('Entitlement').updateOne({ telegramUserId: String(userId) }, { $set: { telegramChatId: String(msg.chat.id) } }, { upsert: true });
+      const out = await require('../../services/dailyReport').sendSummaryForUser(bot, userId, msg.chat.id);
+      return { ...(out || {}), onDemand: true };
+    } catch (err) {
+      await entitlements.releaseOnDemandReport(userId);
+      logger.warn('informe a pedido', { error: err.message });
+      await bot.sendMessage(msg.chat.id, t(lang, 'reportFailed')).catch(() => {});
+      return { failed: true };
+    }
+  }
   const ready = routes.some((r) => !r.paused && r.lastPriceEur && r.foundAt);
   if (!ready) {
-    await bot.sendMessage(msg.chat.id, t(lang, 'noReport'), routes.length ? undefined : { reply_markup: { inline_keyboard: [[{ text: t(lang, 'newAlert'), callback_data: cb.encode('a', 'nx') }]] } });
+    await bot.sendMessage(msg.chat.id, t(lang, 'noReport'), routes.length ? undefined : newAlertKb);
     return { empty: true };
   }
   return require('../handlers/informe').sendInforme(bot, msg.chat.id, msg.from.id);
@@ -341,6 +365,7 @@ async function onCallback(bot, cq) {
       }
     }
     if (fl === 'o') { await onboarding(bot, ctx, s, fields); return true; }
+    if (fl === 'r') { await report(bot, { chat: { id: chatId }, from: cq.from }); return true; }
     if (fl === 'm') { await alerts(bot, ctx, s, fields); return true; }
     if (fl === 'p') {
       if (s === 'stars') await stars.sendInvoice(bot, chatId, ctx.userId);
@@ -481,6 +506,7 @@ const HANDLERS = {
   pro: (bot, msg) => proScreen(bot, ctxOf(msg)),
   help: (bot, msg) => help(bot, msg),
   settings: (bot, msg) => settings(bot, msg),
+  report: (bot, msg) => report(bot, msg),
   // Botón Admin: solo admins; para el resto el texto sigue su camino normal.
   admin: (bot, msg) => require('../admin').onAdminCommand(bot, msg, ''),
 };

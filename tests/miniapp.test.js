@@ -83,7 +83,7 @@ describe('teclado persistente de abajo', () => {
       expect(texts).toEqual(miniapp.ACTIONS.filter((a) => a !== 'admin').map((a) => miniapp.KEY_TEXT[lang][a]));
       expect(kb.keyboard[0][0].web_app).toEqual({ url: `${BASE}/app` });
     }
-    expect(miniapp.KEY_TEXT.es).toEqual({ search: '🔎 Buscar vuelo', alerts: '🔔 Mis alertas', pro: '⭐ Pro', help: '❓ Ayuda', settings: '⚙️ Ajustes', admin: '🛠 Admin' });
+    expect(miniapp.KEY_TEXT.es).toEqual({ search: '🔎 Buscar vuelo', alerts: '🔔 Mis alertas', report: '📊 Informe', pro: '⭐ Pro', help: '❓ Ayuda', settings: '⚙️ Ajustes', admin: '🛠 Admin' });
   });
 
   test('sin Mini App lista (sin base https o MINIAPP_ENABLED=false), Buscar va al flujo por chat', () => {
@@ -143,7 +143,7 @@ describe('menú, comandos y /start', () => {
   test('setup: setMyCommands ES, EN y PT con 4 comandos y botón Menu web_app', async () => {
     const bot = fakeBot();
     await miniapp.setup(bot);
-    const names = ['start', 'buscar', 'alertas', 'pro', 'ayuda'];
+    const names = ['start', 'buscar', 'alertas', 'informe', 'pro', 'ayuda'];
     expect(bot.setMyCommands.mock.calls[0].length).toBe(1); // ES por defecto
     expect(bot.setMyCommands.mock.calls[0][0].map((c) => c.command)).toEqual(names);
     expect(bot.setMyCommands.mock.calls[0][0][1].description).toBe('Buscar un vuelo');
@@ -169,7 +169,8 @@ describe('menú, comandos y /start', () => {
     expect(bot.sent[0].extra.reply_markup.is_persistent).toBe(true);
     const inline = bot.sent[1].extra.reply_markup.inline_keyboard;
     expect(inline[0][0].web_app).toEqual({ url: `${BASE}/app` });
-    expect(inline[1].map((b) => b.text)).toEqual(['🔔 Mis alertas', '⭐ Pro']);
+    expect(inline[1].map((b) => b.text)).toEqual(['🔔 Mis alertas', '📊 Informe']);
+    expect(inline[2].map((b) => b.text)).toEqual(['⭐ Pro']);
   });
 
   test('onboarding en 3 toques hasta la alerta creada, y después el teclado', async () => {

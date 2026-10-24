@@ -298,6 +298,44 @@ async function expire(bot) {
   return { ended };
 }
 
+/** Informes a pedido (Pro): tope diario por fecha ART. El de las 21:00 no cuenta. */
+function reportCap() {
+  const v = Number(process.env.REPORT_ONDEMAND_PER_DAY);
+  return Number.isFinite(v) && v > 0 ? v : 2;
+}
+
+/** Reserva atómica de un informe a pedido del día (fecha ART), mismo patrón que reserveProSearch. */
+async function reserveOnDemandReport(id) {
+  const day = require('../utils/art').parts(clock.now()).day;
+  const telegramUserId = idOf(id);
+  const cap = reportCap();
+  await ensure(id);
+  await ent().updateOne(
+    { telegramUserId, reportDay: { $ne: day } },
+    { $set: { reportDay: day, reportsToday: 0 } },
+  );
+  const r = await ent().updateOne(
+    { telegramUserId, reportDay: day, reportsToday: { $lt: cap } },
+    { $inc: { reportsToday: 1 } },
+  );
+  if (!r.modifiedCount) return false;
+  const doc = await ent().findOne({ telegramUserId });
+  if (!doc || doc.reportDay !== day || Number(doc.reportsToday) > cap) {
+    await releaseOnDemandReport(id);
+    return false;
+  }
+  return true;
+}
+
+/** Devuelve la reserva si el informe no salió. Nunca baja de 0. */
+async function releaseOnDemandReport(id) {
+  const day = require('../utils/art').parts(clock.now()).day;
+  await ent().updateOne(
+    { telegramUserId: idOf(id), reportDay: day, reportsToday: { $gt: 0 } },
+    { $inc: { reportsToday: -1 } },
+  );
+}
+
 function proUntilFromNow() {
   return new Date(clock.now().getTime() + PRO_MS);
 }
@@ -324,4 +362,7 @@ module.exports = {
   expire,
   pauseForBilling,
   proUntilFromNow,
+  reportCap,
+  reserveOnDemandReport,
+  releaseOnDemandReport,
 };
