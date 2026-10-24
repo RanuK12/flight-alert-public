@@ -122,7 +122,53 @@ async function searchRange(q) {
   if (!out.length && q.day) {
     return fill({ origin, destination, departureDate: q.day, returnDate: q.oneway ? null : (q.returnDate || null) });
   }
+  if (!out.length && duffel.enabled()) return rangeFill({ ...q, origin, destination }, now);
   return out;
 }
 
-module.exports = { enabled, search, searchRange, get, mapRow, market, CURRENCY };
+/** Tope total de consultas a Duffel por búsqueda por rango (además del tope por minuto/tick). */
+function rangeMax() {
+  const n = Number(process.env.DUFFEL_RANGE_MAX);
+  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 6;
+}
+
+function addDays(iso, n) {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Fechas de muestra (día 1/10/20 de cada mes) para pares que solo cubre Duffel. */
+function sampleDates(q, now) {
+  const tomorrow = addDays(now.toISOString().slice(0, 10), 1);
+  const dates = [];
+  for (const m of q.months || []) {
+    for (const day of ['01', '10', '20']) {
+      const date = `${m}-${day}`;
+      if (date < tomorrow) continue;
+      if (q.from && date < q.from) continue;
+      dates.push(date);
+    }
+  }
+  return dates.slice(0, rangeMax());
+}
+
+function returnFor(q, date) {
+  if (q.oneway) return null;
+  if (q.returnDate) return q.returnDate;
+  return addDays(date, q.stay ? Number(q.stay) : 14);
+}
+
+/** Relleno por rango: Duffel por fechas de muestra cuando Travelpayouts no tiene nada para el mes. */
+async function rangeFill(q, now) {
+  const out = [];
+  for (const date of sampleDates(q, now)) {
+    const returnDate = returnFor(q, date);
+    if (returnDate && returnDate <= date) continue;
+    const row = await duffel.cheapest({ origin: q.origin, destination: q.destination, departureDate: date, returnDate });
+    if (row) out.push(row);
+  }
+  return out;
+}
+
+module.exports = { enabled, search, searchRange, sampleDates, rangeMax, get, mapRow, market, CURRENCY };
