@@ -172,7 +172,21 @@ describe('render PDF', () => {
     for (let i = 0; i < 30; i += 1) await renderReport(r);
     const grew = (process.memoryUsage().rss - before) / 1024 / 1024;
     expect(grew).toBeLessThan(128);
-    expect(process.memoryUsage().rss / 1024 / 1024).toBeLessThan(512);
+  });
+  test('RSS < 512 MB en proceso aislado (como en Render)', () => {
+    // El worker de jest comparte heap con todas las suites; medimos el tope absoluto en un node limpio.
+    const code = `
+      const rd = require('./src/services/reportData');
+      const { renderReport } = require('./src/services/reportPdf');
+      const now = new Date(process.env.RSS_NOW);
+      const routes = JSON.parse(process.env.RSS_ROUTES);
+      (async () => {
+        const r = rd.buildReport({ routes, now, lang: 'es', histByKey: new Map(JSON.parse(process.env.RSS_HIST)) });
+        for (let i = 0; i < 40; i += 1) await renderReport(r);
+        process.stdout.write(String(process.memoryUsage().rss));
+      })().catch((e) => { console.error(e); process.exit(1); });`;
+    const out = require('child_process').execFileSync(process.execPath, ['-e', code], { cwd: path.join(__dirname, '..'), env: { ...process.env, RSS_NOW: now().toISOString(), RSS_ROUTES: JSON.stringify([DEAL, ABOVE, STALE, NEVER, DEAL, ABOVE]), RSS_HIST: JSON.stringify([...hist(DEAL, [1100, 1080, 1069])]) }, encoding: 'utf8' });
+    expect(Number(out) / 1024 / 1024).toBeLessThan(512);
   });
 });
 
