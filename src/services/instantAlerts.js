@@ -1,5 +1,6 @@
 'use strict';
 
+const priceHistory = require('./priceHistory');
 const duffel = require('../providers/duffel');
 
 const { col } = require('../database');
@@ -98,6 +99,29 @@ const ALERT_TEXT = {
   pt: { title: 'O preço caiu', ceiling: 'Seu teto', cached: 'Preço em cache; o final você vê na Aviasales.', live: 'Preço de referência; o final você vê na Aviasales.' },
 };
 
+async function storeBest(list, best, now) {
+  const set = {
+    lastPriceEur: best.price,
+    foundAt: best.foundAt,
+    stops: best.stops ?? null,
+    durationMin: best.durationMin ?? null,
+    bestDepartureDate: best.departureDate || null,
+    bestReturnDate: best.returnDate || null,
+    gate: best.gate || null,
+    source: best.source || 'travelpayouts',
+    checkedAt: now.toISOString(),
+    ...(best.source === 'duffel' ? { confirmedAt: best.foundAt || now.toISOString() } : {}),
+  };
+  for (const route of list) {
+    try {
+      await col('Route').updateOne({ _id: route._id }, { $set: set });
+      await priceHistory.record(route, best, now);
+    } catch (err) {
+      logger.warn('storeBest', { error: err.message });
+    }
+  }
+}
+
 function messageFor(route, flight, now) {
   const lang = ALERT_TEXT[route.lang] ? route.lang : 'es';
   const T = ALERT_TEXT[lang];
@@ -165,6 +189,8 @@ async function runTick(bot, opts = {}) {
       });
       if (verified) best = verified;
     }
+    // Se guarda el mejor precio en cada tick (no solo cuando hay aviso) para el informe diario.
+    await storeBest(list, best, now);
     for (const route of list) {
       if (best.price > Number(route.priceThreshold)) continue;
       if (route.instantLastAt && now.getTime() - new Date(route.instantLastAt).getTime() < cooldownMs()) continue;

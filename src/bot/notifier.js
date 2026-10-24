@@ -25,4 +25,10 @@ async function send(bot, chatId, text, extra) {
   return bot.sendMessage(chatId, text, extra);
 }
 
-module.exports = { send, setSleeper, waitTurn };
+/** Documento (Buffer) con el mismo turno por chat que los mensajes. */
+async function sendDocument(bot, chatId, buffer, options, fileOptions) {
+  await waitTurn(chatId);
+  return bot.sendDocument(chatId, buffer, options, fileOptions);
+}
+
+module.exports = { send, sendDocument, setSleeper, waitTurn };

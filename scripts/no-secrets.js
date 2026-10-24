@@ -35,7 +35,7 @@ for (const file of walk(root, [])) {
   if (token.test(text)) hits.push(`${path.relative(root, file)} contiene un token de Telegram`);
   // En imágenes (screenshots/, docs/screenshots/) se buscan secretos y tokens, pero no ids numéricos:
   // los bytes comprimidos dan falsos positivos.
-  const binary = /\.(png|jpe?g|webp|avif|gif|ico|woff2?)$/i.test(file);
+  const binary = /\.(png|jpe?g|webp|avif|gif|ico|woff2?|ttf|pdf)$/i.test(file);
   if (!binary && chatId.test(text)) hits.push(`${path.relative(root, file)} contiene un id numérico largo`);
 }
 
