@@ -20,7 +20,7 @@ module.exports = {
     '/buscar: precio más barato para una ruta y fecha',
     '/nueva_alerta: guardar una ruta con tu techo de precio',
     '/mis_alertas: ver y pausar tus alertas',
-    '/informe: el último informe de las 21:00',
+    '/informe: tu informe con precios al momento (Pro, hasta 2 por día)',
     '/pro: planes y pago',
     '/cancel: cortar lo que estabas haciendo',
     '',
