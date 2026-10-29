@@ -46,7 +46,9 @@ async function callOne(p, messages, { maxTokens = MAX_TOKENS, json = false, fetc
       messages,
       temperature: 0,
       max_tokens: Math.min(MAX_TOKENS, maxTokens),
-      ...(json ? { response_format: { type: 'json_object' } } : {}),
+      // Los modelos gpt-oss (si alguien fija GROQ_MODEL=openai/gpt-oss-*) responden 400 json_validate_failed
+      // con response_format: ahí no se envía y se baja el razonamiento. El default no los usa.
+      ...(/gpt-oss/.test(p.model) ? { reasoning_effort: 'low' } : (json ? { response_format: { type: 'json_object' } } : {})),
     }),
     signal: AbortSignal.timeout(timeout),
   });

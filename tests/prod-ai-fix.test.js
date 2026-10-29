@@ -77,6 +77,19 @@ describe('repro prod: frase exacta de Emilio (admin + Pro de cortesía)', () => 
     expect(body.reasoning_effort).toBeUndefined();
   });
 
+  test('GROQ_MODEL=gpt-oss sigue funcionando: sin response_format y con reasoning_effort low', async () => {
+    process.env.GROQ_API_KEY = 'x';
+    process.env.GROQ_MODEL = 'openai/gpt-oss-20b';
+    const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => ({ choices: [{ message: { content: '{}' } }], usage: { total_tokens: 1 } }) }));
+    try {
+      await providers.callOne(providers.PROVIDERS[0], [], { json: true, fetchImpl });
+      const body = JSON.parse(fetchImpl.mock.calls[0][1].body);
+      expect(body.model).toBe('openai/gpt-oss-20b');
+      expect(body.response_format).toBeUndefined();
+      expect(body.reasoning_effort).toBe('low');
+    } finally { delete process.env.GROQ_MODEL; }
+  });
+
   test('validate: ciudades → IATA, mes sin día, precio del texto', () => {
     expect(validate({ origin: 'Buenos Aires', destination: 'roma', flexibleMonth: '2026-12' }, { today: '2026-10-22' }).value)
       .toMatchObject({ origin: 'EZE', destination: 'FCO', departDate: '2026-12-01', flexibleMonth: '2026-12' });
