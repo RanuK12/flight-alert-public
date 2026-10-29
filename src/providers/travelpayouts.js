@@ -88,7 +88,7 @@ async function search(query) {
  * Búsqueda por rango para el bot (spec UX v1). A diferencia de search(), si la API falla
  * tira el error para que el bot muestre "Reintentar" y no descuente cuota.
  * q: { origin, destination, months: ['2026-12'], day: '2026-12-15'|null, from: ISO mínimo,
- *      oneway: bool, returnDate: ISO|null, stay: n|null }
+ *      to: ISO máximo (opcional, ventana flexible), oneway: bool, returnDate: ISO|null, stay: n|null }
  */
 async function searchRange(q) {
   const origin = String(q.origin || '').toUpperCase();
@@ -103,6 +103,7 @@ async function searchRange(q) {
       if (!row.actual || !Number.isFinite(row.price) || row.price <= 0) continue;
       if (!String(row.departureDate || '').startsWith(m)) continue;
       if (q.from && row.departureDate < q.from) continue;
+      if (q.to && row.departureDate > q.to) continue;
       if (q.day && row.departureDate !== q.day) continue;
       if (q.oneway) {
         if (row.returnDate) continue;
@@ -147,6 +148,7 @@ function sampleDates(q, now) {
       const date = `${m}-${day}`;
       if (date < tomorrow) continue;
       if (q.from && date < q.from) continue;
+      if (q.to && date > q.to) continue;
       dates.push(date);
     }
   }

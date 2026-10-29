@@ -128,6 +128,7 @@ function cardFor(route, hist, now, lang, links) {
   const fresh = Number(route.lastPriceEur) > 0 && route.foundAt && isFresh({ foundAt: route.foundAt }, now);
   const base = {
     title: `${route.origin} \u2192 ${route.destination}`,
+    routeKey: priceHistory.routeKey(route),
     trip: tripLabel(route, lang),
     ceiling,
     ceilingLabel: ceiling ? tr(lang, 'ceiling', { price: money(ceiling, currency, lang) }) : tr(lang, 'noCeiling'),
@@ -318,8 +319,9 @@ function textFor(report) {
       `${c.title} · ${c.trip}`,
       [c.priceLabel, c.vsCeiling, c.stops, c.dates].filter(Boolean).join(' · '),
       c.sourceLine,
+      c.advice,
       c.disclaimer,
-    ].join('\n'),
+    ].filter(Boolean).join('\n'),
     extra: { reply_markup: { inline_keyboard: [[{ text: tr(L, 'textBtn'), url: c.url }]] } },
   }));
   return { header: head.join('\n'), items };

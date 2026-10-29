@@ -29,6 +29,7 @@ beforeEach(async () => {
   cleanEnv(); reset(); ai._reset();
   clock.setNow(new Date('2026-10-22T23:27:00Z')); // 20:27 ART, la hora del reporte
   process.env.AI_ENABLED = 'true';
+  process.env.GROQ_API_KEY = 'test-groq';
   process.env.ADMIN_TELEGRAM_IDS = String(EMILIO);
   await col('Entitlement').create({ telegramUserId: String(EMILIO), plan: 'pro', source: 'comp', searchesUsed: 0, proUntil: '2099-12-30T00:00:00.000Z' });
 });
@@ -37,8 +38,8 @@ afterAll(() => { clock.reset(); cleanEnv(); });
 
 describe('repro prod: frase exacta de Emilio (admin + Pro de cortesía)', () => {
   test('va por la IA, busca COR→MAD en marzo 2027 y ofrece alerta de 900 €', async () => {
-    // Respuesta real de gpt-oss-20b: nombres de ciudad y marzo del año en curso.
-    const call = jest.spyOn(providers, 'callOne').mockResolvedValue({ content: '{"origin":"Córdoba","destination":"Madrid","departDate":"2026-03-01","returnDate":null,"adults":1,"flexibleMonth":"2026-03"}', tokens: 60 });
+    // Contrato nuevo: el modelo devuelve IATA y una fecha que no está en el pasado.
+    const call = jest.spyOn(providers, 'callOne').mockResolvedValue({ content: '{"origen":"COR","destino":"MAD","fecha_ida":"2027-03-01","fecha_vuelta":null,"flex_dias":0}', tokens: 60 });
     const reply = jest.spyOn(buscar, 'replySearch').mockResolvedValue(undefined);
     const bot = fakeBot();
     expect(await naturalSearch.handleText(bot, msgOf(EMILIO, PHRASE))).toBe(true);
@@ -49,21 +50,44 @@ describe('repro prod: frase exacta de Emilio (admin + Pro de cortesía)', () => 
     expect(offer.extra.reply_markup.inline_keyboard[0][0].callback_data).toBe(cb.encode('o', 'al', { o: 'COR', d: 'MAD' }));
   });
 
-  test('providers caídos (sin key / 400): mensaje específico, no "no entendí"', async () => {
-    jest.spyOn(providers, 'callOne').mockRejectedValue(Object.assign(new Error('groq_no_key'), { code: 'no_key' }));
+  test('providers caídos: no se responde nada de IA, cae al menú (no consume cupo)', async () => {
+    jest.spyOn(providers, 'callOne').mockRejectedValue(Object.assign(new Error('x'), { status: 400 }));
     const bot = fakeBot();
-    expect(await naturalSearch.handleText(bot, msgOf(EMILIO, PHRASE))).toBe(true);
-    expect(bot.sent[0].text).toMatch(/No pude interpretar/);
+    expect(await naturalSearch.handleText(bot, msgOf(EMILIO, PHRASE))).toBe(false);
+    expect(bot.sent).toHaveLength(0);
+    expect(await require('../src/services/ai/quota').used(EMILIO)).toBe(0);
   });
 
-  test('Groq: sin response_format y con reasoning_effort low para gpt-oss', async () => {
+  test('salida incompleta del modelo: se le vuelve a preguntar al usuario', async () => {
+    jest.spyOn(providers, 'callOne').mockResolvedValue({ content: '{"origen":"COR","destino":"MAD","fecha_ida":null,"fecha_vuelta":null,"flex_dias":0}', tokens: 20 });
+    const reply = jest.spyOn(buscar, 'replySearch').mockResolvedValue(undefined);
+    const bot = fakeBot();
+    expect(await naturalSearch.handleText(bot, msgOf(EMILIO, 'córdoba a madrid'))).toBe(true);
+    expect(reply).not.toHaveBeenCalled();
+    expect(bot.sent[0].text).toMatch(/No me quedó claro/);
+  });
+
+  test('Groq: response_format json_object, modelo llama-3.1-8b-instant, sin reasoning_effort', async () => {
     process.env.GROQ_API_KEY = 'x';
     const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => ({ choices: [{ message: { content: '{}' } }], usage: { total_tokens: 1 } }) }));
-    await providers.callOne({ name: 'groq', keyEnv: 'GROQ_API_KEY', url: 'https://example.test', model: 'openai/gpt-oss-20b' }, [], { fetchImpl });
+    await providers.callOne(providers.PROVIDERS[0], [], { json: true, fetchImpl });
     const body = JSON.parse(fetchImpl.mock.calls[0][1].body);
-    expect(body.response_format).toBeUndefined();
-    expect(body.reasoning_effort).toBe('low');
-    delete process.env.GROQ_API_KEY;
+    expect(body.response_format).toEqual({ type: 'json_object' });
+    expect(body.model).toBe('llama-3.1-8b-instant');
+    expect(body.reasoning_effort).toBeUndefined();
+  });
+
+  test('GROQ_MODEL=gpt-oss sigue funcionando: sin response_format y con reasoning_effort low', async () => {
+    process.env.GROQ_API_KEY = 'x';
+    process.env.GROQ_MODEL = 'openai/gpt-oss-20b';
+    const fetchImpl = jest.fn(async () => ({ ok: true, json: async () => ({ choices: [{ message: { content: '{}' } }], usage: { total_tokens: 1 } }) }));
+    try {
+      await providers.callOne(providers.PROVIDERS[0], [], { json: true, fetchImpl });
+      const body = JSON.parse(fetchImpl.mock.calls[0][1].body);
+      expect(body.model).toBe('openai/gpt-oss-20b');
+      expect(body.response_format).toBeUndefined();
+      expect(body.reasoning_effort).toBe('low');
+    } finally { delete process.env.GROQ_MODEL; }
   });
 
   test('validate: ciudades → IATA, mes sin día, precio del texto', () => {

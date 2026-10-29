@@ -22,6 +22,8 @@ function queryHash(query) {
     query.day || '',
     query.stay || '',
     query.oneway ? '1' : '',
+    // Ventana flexible: solo entra al hash cuando existe, para no cambiar el de las búsquedas de siempre.
+    ...(query.to ? [query.from || '', query.to] : []),
   ].join('|');
   return crypto.createHash('sha256').update(raw).digest('hex');
 }

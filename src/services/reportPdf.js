@@ -162,6 +162,7 @@ function pricedCard(doc, c, y, draw) {
   if (det) cy += text(doc, draw, det, x, cy, { size: 12, width: w, tnum: true });
   cy += text(doc, draw, c.sourceLine, x, cy, { size: 12, color: C.muted, width: w });
   if (c.confirmed) cy += text(doc, draw, c.confirmed, x, cy, { size: 12, color: C.accent, width: w });
+  if (c.advice) cy += text(doc, draw, c.advice, x, cy, { font: 'S', size: 12, width: w });
   cy += text(doc, draw, c.disclaimer, x, cy, { size: 12, color: C.muted, width: w }) + 8;
   cy += button(doc, draw, c.cta, c.url, x, cy, w, false);
   const h = cy + PAD - y;
