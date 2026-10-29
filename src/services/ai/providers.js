@@ -3,7 +3,7 @@
 /**
  * Capa de proveedores LLM: Groq (primario) → Mistral (fallback).
  *   complete(system, user, schema, maxTokens) -> objeto | {text} | null
- * Timeout 5 s por intento y 1 reintento (solo en errores transitorios). Si fallan los dos
+ * Timeout 5 s por intento y 1 reintento (solo en errores transitorios; en truncado, 1 reintento con el doble de tokens). Si fallan los dos
  * proveedores devuelve null y el bot sigue con el menú de siempre.
  * Las claves salen solo de process.env y nunca se loguean. La IA jamás produce precios.
  */
@@ -11,6 +11,10 @@ const telemetry = require('./telemetry');
 const logger = require('../../utils/logger').child('ai');
 
 const MAX_TOKENS = 150;
+// Techo duro por llamada. Los modelos de razonamiento (gpt-oss) gastan parte del presupuesto pensando:
+// con 120 tokens el JSON de búsqueda llegaba cortado (finish_reason 'length'). Cada uso pide su
+// presupuesto (nl_search 400); el techo evita pedidos descontrolados.
+const MAX_TOKENS_CEILING = 600;
 const RETRIES = 1;
 
 const PROVIDERS = [
@@ -45,7 +49,7 @@ async function callOne(p, messages, { maxTokens = MAX_TOKENS, json = false, fetc
       model: p.model,
       messages,
       temperature: 0,
-      max_tokens: Math.min(MAX_TOKENS, maxTokens),
+      max_tokens: Math.min(MAX_TOKENS_CEILING, maxTokens),
       // Los modelos gpt-oss (si alguien fija GROQ_MODEL=openai/gpt-oss-*) responden 400 json_validate_failed
       // con response_format: ahí no se envía y se baja el razonamiento. El default no los usa.
       ...(/gpt-oss/.test(p.model) ? { reasoning_effort: 'low' } : (json ? { response_format: { type: 'json_object' } } : {})),
@@ -57,7 +61,8 @@ async function callOne(p, messages, { maxTokens = MAX_TOKENS, json = false, fetc
   const content = data && data.choices && data.choices[0] && data.choices[0].message
     ? String(data.choices[0].message.content || '') : '';
   const tokens = Number(data && data.usage && data.usage.total_tokens) || 0;
-  return { provider: p.name, content, tokens, status: res.status };
+  const finishReason = (data && data.choices && data.choices[0] && data.choices[0].finish_reason) || null;
+  return { provider: p.name, content, tokens, status: res.status, finishReason };
 }
 
 /** Errores que vale la pena reintentar: red, timeout, 429 y 5xx. */
@@ -89,12 +94,23 @@ async function complete(system, user, schema, maxTokens = MAX_TOKENS, opts = {})
   const messages = [{ role: 'system', content: system }, { role: 'user', content: user }];
   for (let i = 0; i < list.length; i += 1) {
     const p = list[i];
+    let budget = maxTokens;
     for (let attempt = 0; attempt <= RETRIES; attempt += 1) {
       const t0 = Date.now();
       try {
-        const out = await call(p, messages, { maxTokens, json, fetchImpl: opts.fetchImpl });
+        const out = await call(p, messages, { maxTokens: budget, json, fetchImpl: opts.fetchImpl });
         const latencyMs = Date.now() - t0;
         const content = out && out.content;
+        // Política de truncado (finish_reason 'length'): la salida está cortada, NUNCA se usa (ni el JSON
+        // a medias ni una frase sin terminar). Con temperature 0 repetir igual daría igual: se reintenta
+        // UNA vez con el doble de presupuesto (techo MAX_TOKENS_CEILING) y, si vuelve a cortarse,
+        // se pasa al otro proveedor / al menú de siempre.
+        if (out && out.finishReason === 'length') {
+          telemetry.record({ purpose, provider: p.name, latencyMs, tokens: out.tokens, ok: false, fallback: i > 0 });
+          logger.warn('ai_truncated', { provider: p.name, purpose, maxTokens: budget, attempt });
+          if (attempt < RETRIES && budget < MAX_TOKENS_CEILING) { budget = Math.min(MAX_TOKENS_CEILING, budget * 2); continue; }
+          break;
+        }
         let value = null;
         if (json) {
           value = extractJson(content);
@@ -117,4 +133,4 @@ async function complete(system, user, schema, maxTokens = MAX_TOKENS, opts = {})
   return null;
 }
 
-module.exports = { PROVIDERS, MAX_TOKENS, callOne, complete, configured, hasKey, extractJson };
+module.exports = { PROVIDERS, MAX_TOKENS, MAX_TOKENS_CEILING, callOne, complete, configured, hasKey, extractJson };

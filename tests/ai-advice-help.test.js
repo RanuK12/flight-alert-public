@@ -15,7 +15,7 @@ const tp = require('../src/providers/travelpayouts');
 const pro = async () => true;
 const free = async () => false;
 const D = { routeKey: 'COR|MAD|2026-12-01||roundtrip||', origin: 'COR', destination: 'MAD', price: 890, min: 880, avg: 1100, lang: 'es' };
-const LINE = 'Buen momento: está cerca del mínimo reciente de la ruta.';
+const LINE = 'Está cerca del mínimo de estos últimos días.';
 const reply = (content) => jest.fn(async () => ({ content, tokens: 21 }));
 
 beforeEach(() => {
@@ -33,11 +33,11 @@ afterAll(() => {
 });
 
 describe('P2 consejo de una línea', () => {
-  test('devuelve la línea limpia, max_tokens 60, y al modelo solo le llegan datos calculados por código', async () => {
+  test('devuelve la línea limpia, max_tokens 120, y al modelo solo le llegan datos calculados por código', async () => {
     const call = reply(`"${LINE}"`);
     expect(await advice.adviceFor(1, D, { call, isPro: pro })).toBe(LINE);
     const [, messages, o] = call.mock.calls[0];
-    expect(o.maxTokens).toBe(60);
+    expect(o.maxTokens).toBe(120);
     const user = JSON.parse(messages.find((m) => m.role === 'user').content);
     expect(user).toEqual({ ruta: 'COR-MAD', senal: 'near_min' });
     expect(JSON.stringify(messages)).not.toMatch(/890|880|1100/); // ni precios ni historial
@@ -50,6 +50,44 @@ describe('P2 consejo de una línea', () => {
     ['muy corto', 'Dale'],
   ])('rechaza la salida con %s', async (_n, text) => {
     expect(await advice.adviceFor(1, D, { call: reply(text), isPro: pro })).toBeNull();
+  });
+
+  test.each([
+    ['punto más bajo + orden de compra (caso real de gpt-oss)', 'Compra ya, el precio está en su punto más bajo.'],
+    ['mínimo histórico', 'Está en el mínimo histórico de la ruta, increíble.'],
+    ['mejor precio', 'Es el mejor precio frente al promedio reciente.'],
+    ['orden de compra', 'Comprá ya, está bajo el promedio reciente.'],
+    ['urgencia', 'Aprovechá, está bajo el promedio reciente.'],
+    ['no esperes', 'No esperes más, está bajo el promedio reciente.'],
+    ['garantía', 'Precio garantizado frente al promedio reciente.'],
+    ['predicción', 'Va a subir pronto según el historial reciente.'],
+    ['buen momento', 'Buen momento: está cerca del mínimo reciente de la ruta.'],
+    ['inglés', 'You should buy now, it is below the recent average.'],
+    ['portugués', 'Melhor preço, abaixo da média recente.'],
+    ['sin referencia a lo reciente (afirmación suelta)', 'Está muy barato para esta ruta.'],
+  ])('rechaza afirmaciones absolutas u órdenes: %s', async (_n, text) => {
+    expect(advice.clean(text)).toBeNull();
+    expect(await advice.adviceFor(1, D, { call: reply(text), isPro: pro })).toBeNull();
+  });
+
+  test.each([
+    'Está cerca del mínimo de estos últimos días.',
+    'Se mantiene en el promedio reciente de la ruta.',
+    'Hoy está algo más alto que el promedio reciente.',
+    'Está por debajo del promedio de estos días, aunque puede cambiar.',
+    'It is near the recent minimum.',
+  ])('acepta descripciones relativas a lo reciente: %s', (text) => {
+    expect(advice.clean(text)).toBe(text);
+  });
+
+  test('el prompt pide hablar en relativo y prohíbe absolutos, órdenes y garantías', async () => {
+    const call = reply(LINE);
+    await advice.adviceFor(1, D, { call, isPro: pro });
+    const sys = call.mock.calls[0][1].find((m) => m.role === 'system').content;
+    expect(sys).toMatch(/relativo a lo reciente/);
+    expect(sys).toMatch(/PROHIBIDO/);
+    expect(sys).toMatch(/punto más bajo/);
+    expect(sys).toMatch(/No recomiendes comprar/);
   });
 
   test('caché por (ruta, día ART) 24 h: la segunda vez no llama ni cuenta cupo', async () => {

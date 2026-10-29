@@ -13,7 +13,7 @@ const { todayART } = require('./today');
 
 const TTL_MS = 24 * 60 * 60 * 1000;
 const CACHE_MAX = 1000;
-const MAX_TOKENS = 60;
+const MAX_TOKENS = 120; // con gpt-oss parte se va en razonamiento; la línea final es corta
 const WAIT_MS = 8000;
 const cache = new Map();   // `${routeKey}|${día ART}|${lang}` -> { text, exp }
 const pending = new Map(); // misma clave -> promesa en vuelo (no duplica llamadas)
@@ -31,21 +31,39 @@ function signalOf(price, min, avg) {
 }
 
 function system(lang) {
-  return 'Das un consejo de UNA sola línea (máximo 18 palabras) a alguien que sigue el precio de un vuelo. '
+  return 'Das un comentario de UNA sola línea (máximo 18 palabras) sobre cómo está el precio de un vuelo en comparación con lo que vimos estos días. '
     + `Escribí en ${LANG_NAME[lang] || LANG_NAME.es}. Recibís un JSON con la ruta y una señal: `
-    + 'near_min = está cerca del mínimo reciente, below_avg = por debajo del promedio, near_avg = en el promedio, '
-    + 'above_avg = por encima del promedio. Basate solo en la señal. '
-    + 'PROHIBIDO escribir números, cifras, porcentajes, monedas o fechas; no prometas que el precio va a subir o bajar. '
-    + 'Sin comillas, sin emojis, sin saltos de línea.';
+    + 'near_min = cerca del mínimo reciente, below_avg = por debajo del promedio reciente, near_avg = en el promedio reciente, '
+    + 'above_avg = por encima del promedio reciente. Basate solo en la señal y hablá SIEMPRE en relativo a lo reciente '
+    + '(ej.: "Está cerca del mínimo de estos últimos días."). '
+    + 'PROHIBIDO: números, cifras, porcentajes, monedas o fechas; afirmaciones absolutas ("el más bajo", "el mejor precio", "mínimo histórico", '
+    + '"punto más bajo"); órdenes o urgencia de compra ("comprá ya", "aprovechá", "no esperes"); garantías o predicciones '
+    + '("seguro", "va a subir", "va a bajar"). No recomiendes comprar ni esperar. Sin comillas, sin emojis, sin saltos de línea.';
 }
 
+// Dígitos, monedas y enlaces.
 const BAD = /\d|[€$£%]|\b(?:eur|euros?|usd|ars|dolares|dólares|pesos|dollars?)\b|https?:|www\./i;
+// Afirmaciones absolutas, órdenes de compra o garantías (es/en/pt). El consejo describe, no promete ni manda.
+const CLAIMS = new RegExp([
+  'm[ií]nimo hist[oó]rico', 'hist[oó]ricamente', 'all[- ]time', 'record low', 'lowest ever', 'm[ií]nimo absoluto',
+  'punto m[aá]s bajo', '(?:el|lo|la) m[aá]s (?:bajo|barat[oa])', 'm[aá]s bajo (?:de|que|del)', 'm[aá]s barat[oa] (?:de|que|del)',
+  '(?:buen|mejor|gran) momento', 'momento (?:ideal|perfecto|justo)', 'conviene (?:comprar|reservar|esperar)', 'mejor (?:precio|momento|oferta|tarifa|pre[cç]o|price|time|deal)', 'best (?:price|time|deal|fare)', 'melhor (?:pre[cç]o|momento|oferta)', 'mais (?:baixo|barato)', 'compre[\\wáéíóúãç]*', 'aproveite', 'garantid[oa]', 'hist[oó]rico m[ií]nimo',
+  'precio (?:m[ií]nimo|rid[ií]culo|imperdible)', 'imperdible', 'oportunidad [uú]nica', '[uú]ltima oportunidad', 'no (?:te )?lo (?:pierdas|dejes)', 'don.t miss',
+  'compr[aáeé][\\wáéíóú]*', 'buy[\\wáéíóú]*', 'reserv[aáeé][\\wáéíóú]*', 'book now', 'aprovech[\\wáéíóú]*', 'apur[aáeé][\\wáéíóú]*', 'hurry', 'act now', 'no esper[\\wáéíóú]*', 'don.t wait',
+  '\\bya mismo\\b', '\\bahora mismo\\b', '\\bde inmediato\\b', 'urgente', 'ganga', 'chollo', 'oferta',
+  'garantiz[\\wáéíóú]*', 'garant[ií]a', 'guarantee[\\wáéíóú]*', 'asegurad[oa]', 'seguro que', 'sin duda', 'definitivamente', 'definitely', 'certainly',
+  'va a (?:subir|bajar|aumentar|caer)', 'subir[aá]', 'bajar[aá]', 'will (?:rise|drop|go up|go down|increase|fall)', 'vai (?:subir|cair|aumentar)',
+  'el precio (?:no )?(?:va|seguir[aá])', 'nunca (?:est[aá]|estuvo|fue)', 'jam[aá]s',
+].join('|'), 'i');
+// Todo consejo debe ser relativo a lo observado: sin una referencia a lo reciente / al historial / al promedio no sirve.
+const RELATIVE = /reciente|[uú]ltimos|[uú]ltimas|estos d[ií]as|historial|promedio|seguimiento|vimos|visto|observ|recent|lately|average|history|tracked|m[eé]dia|dias recentes|[uú]ltimos dias/i;
 
-/** Una línea, sin números ni monedas ni enlaces. */
+/** Una línea, sin números ni monedas ni enlaces, sin afirmaciones absolutas ni órdenes, y relativa a lo reciente. */
 function clean(text) {
   const t = String(text || '').replace(/\s+/g, ' ').trim().replace(/^["'`“”]+|["'`“”]+$/g, '').trim();
   if (t.length < 8 || t.length > 160) return null;
-  if (BAD.test(t)) return null;
+  if (BAD.test(t) || CLAIMS.test(t)) return null;
+  if (!RELATIVE.test(t)) return null;
   return t;
 }
 

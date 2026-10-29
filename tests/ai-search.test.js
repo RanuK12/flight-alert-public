@@ -114,12 +114,12 @@ describe('parse (P1)', () => {
     delete process.env.ADMIN_TELEGRAM_IDS;
   });
 
-  test('JSON válido: pide response_format json, max_tokens 120 y temperature 0 al proveedor', async () => {
+  test('JSON válido: pide response_format json, max_tokens 400 y temperature 0 al proveedor', async () => {
     const call = jest.fn(async () => ({ content: good, tokens: 42 }));
     const out = await ai.parse(1, 'córdoba a madrid 10 dic', { call, isPro: pro });
     expect(out).toMatchObject({ ok: true, source: 'ai', value: { origin: 'COR', destination: 'MAD', departDate: '2026-12-10', flexDays: 0 } });
     expect(call).toHaveBeenCalledTimes(1);
-    expect(call.mock.calls[0][2]).toMatchObject({ maxTokens: 120, json: true });
+    expect(call.mock.calls[0][2]).toMatchObject({ maxTokens: 400, json: true });
     expect(call.mock.calls[0][1][0].content).toContain('Hoy es 2026-10-22');
   });
 
@@ -248,6 +248,62 @@ describe('tope diario (20 por usuario, día ART, contador atómico)', () => {
   });
 });
 
+describe('truncado (finish_reason=length)', () => {
+  const trunc = '{"origen":"COR","destino":"MAD","fecha_ida":"2026-12-31","fecha_vuelta":null,"flex_dias';
+  const cut = (content = trunc) => ({ content, tokens: 478, finishReason: 'length' });
+
+  test('P1: JSON cortado + sigue cortado tras el reintento → fallback seguro (providers_down), cupo devuelto, nada se ejecuta', async () => {
+    const call = jest.fn(async () => cut());
+    const out = await ai.parse(1, 'quiero volar de córdoba a madrid a fin de diciembre, flexible, por menos de 900 euros', { call, isPro: pro });
+    expect(out).toEqual({ ok: false, reason: 'providers_down' });
+    // por proveedor (Groq y Mistral): 1 intento + 1 reintento con más presupuesto, y recién ahí el menú de siempre
+    expect(call.mock.calls.map((c) => [c[0].name, c[2].maxTokens])).toEqual([['groq', 400], ['groq', 600], ['mistral', 400], ['mistral', 600]]);
+    expect(await quota.used(1)).toBe(0);
+  });
+
+  test('P1: truncado la primera vez y completo con más presupuesto → usa la respuesta completa', async () => {
+    const call = jest.fn()
+      .mockResolvedValueOnce(cut())
+      .mockResolvedValueOnce({ content: good, tokens: 300, finishReason: 'stop' });
+    const out = await ai.parse(1, 'quiero volar de córdoba a madrid a fin de diciembre, flexible', { call, isPro: pro });
+    expect(out).toMatchObject({ ok: true, source: 'ai', value: { origin: 'COR', destination: 'MAD' } });
+    expect(call.mock.calls.map((c) => c[2].maxTokens)).toEqual([400, 600]);
+    expect(await quota.used(1)).toBe(1);
+  });
+
+  test('nunca usa una salida truncada, aunque parezca JSON/texto válido', async () => {
+    const complete = await providers.complete('s', 'u', { name: 'x' }, 400, { call: jest.fn(async () => cut(good)), providers: [{ name: 'groq', keyEnv: 'GROQ_API_KEY', model: 'm' }] });
+    expect(complete).toBeNull();
+    const text = await providers.complete('s', 'u', null, 150, { call: jest.fn(async () => cut('Para crear una alerta, escribí')), providers: [{ name: 'groq', keyEnv: 'GROQ_API_KEY', model: 'm' }] });
+    expect(text).toBeNull();
+  });
+
+  test('truncado en Groq → pasa a Mistral; el techo de presupuesto es 600', async () => {
+    process.env.MISTRAL_API_KEY = 'test-mistral';
+    const seen = [];
+    const call = jest.fn(async (p, _m, o) => { seen.push([p.name, o.maxTokens]); return p.name === 'groq' ? cut() : { content: good, tokens: 9, finishReason: 'stop' }; });
+    const out = await ai.parse(1, 'quiero volar de córdoba a madrid a fin de diciembre', { call, isPro: pro });
+    expect(out.ok).toBe(true);
+    expect(seen).toEqual([['groq', 400], ['groq', 600], ['mistral', 400]]);
+    delete process.env.MISTRAL_API_KEY;
+    expect(providers.MAX_TOKENS_CEILING).toBe(600);
+  });
+
+  test('callOne devuelve finishReason del proveedor y manda reasoning_effort low a gpt-oss', async () => {
+    process.env.GROQ_MODEL = 'openai/gpt-oss-20b';
+    const body = {};
+    const fetchImpl = jest.fn(async (_u, init) => {
+      Object.assign(body, JSON.parse(init.body));
+      return { ok: true, status: 200, json: async () => ({ choices: [{ message: { content: trunc }, finish_reason: 'length' }], usage: { total_tokens: 478 } }) };
+    });
+    const out = await providers.callOne(providers.PROVIDERS[0], [], { maxTokens: 400, json: true, fetchImpl });
+    expect(out.finishReason).toBe('length');
+    expect(body).toMatchObject({ max_tokens: 400, reasoning_effort: 'low' });
+    expect(body.response_format).toBeUndefined();
+    delete process.env.GROQ_MODEL;
+  });
+});
+
 describe('providers (HTTP)', () => {
   const okFetch = (body) => jest.fn(async (_u, init) => {
     Object.assign(body, JSON.parse(init.body));
@@ -260,13 +316,13 @@ describe('providers (HTTP)', () => {
     expect(providers.PROVIDERS[0].model).toBe('otro');
   });
 
-  test('temperature 0, response_format json, max_tokens topado en 150 y timeout de 5 s', async () => {
+  test('temperature 0, response_format json, max_tokens topado en el techo (600) y timeout de 5 s', async () => {
     const body = {};
     const fetchImpl = okFetch(body);
     const spy = jest.spyOn(AbortSignal, 'timeout');
     const out = await providers.callOne(providers.PROVIDERS[0], [], { maxTokens: 999, json: true, fetchImpl });
     expect(out).toMatchObject({ provider: 'groq', tokens: 9 });
-    expect(body).toMatchObject({ temperature: 0, max_tokens: 150, response_format: { type: 'json_object' }, model: 'llama-3.1-8b-instant' });
+    expect(body).toMatchObject({ temperature: 0, max_tokens: 600, response_format: { type: 'json_object' }, model: 'llama-3.1-8b-instant' });
     expect(spy).toHaveBeenCalledWith(5000);
     spy.mockRestore();
     const b2 = {};

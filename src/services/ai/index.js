@@ -18,6 +18,8 @@ const logger = require('../../utils/logger').child('ai');
 const { todayART } = require('./today');
 
 const DAILY_CAP = quota.DAILY_CAP;
+// P1: el JSON de búsqueda + el razonamiento de gpt-oss no entran en 120 tokens (llegaba cortado). 400 con holgura.
+const NL_MAX_TOKENS = 400;
 const CACHE_MAX = 500;
 const cache = new Map();
 
@@ -84,7 +86,7 @@ async function guarded(userId, purpose, { system, user, schema = null, maxTokens
 
 /** P1: texto → JSON (max_tokens 120). Validación estricta; lo inválido no se ejecuta. */
 async function askLlm(userId, text, opts = {}) {
-  const g = await guarded(userId, 'nl_search', { system: systemP1(), user: text, schema: NL_SEARCH, maxTokens: 120 }, opts);
+  const g = await guarded(userId, 'nl_search', { system: systemP1(), user: text, schema: NL_SEARCH, maxTokens: NL_MAX_TOKENS }, opts);
   if (!g.ok) return g;
   const v = fromLlm(g.value, { today: today() });
   if (v.ok) return { ok: true, value: v.value };
