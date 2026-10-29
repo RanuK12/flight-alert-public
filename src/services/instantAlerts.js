@@ -232,7 +232,8 @@ async function runTick(bot, opts = {}) {
       });
       const rowId = row && row._id;
       try {
-        await notifier.send(bot, route.telegramChatId, messageFor(route, best, now), {
+        const advice = await require('./ai/advice').forAlert(route, best, now);
+        await notifier.send(bot, route.telegramChatId, messageFor(route, best, now) + (advice ? `\n${advice}` : ''), {
           reply_markup: { inline_keyboard: [[{ text: 'Ver en Aviasales', url: bookingUrl(best) }]] },
         });
       } catch (err) {

@@ -12,14 +12,48 @@ function priceCeiling(text) {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
+function addDays(iso, n) {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Parámetros de búsqueda a partir de lo validado. Con flex_dias > 0 se busca en la ventana
+ * [ida - flex, ida + flex] (sin bajar de hoy ART); la vuelta conserva las noches del pedido.
+ */
+function queryFrom(v, today = ai.today()) {
+  const base = {
+    origin: v.origin,
+    destination: v.destination,
+    departureDate: v.departDate,
+    returnDate: v.returnDate,
+    adults: v.adults,
+  };
+  const flex = Number(v.flexDays) || 0;
+  if (!flex) return base;
+  const from = addDays(v.departDate, -flex) < today ? today : addDays(v.departDate, -flex);
+  const to = addDays(v.departDate, flex);
+  const months = [...new Set([from, to].map((d) => d.slice(0, 7)))];
+  const q = { origin: v.origin, destination: v.destination, adults: v.adults, months, from, to };
+  if (v.returnDate) {
+    q.oneway = false;
+    q.stay = Math.round((new Date(`${v.returnDate}T00:00:00Z`) - new Date(`${v.departDate}T00:00:00Z`)) / 86400000) || null;
+  } else {
+    q.oneway = true;
+  }
+  return q;
+}
+
 /** Texto libre → búsqueda. Devuelve true si lo consumió. */
 async function handleText(bot, msg) {
   const userId = msg.from && msg.from.id;
   const out = await ai.parse(userId, msg.text);
   if (!out.ok) {
+    // Tope diario de la IA: se vuelve al menú de siempre (y la ayuda P3 tampoco insiste).
     if (out.reason === 'daily_cap') {
-      await bot.sendMessage(msg.chat.id, 'Llegaste al tope diario de búsquedas con IA. Probá con /buscar EZE MAD AAAA-MM-DD.');
-      return true;
+      msg.aiCapped = true;
+      return false;
     }
     if (out.reason === 'not_pro') {
       const { t, langOf } = require('../ux/i18n');
@@ -30,23 +64,18 @@ async function handleText(bot, msg) {
       });
       return true;
     }
-    // Pro/admin con la IA caída o sin entender: lo decimos, no "no entendí" genérico.
-    if (out.reason === 'providers_down' || out.reason === 'invalid') {
-      logger.error('búsqueda IA falló', { reason: out.reason });
+    // El modelo entendió un pedido de vuelo pero falta algo o no cierra: se le vuelve a preguntar.
+    if (out.reason === 'incomplete') {
       const { t, langOf } = require('../ux/i18n');
-      await bot.sendMessage(msg.chat.id, t(langOf(msg.from), 'aiFailed'));
+      await bot.sendMessage(msg.chat.id, t(langOf(msg.from), 'aiReask'));
       return true;
     }
+    // Proveedores caídos, IA apagada o texto que no es una búsqueda: sigue el menú de siempre (o la ayuda P3).
+    if (out.reason === 'providers_down') logger.warn('búsqueda IA sin respuesta', { reason: out.reason });
     return false;
   }
   const v = out.value;
-  await buscar.replySearch(bot, msg.chat.id, userId, {
-    origin: v.origin,
-    destination: v.destination,
-    departureDate: v.departDate,
-    returnDate: v.returnDate,
-    adults: v.adults,
-  });
+  await buscar.replySearch(bot, msg.chat.id, userId, queryFrom(v));
   const price = priceCeiling(msg.text);
   if (price) {
     const { t, langOf } = require('../ux/i18n');
@@ -60,4 +89,4 @@ async function handleText(bot, msg) {
   return true;
 }
 
-module.exports = { handleText, priceCeiling };
+module.exports = { handleText, priceCeiling, queryFrom };

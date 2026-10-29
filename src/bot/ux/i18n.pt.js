@@ -97,6 +97,7 @@ module.exports = {
   alreadyPro: 'Você já tem Pro até {date}.',
   proActive: 'Você tem Pro ativo: buscas sem limite, alertas de preço e busca com IA.',
   adminHint: '🛠 Você é admin: toque em Admin ou use /admin.',
+  aiReask: 'Não entendi o voo. Diga de onde para onde e em que dia, por exemplo: "Córdoba a Madri em 10 de dezembro".',
   aiFailed: 'Não consegui interpretar sua busca com IA. Tente assim: "São Paulo a Lisboa em março", ou toque em 🔎 Buscar voo.',
   aiPriceOffer: 'Posso te avisar se {o}→{d} baixar de {price} €.',
   btnAiAlert: '🔔 Criar alerta {o}→{d}',

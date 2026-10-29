@@ -46,6 +46,7 @@ async function pdfSummary(bot, userId, chatId, budget) {
   const hist = await reportData.historyFor(filled, now, b);
   const links = reportLinks();
   const report = reportData.buildReport({ routes: filled, user, now, lang, histByKey: hist, links });
+  await require('./ai/advice').attachToReport(userId, report, hist, lang);
   let pdf = null;
   try {
     pdf = await render(report);

@@ -13,6 +13,7 @@ const startHandler = require('./handlers/start');
 const buscarHandler = require('./handlers/buscar');
 const nuevaAlertaHandler = require('./handlers/nuevaAlerta');
 const naturalSearch = require('./handlers/naturalSearch');
+const aiHelp = require('./handlers/aiHelp');
 const misAlertasHandler = require('./handlers/misAlertas');
 const ux = require('./ux');
 
@@ -113,7 +114,8 @@ function startBot() {
         || (await ux.onText(bot, msg))
         || (await buscarHandler.handleText(bot, msg))
         || (await nuevaAlertaHandler.handleText(bot, msg))
-        || (await naturalSearch.handleText(bot, msg));
+        || (await naturalSearch.handleText(bot, msg))
+        || (await aiHelp.handleText(bot, msg));
       if (!consumed) await ux.notUnderstood(bot, msg);
     } catch (err) {
       logger.error('mensaje', err);
