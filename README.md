@@ -21,6 +21,8 @@ Los IDs de Telegram en `OWNER_TELEGRAM_IDS` no tienen tope.
 
 ## Arquitectura
 
+> **Persistencia y Durabilidad**: Las alertas configuradas (`/nueva_alerta`, `/watch`) y el historial de notificaciones se guardan de forma persistente en MongoDB Atlas (`Route` y `Notification`). Los reinicios del servicio o redeploys en Docker/Render nunca eliminan las alertas activas ni disparan pings duplicados (cooldown de 12h y deduplicación atómica). La capa en memoria se usa de forma exclusiva para la caché TTL de cotizaciones de vuelos (<35ms) para no consumir cuotas de API.
+
 ```mermaid
 flowchart LR
   U[Usuario Telegram] <--> TG[Telegram Bot API]
