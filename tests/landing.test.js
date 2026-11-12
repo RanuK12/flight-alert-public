@@ -181,30 +181,35 @@ test('inglés por Accept-Language y por /en, español forzado en /es', async () 
 });
 
 test('ARS solo con cotización real y el país detectado no cambia el checkout', async () => {
-  const app = createApp();
-  country.setLookup(async () => 'AR');
-  const missing = text(await get(app, '/es'));
-  expect(missing).toContain('Sin cotización del dólar oficial para mostrar el precio en pesos.');
-  expect(missing).not.toContain('pesos argentinos, al dólar oficial de hoy');
-  expect(missing).toContain('data-price-region="ar" aria-current="true"');
+  process.env.FEATURE_PAYMENTS_MP = 'on';
+  try {
+    const app = createApp();
+    country.setLookup(async () => 'AR');
+    const missing = text(await get(app, '/es'));
+    expect(missing).toContain('Sin cotización del dólar oficial para mostrar el precio en pesos.');
+    expect(missing).not.toContain('pesos argentinos, al dólar oficial de hoy');
+    expect(missing).toContain('data-price-region="ar" aria-current="true"');
 
-  await col('FxRate').create({
-    publishedArs: 7700,
-    usedRate: 1540,
-    at: '2026-10-21T00:00:00.000Z',
-  });
-  const html = text(await get(app, '/es'));
-  expect(html).toContain('7700 pesos argentinos, al dólar oficial de hoy.');
-  expect(html).toContain('al dólar oficial de hoy');
-  expect(html).toContain('"priceCurrency":"ARS"');
-  expect(html).toContain('"price":"7700"');
-  expect(html).toContain('Este selector solo cambia la vista.');
+    await col('FxRate').create({
+      publishedArs: 7700,
+      usedRate: 1540,
+      at: '2026-10-21T00:00:00.000Z',
+    });
+    const html = text(await get(app, '/es'));
+    expect(html).toContain('7700 pesos argentinos, al dólar oficial de hoy.');
+    expect(html).toContain('al dólar oficial de hoy');
+    expect(html).toContain('"priceCurrency":"ARS"');
+    expect(html).toContain('"price":"7700"');
+    expect(html).toContain('Este selector solo cambia la vista.');
 
-  country.setLookup(async () => 'ES');
-  const eu = text(await get(app, '/es'));
-  expect(eu).toContain('data-price-region="eu" aria-current="true"');
-  expect(eu).toContain('4,50 euros, IVA incluido.');
-  expect(eu).toContain('data-price-region="ar" hidden');
+    country.setLookup(async () => 'ES');
+    const eu = text(await get(app, '/es'));
+    expect(eu).toContain('data-price-region="eu" aria-current="true"');
+    expect(eu).toContain('4,50 euros, IVA incluido.');
+    expect(eu).toContain('data-price-region="ar" hidden');
+  } finally {
+    delete process.env.FEATURE_PAYMENTS_MP;
+  }
 });
 
 test('GET /api/sample-price es de solo lectura y no inventa', async () => {
@@ -377,20 +382,27 @@ test('fotos propias en webp, < 200 KB y con créditos', () => {
 
 
 test('review PRISM: 31 destinos con chips, moneda en radiogroup, fuentes propias, sin toggle de tema', () => {
-  const { renderLanding } = require('../src/web/landing');
-  const html = renderLanding({ lang: 'es' });
-  expect((html.match(/class="dest-mini[ "]/g) || []).length).toBe(31);
-  expect(html).toContain('name="dest-region"');
-  expect(html).toContain('Ver los 31 destinos');
-  expect(html).toMatch(/role="radiogroup"[^>]*class="ccy-group"/);
-  expect((html.match(/name="ccy"/g) || []).length).toBe(4);
-  expect(html).not.toContain('<select');
-  expect(html).toContain('/public/fonts/inter-latin-wght-normal.woff2');
-  expect(html).not.toMatch(/<button[^>]*id="theme-toggle"/);
-  expect(html).toMatch(/id="theme-pick" role="group" aria-label="Tema"/);
-  expect((html.match(/class="theme-opt" data-mode="(system|light|dark)" aria-pressed="(true|false)"/g) || []).length).toBe(3);
-  expect(html).toContain('<span class="sr-only">Sistema</span>');
-  expect(html).not.toContain('cada pocas horas');
+  process.env.FEATURE_PAYMENTS_MP = 'on';
+  process.env.FEATURE_PAYMENTS_STARS = 'on';
+  try {
+    const { renderLanding } = require('../src/web/landing');
+    const html = renderLanding({ lang: 'es' });
+    expect((html.match(/class="dest-mini[ "]/g) || []).length).toBe(31);
+    expect(html).toContain('name="dest-region"');
+    expect(html).toContain('Ver los 31 destinos');
+    expect(html).toMatch(/role="radiogroup"[^>]*class="ccy-group"/);
+    expect((html.match(/name="ccy"/g) || []).length).toBe(4);
+    expect(html).not.toContain('<select');
+    expect(html).toContain('/public/fonts/inter-latin-wght-normal.woff2');
+    expect(html).not.toMatch(/<button[^>]*id="theme-toggle"/);
+    expect(html).toMatch(/id="theme-pick" role="group" aria-label="Tema"/);
+    expect((html.match(/class="theme-opt" data-mode="(system|light|dark)" aria-pressed="(true|false)"/g) || []).length).toBe(3);
+    expect(html).toContain('<span class="sr-only">Sistema</span>');
+    expect(html).not.toContain('cada pocas horas');
+  } finally {
+    delete process.env.FEATURE_PAYMENTS_MP;
+    delete process.env.FEATURE_PAYMENTS_STARS;
+  }
 });
 
 test('PRISM: "cada 2–3 h" una sola vez, reporte "21 h (hora Argentina)" y botón "Ver oferta ↗"', () => {

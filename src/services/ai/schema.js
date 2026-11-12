@@ -1,6 +1,6 @@
 'use strict';
 
-const { ORIGINS, DESTINATIONS, pairOk } = require('../../config/airports');
+const { ORIGINS, DESTINATIONS, activeOrigins, activeDestinations, pairOk } = require('../../config/airports');
 
 const IATA = new Set([...ORIGINS, ...DESTINATIONS]);
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -9,12 +9,14 @@ const KEYS = new Set(['origin', 'destination', 'departDate', 'returnDate', 'adul
 
 /** Nombre de ciudad/alias (p. ej. "Córdoba", "madrid") → IATA, solo si es inequívoco. */
 function resolveCode(raw) {
+  const codes = [...activeOrigins(), ...activeDestinations()];
+  const iata = new Set(codes);
   const up = String(raw || '').trim().toUpperCase();
-  if (IATA.has(up)) return up;
+  if (iata.has(up)) return up;
   const { PLACES, norm } = require('../../bot/ux/places');
   const q = norm(raw);
   if (!q) return up;
-  for (const code of [...ORIGINS, ...DESTINATIONS]) {
+  for (const code of codes) {
     const p = PLACES[code];
     if (!p) continue;
     if ([p.city, p.airport, ...(p.alias || [])].map(norm).includes(q)) return code; // EZE antes que BUE
@@ -105,7 +107,8 @@ function fromLlm(obj, opts = {}) {
     return { ok: false, error: 'iata' };
   }
   if (typeof ida !== 'string' || (!nil(vuelta) && typeof vuelta !== 'string')) return { ok: false, error: 'date' };
-  if (!IATA.has(origen.toUpperCase()) || !IATA.has(destino.toUpperCase())) return { ok: false, error: 'iata' };
+  const activeIata = new Set([...activeOrigins(), ...activeDestinations()]);
+  if (!activeIata.has(origen.toUpperCase()) || !activeIata.has(destino.toUpperCase())) return { ok: false, error: 'iata' };
   let flexDays = 0;
   if (!nil(obj.flex_dias)) {
     if (!Number.isInteger(obj.flex_dias) || obj.flex_dias < 0 || obj.flex_dias > MAX_FLEX) return { ok: false, error: 'flex_dias' };

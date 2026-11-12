@@ -6,6 +6,7 @@ services:
     plan: starter
     healthCheckPath: /health
     envVars:
+      # CRITICAL in Render Dashboard: NODE_ENV MUST be "production" (disables /app/api/test/plan)
       - key: NODE_ENV
         sync: false
       - key: PORT
@@ -83,4 +84,20 @@ services:
       - key: DEVICE_COOKIE_SECRET
         sync: false
       - key: STARS_PAYLOAD_SECRET
+        sync: false
+      - key: SUPPORT_CONTACT
+        sync: false
+      - key: FUNNEL_HMAC_SALT
+        sync: false
+      - key: PLAN_LIMITS_JSON
+        sync: false
+      - key: INSTANT_ALERTS_TRIAL_MAX_TOTAL
+        sync: false
+      - key: FEATURE_F3_DESTINATIONS
+        sync: false
+      - key: ADMIN_TELEGRAM_IDS
+        sync: false
+      - key: TELEGRAM_WEBHOOK_SECRET
+        sync: false
+      - key: BROADCAST_ALLOWLIST
         sync: false

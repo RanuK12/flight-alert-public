@@ -11,6 +11,6 @@ const schema = new mongoose.Schema({
   paidAt: { type: String, default: null },
 }, { timestamps: true });
 
-schema.index({ provider: 1, ref: 1 }, { unique: true });
+schema.index({ provider: 1, ref: 1 }, { unique: true, name: 'provider_ref_unique' });
 
 module.exports = mongoose.models.Payment || mongoose.model('Payment', schema);

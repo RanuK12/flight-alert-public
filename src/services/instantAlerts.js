@@ -7,7 +7,9 @@ const { col } = require('../database');
 const clock = require('../utils/clock');
 const art = require('../utils/art');
 const flags = require('../config/flags');
+const plans = require('../config/plans');
 const entitlements = require('./entitlements');
+const funnel = require('./funnel');
 const travelpayouts = require('../providers/travelpayouts');
 const { sortFlights, seenLabel } = require('./sortFlights');
 const { bookingUrl } = require('../bot/deepLinks');
@@ -146,18 +148,44 @@ async function run(bot, opts = {}) {
   }
 }
 
+let lastSafeLogAt = 0;
+function logSafeModeOnce() {
+  const nowMs = clock.now().getTime();
+  if (nowMs - lastSafeLogAt >= art.HOUR_MS) {
+    lastSafeLogAt = nowMs;
+    logger.error('instant_alerts_paused_safe_mode', { reason: 'plan_config_missing' });
+  }
+}
+
 async function runTick(bot, opts = {}) {
   if (flags.kill() || !flags.instantAlerts()) return { skipped: true };
+  if (plans.isSafeMode()) {
+    logSafeModeOnce();
+    return { skipped: true, reason: 'plan_config_missing' };
+  }
   const now = clock.now();
   // Forzado desde /admin: revisa igual, pero no manda nada en horario de silencio.
   if (art.isQuiet(now)) return { quiet: true, forced: Boolean(opts.force) };
   const routes = (await col('Route').find({ paused: false }).lean())
-    .filter((r) => Number(r.priceThreshold) > 0);
-  const proCache = new Map();
+    .filter((r) => !r.deletedAt && Number(r.priceThreshold) > 0);
+  const cfg = plans.current();
+  const userStateCache = new Map();
   const eligible = [];
   for (const r of routes) {
-    if (!proCache.has(r.telegramUserId)) proCache.set(r.telegramUserId, await entitlements.isPro(r.telegramUserId));
-    if (proCache.get(r.telegramUserId)) eligible.push(r);
+    const uid = String(r.telegramUserId);
+    if (!userStateCache.has(uid)) {
+      const userDoc = await col('User').findOne({ telegramUserId: uid });
+      if (userDoc && userDoc.blocked) {
+        userStateCache.set(uid, { eligible: false, plan: 'blocked', quota: null });
+      } else {
+        const { plan } = await entitlements.planOf(uid);
+        const quota = await entitlements.instantQuotaState(uid);
+        const trialOk = plan !== 'trial' || (Number.isInteger(cfg.trial.instantTotalMax) && cfg.trial.instantTotalMax > 0);
+        const planOk = (plan === 'owner' || plan === 'pro' || (plan === 'trial' && trialOk) || (plan === 'free' && Number(cfg.free.instantTotalMax) > 0));
+        userStateCache.set(uid, { eligible: planOk, plan, quota });
+      }
+    }
+    if (userStateCache.get(uid).eligible) eligible.push(r);
   }
   const groups = new Map();
   for (const r of eligible) {
@@ -165,7 +193,6 @@ async function runTick(bot, opts = {}) {
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(r);
   }
-  const dayStart = art.startOfArtDay(now).toISOString();
   let calls = 0;
   let sent = 0;
   for (const [, list] of groups) {
@@ -194,6 +221,16 @@ async function runTick(bot, opts = {}) {
     for (const route of list) {
       if (best.price > Number(route.priceThreshold)) continue;
       if (route.instantLastAt && now.getTime() - new Date(route.instantLastAt).getTime() < cooldownMs()) continue;
+      const uid = String(route.telegramUserId);
+      const state = userStateCache.get(uid);
+      if (!state || !state.quota) continue;
+      const q = state.quota;
+      if (q.instantTotalMax !== null && q.instantTotalMax !== undefined && q.instantUsedTotal >= q.instantTotalMax) continue;
+      const envMax = process.env.INSTANT_ALERTS_MAX_PER_DAY;
+      const perDayCap = state.plan === 'owner'
+        ? (flags.isAdmin(uid) ? num('ADMIN_ALERTS_PER_DAY', 500) : q.instantPerDayMax)
+        : (state.plan === 'pro' && envMax !== undefined && envMax !== '' ? num('INSTANT_ALERTS_MAX_PER_DAY', 5) : q.instantPerDayMax);
+      if (perDayCap !== null && perDayCap !== undefined && q.instantUsedToday >= perDayCap) continue;
       const dup = await col('Notification').findOne({
         telegramUserId: route.telegramUserId,
         kind: 'instant',
@@ -202,21 +239,14 @@ async function runTick(bot, opts = {}) {
         departureDate: best.departureDate,
         returnDate: best.returnDate || null,
         price: priceBand(best.price),
-        status: { $ne: 'failed' },
+        status: { $nin: ['failed', 'skipped'] },
       });
       if (dup) continue;
-      const today = await col('Notification').countDocuments({
-        telegramUserId: route.telegramUserId,
-        kind: 'instant',
-        sentAtIso: { $gt: dayStart },
-        status: { $ne: 'failed' },
-      });
-      const cap = require('../config/flags').isAdmin(route.telegramUserId) ? num('ADMIN_ALERTS_PER_DAY', 500) : maxPerDay();
-      if (today >= cap) continue;
       // Outbox: se registra ANTES de mandar. Si el proceso se cae después del envío,
       // el registro 'pending' ya bloquea un segundo aviso (at-most-once).
       const row = await col('Notification').create({
         telegramUserId: route.telegramUserId,
+        alertId: route._id ? String(route._id) : null,
         origin: best.origin,
         destination: best.destination,
         departureDate: best.departureDate,
@@ -238,14 +268,17 @@ async function runTick(bot, opts = {}) {
         });
       } catch (err) {
         logger.warn('send', { error: err.message });
-        if (rowId) await col('Notification').updateOne({ _id: rowId }, { $set: { status: 'failed' } });
+        if (rowId) await col('Notification').updateOne({ _id: rowId }, { $set: { status: 'failed', reason: err.message || 'send_failed' } });
         continue;
       }
       if (rowId) await col('Notification').updateOne({ _id: rowId }, { $set: { status: 'sent' } });
+      q.instantUsedTotal += 1;
+      q.instantUsedToday += 1;
       await col('Route').updateOne(
         { _id: route._id },
         { $set: { instantLastAt: now.toISOString(), lastPriceEur: best.price, foundAt: best.foundAt } },
       );
+      await funnel.record({ event: 'first_cheap_alert', userId: route.telegramUserId, plan: state.plan });
       sent += 1;
     }
   }

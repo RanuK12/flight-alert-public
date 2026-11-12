@@ -135,7 +135,7 @@ function routePage(route, lang, price, nonce = '') {
     + `<script type="application/ld+json"${n}>${ld(faqLd)}</script>`
     + `<script type="application/ld+json"${n}>${ld(crumbLd)}</script>`
     + '</head><body class="page-simple">'
-    + `<header class="site-header"><div class="wrap"><a class="wordmark" href="${home}"><img class="bot-logo" src="/public/avatar.webp" alt="" width="36" height="36"><span class="wordmark-label">Flight Alert</span></a></div></header>`
+    + `<header class="site-header"><div class="wrap"><a class="wordmark" href="${home}">${require('./brandSvg').flightAlertLogoSvg({ size: 36, cls: 'bot-logo' })}<span class="wordmark-label">Flight Alert</span></a></div></header>`
     + `<main id="contenido" class="section"><div class="wrap narrow">`
     + `<nav aria-label="${lang === 'en' ? 'Breadcrumb' : 'Migas'}"><a href="${home}">Flight Alert</a> › <span>${esc(t.h1)}</span></nav>`
     + `<h1>${esc(t.h1)}</h1><p>${esc(fill(t.intro, price, lang))}</p>`

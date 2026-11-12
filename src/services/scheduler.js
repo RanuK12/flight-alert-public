@@ -63,6 +63,7 @@ function buildJobs(deps) {
   return [
     { name: 'digest', window: dailyAt(21), graceMs: num('DIGEST_GRACE_HOURS', 3) * art.HOUR_MS, leaseMs: 30 * MIN_MS, run: deps.digest },
     { name: 'expire', window: everyHours(1), graceMs: art.HOUR_MS, leaseMs: 15 * MIN_MS, run: deps.expire },
+    { name: 'stars-recovery', window: everyHours(1), graceMs: art.HOUR_MS, leaseMs: 15 * MIN_MS, run: deps.starsRecovery },
     { name: 'fx', window: dailyAt(10), graceMs: 12 * art.HOUR_MS, leaseMs: 15 * MIN_MS, run: deps.fx },
     { name: 'instant', window: everyHours(instantEvery), graceMs: instantEvery * art.HOUR_MS, leaseMs: 30 * MIN_MS, run: deps.instant },
     // Lo que se guardó por horario de silencio sale a las 08:00.

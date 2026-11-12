@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const axios = require('axios');
 const { col } = require('../../database');
 const entitlements = require('../entitlements');
+const funnel = require('../funnel');
 const logger = require('../../utils/logger').child('mp');
 const { savePending } = require('./pending');
 const { paymentsMode, assertMpKey } = require('./mode');
@@ -173,12 +174,25 @@ async function handleWebhookInner(req) {
       'mp',
       String(dataId),
       entitlements.proUntilFromNow(),
+      { source: 'mp' },
     );
     await col('Entitlement').updateOne(
       { telegramUserId: String(checkout.telegramUserId) },
       { $set: { country: 'AR', priceCurrency: 'ARS' } },
     );
-    if (!result.duplicate) await alert();
+    if (!result.duplicate) {
+      if (!result.compPreserved) {
+        await funnel.record({
+          event: 'pro_paid',
+          userId: checkout.telegramUserId,
+          method: 'mp',
+          interval: 'monthly',
+          origin: checkout.origin || null,
+          subscriptionId: String(dataId),
+        });
+      }
+      await alert();
+    }
     return { status: 200, payment: true, activated: true, duplicate: Boolean(result.duplicate) };
   }
   const remote = await fetchPreapproval(dataId);
@@ -189,16 +203,27 @@ async function handleWebhookInner(req) {
     await savePending({ provider: 'mp', ref: String(dataId), externalReference: ref });
     return { status: 200, pendingLink: true };
   }
-  await entitlements.activatePro(
+  const preRes = await entitlements.activatePro(
     checkout.telegramUserId,
     'mp',
     String(dataId),
     entitlements.proUntilFromNow(),
+    { source: 'mp' },
   );
   await col('Entitlement').updateOne(
     { telegramUserId: String(checkout.telegramUserId) },
     { $set: { country: 'AR', priceCurrency: 'ARS' } },
   );
+  if (!preRes.duplicate && !preRes.compPreserved) {
+    await funnel.record({
+      event: 'pro_paid',
+      userId: checkout.telegramUserId,
+      method: 'mp',
+      interval: 'monthly',
+      origin: checkout.origin || null,
+      subscriptionId: String(dataId),
+    });
+  }
   return { status: 200, activated: true };
 }
 

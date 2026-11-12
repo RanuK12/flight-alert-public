@@ -7,6 +7,8 @@ const clock = require('../../utils/clock');
 const logger = require('../../utils/logger').child('ux');
 const { col } = require('../../database');
 const flags = require('../../config/flags');
+const plans = require('../../config/plans');
+const pricing = require('../../config/pricing');
 const sessions = require('../sessions');
 const entitlements = require('../../services/entitlements');
 const { runSearch } = require('../../services/search');
@@ -49,11 +51,12 @@ async function quotaLine(lang, userId) {
   if (flags.isOwner(userId) || await entitlements.isPro(userId)) return { ok: true, text: '' };
   const gate = await entitlements.peek(userId);
   if (gate.owner) return { ok: true, text: '' };
-  const left = Math.max(0, SEARCH_CAP - (gate.used || 0));
+  const cap = entitlements.SEARCH_CAP;
+  const left = Math.max(0, cap - (gate.used || 0));
   if (left > 0) return { ok: true, text: t(lang, 'quotaLeft', { n: left }) };
   const x = cal.today();
   const nm = cal.addMonths(x.y, x.m, 1);
-  return { ok: false, text: t(lang, 'quotaOut', { n: entitlements.SEARCH_CAP, date: cal.shortDate(lang, cal.iso(nm.y, nm.m, 1)) }) };
+  return { ok: false, text: t(lang, 'quotaOut', { n: cap, date: cal.shortDate(lang, cal.iso(nm.y, nm.m, 1)) }) };
 }
 
 async function step(bot, ctx, fl, fields, extra) {
@@ -114,8 +117,14 @@ function shortcut(args) {
 async function startFlow(bot, msg, fl, fields = {}, editId = null) {
   const ctx = { chatId: msg.chat.id, userId: msg.from.id, lang: langOf(msg.from), mid: null, editId };
   if (fl === 'a') {
-    const opened = await require('../handlers/nuevaAlerta').gate(ctx.userId, ctx.chatId);
-    if (!opened.ok) return proScreen(bot, ctx, opened.text);
+    const opened = await require('../handlers/nuevaAlerta').gate(ctx.userId, ctx.chatId, { lang: ctx.lang });
+    if (!opened.ok) {
+      if (opened.status === 409 || opened.status === 503 || opened.status === 403) {
+        await show(bot, ctx.chatId, ctx.mid, opened.text, menu(ctx.lang));
+        return null;
+      }
+      return proScreen(bot, ctx, opened.text, { origin: 'alert_paywall' });
+    }
     return step(bot, ctx, fl, fields, opened.text);
   }
   return step(bot, ctx, fl, fields);
@@ -157,8 +166,26 @@ async function doSearch(bot, ctx, f, attempt) {
 
 async function createAlert(bot, ctx, f) {
   const nuevaAlerta = require('../handlers/nuevaAlerta');
-  const opened = await nuevaAlerta.gate(ctx.userId, ctx.chatId);
-  if (!opened.ok) return proScreen(bot, ctx, opened.text);
+  let opened = { ok: true, text: '' };
+  if (ctx.editId) {
+    const existing = await col('Route').findOne({ _id: ctx.editId, telegramUserId: String(ctx.userId) }).lean();
+    if (!existing || existing.paused || existing.deletedAt) {
+      opened = await nuevaAlerta.gate(ctx.userId, ctx.chatId, { lang: ctx.lang });
+    } else if (!flags.alerts()) {
+      opened = { ok: false, status: 403, text: t(ctx.lang, 'alertsOff') };
+    } else if (plans.isSafeMode()) {
+      opened = { ok: false, status: 503, text: t(ctx.lang, 'planConfigDown') };
+    }
+  } else {
+    opened = await nuevaAlerta.gate(ctx.userId, ctx.chatId, { lang: ctx.lang });
+  }
+  if (!opened.ok) {
+    if (opened.status === 409 || opened.status === 503 || opened.status === 403) {
+      await show(bot, ctx.chatId, ctx.mid, opened.text, menu(ctx.lang));
+      return null;
+    }
+    return proScreen(bot, ctx, opened.text, { origin: 'alert_paywall' });
+  }
   const now = clock.now();
   const q = flow.toQuery(f, now);
   const first = q.day || (q.months[0] === cal.todayIso(now).slice(0, 7) ? cal.todayIso(now) : `${q.months[0]}-01`);
@@ -177,13 +204,15 @@ async function createAlert(bot, ctx, f) {
     currency: 'EUR',
     hour: '21:00',
     paused: false,
+    pausedByBilling: false,
+    pausedReason: null,
     name: `${f.o}→${f.d}`,
     lang: ctx.lang || 'es',
   };
   if (ctx.editId) {
-    await col('Route').updateOne({ _id: ctx.editId, telegramUserId: String(ctx.userId) }, { $set: doc });
+    await col('Route').updateOne({ _id: ctx.editId, telegramUserId: String(ctx.userId) }, { $set: doc, $inc: { version: 1 } });
   } else {
-    await col('Route').create(doc);
+    await col('Route').create({ ...doc, version: 1 });
   }
   await sessions.clearSession(ctx.chatId);
   const extra = opened.text ? `\n\n${opened.text}` : '';
@@ -196,7 +225,7 @@ function kbFor(lang, userId) {
   return miniapp.keyboard(lang, process.env, { admin: userId != null && flags.isAdmin(userId) });
 }
 
-async function proScreen(bot, ctx, extra) {
+async function proScreen(bot, ctx, extra, opts = {}) {
   const lang = ctx.lang;
   const e = await col('Entitlement').findOne({ telegramUserId: String(ctx.userId) });
   if ((await entitlements.isPro(ctx.userId) && e && e.proUntil) || flags.isAdmin(ctx.userId)) {
@@ -210,11 +239,28 @@ async function proScreen(bot, ctx, extra) {
     return null;
   }
   const last = await fx.latest().catch(() => null);
-  const ars = last && last.publishedArs ? t(lang, 'proArs', { ars: Number(last.publishedArs).toLocaleString('es-AR') }) : '';
+  const ars = (flags.mp() && last && last.publishedArs) ? t(lang, 'proArs', { ars: Number(last.publishedArs).toLocaleString('es-AR') }) : '';
+  const eur = `€${pricing.figure(pricing.PRO_EUR_CENTS, lang)}`;
+  const usd = `US$${pricing.figure(pricing.PRO_USD_CENTS, lang)}`;
+  const starsPart = flags.stars() ? t(lang, 'proStarsPart', { stars: stars.STARS_TOTAL }) : '';
   const base = require('../../config/site').baseUrl();
-  const text = [extra, t(lang, 'proTitle', { drop: t(lang, 'dropNotice') }), t(lang, 'proPrices', { ars }), t(lang, 'proHow')].filter(Boolean).join('\n\n');
-  const rows = [[{ text: t(lang, 'payWeb'), url: `${base}/pro?s=${encodeURIComponent(webSession.sign(ctx.userId))}` }]];
-  if (flags.stars()) rows.push([{ text: t(lang, 'payStars'), callback_data: cb.encode('p', 'stars') }]);
+  const origin = opts && opts.origin ? String(opts.origin).replace(/[^A-Za-z0-9_:-]/g, '').slice(0, 64) : null;
+  const signed = origin ? webSession.sign(ctx.userId, { origin }) : webSession.sign(ctx.userId);
+  const text = [
+    extra,
+    t(lang, 'proTitle', { drop: t(lang, 'dropNotice') }),
+    t(lang, 'proPrices', { proDays: entitlements.PRO_DAYS, ars, eur, usd, starsPart }),
+    t(lang, 'proHow'),
+  ].filter(Boolean).join('\n\n');
+  const rows = [[{ text: t(lang, 'payWeb'), url: `${base}/pro?s=${encodeURIComponent(signed)}` }]];
+  if (flags.stars()) {
+    const sf = origin ? { o: origin.slice(0, 32) } : {};
+    rows.push([{ text: t(lang, 'payStars'), callback_data: cb.encode('p', 'stars', sf) }]);
+  }
+  if (!(e && e.trialUsedAt) && !plans.isSafeMode()) {
+    const trialDays = (plans.current().trial && plans.current().trial.days) || entitlements.TRIAL_DAYS;
+    rows.push([{ text: t(lang, 'tryPro', { days: trialDays }), callback_data: cb.encode('p', 'trial') }]);
+  }
   await show(bot, ctx.chatId, ctx.mid, text, { inline_keyboard: rows });
   return null;
 }
@@ -227,7 +273,8 @@ function alertLabel(lang, r) {
 async function alerts(bot, ctx, stepName, fields) {
   const lang = ctx.lang;
   const mine = { telegramUserId: String(ctx.userId) };
-  const routes = await col('Route').find(mine).lean();
+  const rawRoutes = await col('Route').find(mine).lean();
+  const routes = rawRoutes.filter((r) => !r.deletedAt);
   const byId = (id) => routes.find((r) => String(r._id) === String(id));
   if (stepName === 'ls') {
     if (!routes.length) {
@@ -252,8 +299,29 @@ async function alerts(bot, ctx, stepName, fields) {
   if (!r) return alerts(bot, ctx, 'ls', {});
   const id = String(r._id);
   if (stepName === 'pa') {
-    if (r.paused && !(await entitlements.canUseAlerts(ctx.userId))) return proScreen(bot, ctx, require('../copy').alertsPaywall);
-    await col('Route').updateOne({ _id: r._id, ...mine }, { $set: r.paused ? { paused: false, pausedByBilling: false } : { paused: true } });
+    if (r.paused) {
+      const v = await entitlements.canCreateOrReactivate(ctx.userId);
+      if (!v.ok) {
+        if (v.status === 503 || v.code === 'PLAN_CONFIG_UNAVAILABLE') {
+          await show(bot, ctx.chatId, ctx.mid, t(lang, 'planConfigDown'), menu(lang));
+          return null;
+        }
+        if (v.plan === 'pro') {
+          await show(bot, ctx.chatId, ctx.mid, t(lang, 'capReachedPro', { n: v.cap }), menu(lang));
+          return null;
+        }
+        return proScreen(bot, ctx, t(lang, 'capReached', { n: v.cap }), { origin: 'alert_reactivate_paywall' });
+      }
+    }
+    await col('Route').updateOne(
+      { _id: r._id, ...mine },
+      {
+        $set: r.paused
+          ? { paused: false, pausedByBilling: false, pausedReason: null }
+          : { paused: true, pausedReason: 'user' },
+        $inc: { version: 1 },
+      },
+    );
     return alerts(bot, ctx, 'dt', { id });
   }
   if (stepName === 'dl') {
@@ -263,7 +331,10 @@ async function alerts(bot, ctx, stepName, fields) {
     return;
   }
   if (stepName === 'dk') {
-    await col('Route').deleteMany({ _id: r._id, ...mine });
+    await col('Route').updateOne(
+      { _id: r._id, ...mine },
+      { $set: { deletedAt: clock.now().toISOString(), paused: true }, $inc: { version: 1 } },
+    );
     await show(bot, ctx.chatId, ctx.mid, t(lang, 'deleted', { o: r.origin, d: r.destination }), {
       inline_keyboard: [[{ text: t(lang, 'back'), callback_data: cb.encode('m', 'ls') }]],
     });
@@ -350,8 +421,15 @@ async function onCallback(bot, cq) {
     if (fl === 'b' || fl === 'a') {
       if (s === 'nx' || s === 'rnav') {
         if (fl === 'a' && !fields.o && !draft) {
-          const opened = await require('../handlers/nuevaAlerta').gate(ctx.userId, chatId);
-          if (!opened.ok) { await proScreen(bot, ctx, opened.text); return true; }
+          const opened = await require('../handlers/nuevaAlerta').gate(ctx.userId, chatId, { lang: ctx.lang });
+          if (!opened.ok) {
+            if (opened.status === 409 || opened.status === 503 || opened.status === 403) {
+              await show(bot, chatId, ctx.mid, opened.text, menu(ctx.lang));
+            } else {
+              await proScreen(bot, ctx, opened.text, { origin: 'alert_paywall' });
+            }
+            return true;
+          }
         }
         await step(bot, ctx, fl, fields);
         return true;
@@ -368,11 +446,37 @@ async function onCallback(bot, cq) {
     if (fl === 'r') { await report(bot, { chat: { id: chatId }, from: cq.from }); return true; }
     if (fl === 'm') { await alerts(bot, ctx, s, fields); return true; }
     if (fl === 'p') {
-      if (s === 'stars') await stars.sendInvoice(bot, chatId, ctx.userId);
-      else await proScreen(bot, ctx);
+      if (s === 'stars') {
+        await stars.sendInvoice(bot, chatId, ctx.userId, { origin: fields && fields.o ? String(fields.o) : null });
+      } else if (s === 'trial') {
+        if (plans.isSafeMode()) {
+          await show(bot, chatId, ctx.mid, t(ctx.lang, 'planConfigDown'), menu(ctx.lang));
+          return true;
+        }
+        const tr = await entitlements.startTrial(ctx.userId);
+        if (!tr.ok) {
+          await proScreen(bot, ctx);
+          return true;
+        }
+        await col('Entitlement').updateOne(
+          { telegramUserId: String(ctx.userId) },
+          { $set: { telegramChatId: String(chatId) } },
+          { upsert: true },
+        ).catch(() => {});
+        const instant = (plans.current().trial && plans.current().trial.instantTotalMax)
+          ?? plans.INSTANT_ALERTS_TRIAL_MAX_TOTAL
+          ?? 3;
+        await show(bot, chatId, ctx.mid, t(ctx.lang, 'trialOn', {
+          days: entitlements.TRIAL_DAYS,
+          instant,
+          maxAlerts: entitlements.maxAlertsFor('trial'),
+        }), menu(ctx.lang));
+      } else {
+        await proScreen(bot, ctx);
+      }
       return true;
     }
-    if (fl === 's' && s === 'help') { await show(bot, chatId, ctx.mid, t(ctx.lang, 'help'), menu(ctx.lang)); return true; }
+    if (fl === 's' && s === 'help') { await show(bot, chatId, ctx.mid, t(ctx.lang, 'help', { n: entitlements.SEARCH_CAP }), menu(ctx.lang)); return true; }
     await expired(bot, ctx);
   } catch (err) {
     logger.error('callback ux', err);
@@ -421,9 +525,12 @@ async function home(bot, chatId, lang, text, userId) {
 }
 
 /** /start: si el usuario es nuevo, onboarding en 3 toques; si no, home. */
-async function welcome(bot, msg, { isNew = false } = {}) {
+async function welcome(bot, msg, { isNew = false, startParam = null } = {}) {
   const lang = langOf(msg.from);
   await miniapp.chatMenu(bot, msg.chat.id, lang);
+  if (startParam === 'pro_search_paywall') {
+    return proScreen(bot, { chatId: msg.chat.id, userId: msg.from.id, lang, mid: null }, null, { origin: 'pro_search_paywall' });
+  }
   if (isNew) return onboarding(bot, { chatId: msg.chat.id, userId: msg.from.id, lang, mid: null }, 'o1', {});
   return home(bot, msg.chat.id, lang, null, msg.from.id);
 }
@@ -470,7 +577,7 @@ async function onboarding(bot, ctx, s, fields) {
 
 async function help(bot, msg) {
   const lang = langOf(msg.from);
-  await bot.sendMessage(msg.chat.id, t(lang, 'help'), { reply_markup: miniapp.homeInline(lang, cb.encode) });
+  await bot.sendMessage(msg.chat.id, t(lang, 'help', { n: entitlements.SEARCH_CAP }), { reply_markup: miniapp.homeInline(lang, cb.encode) });
 }
 
 async function settings(bot, msg) {

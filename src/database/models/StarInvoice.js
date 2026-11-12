@@ -7,6 +7,7 @@ const schema = new mongoose.Schema({
   telegramUserId: { type: String, required: true },
   total: { type: Number, required: true },
   currency: { type: String, required: true },
+  origin: { type: String, default: null },
   usedAt: { type: String, default: null },
 }, { timestamps: true });
 

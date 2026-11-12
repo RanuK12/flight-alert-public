@@ -1,6 +1,9 @@
 'use strict';
 
-const { ORIGINS, DESTINATIONS, ORIGIN_GROUPS, ALL_ORIGINS, EU_RETURN_HUBS, destinationsFor } = require('../../config/airports');
+const {
+  ORIGINS, DESTINATIONS, ORIGIN_GROUPS, ALL_ORIGINS, EU_RETURN_HUBS, destinationsFor,
+  activeDestinations, activeAllOrigins,
+} = require('../../config/airports');
 
 /** Nombres de los aeropuertos cubiertos. Sin inventar: solo los códigos de la config. */
 const PLACES = {
@@ -16,6 +19,7 @@ const PLACES = {
   LIM: { city: 'Lima', airport: 'Jorge Chávez', country: 'Perú', alias: [] },
   BOG: { city: 'Bogotá', airport: 'El Dorado', country: 'Colombia', alias: ['bogota'] },
   MEX: { city: 'Ciudad de México', airport: 'Benito Juárez', country: 'México', alias: ['cdmx', 'mexico', 'df'] },
+  ASU: { city: 'Asunción', airport: 'Silvio Pettirossi', country: 'Paraguay', alias: ['asuncion', 'paraguay'] },
   MAD: { city: 'Madrid', airport: 'Barajas', country: 'España', alias: [] },
   BCN: { city: 'Barcelona', airport: 'El Prat', country: 'España', alias: [] },
   SVQ: { city: 'Sevilla', airport: 'San Pablo', country: 'España', alias: ['seville'] },
@@ -47,6 +51,20 @@ const PLACES = {
   ZRH: { city: 'Zúrich', airport: 'Kloten', country: 'Suiza', alias: ['zurich'] },
   ATH: { city: 'Atenas', airport: 'Eleftherios Venizelos', country: 'Grecia', alias: ['athens'] },
   IST: { city: 'Estambul', airport: 'Istanbul', country: 'Turquía', alias: ['istanbul'] },
+  MIA: { city: 'Miami', airport: 'Miami International', country: 'Estados Unidos', alias: ['eeuu', 'usa'] },
+  JFK: { city: 'Nueva York', airport: 'John F. Kennedy', country: 'Estados Unidos', alias: ['new york', 'nyc', 'eeuu'] },
+  LAX: { city: 'Los Ángeles', airport: 'Los Angeles', country: 'Estados Unidos', alias: ['los angeles', 'eeuu'] },
+  ORD: { city: 'Chicago', airport: 'O\'Hare', country: 'Estados Unidos', alias: ['ohare'] },
+  DFW: { city: 'Dallas', airport: 'Dallas/Fort Worth', country: 'Estados Unidos', alias: ['fort worth'] },
+  SFO: { city: 'San Francisco', airport: 'San Francisco', country: 'Estados Unidos', alias: ['sf'] },
+  ATL: { city: 'Atlanta', airport: 'Hartsfield-Jackson', country: 'Estados Unidos', alias: [] },
+  MCO: { city: 'Orlando', airport: 'Orlando International', country: 'Estados Unidos', alias: ['disney'] },
+  PVG: { city: 'Shanghái', airport: 'Pudong', country: 'China', alias: ['shanghai', 'shangai'] },
+  PEK: { city: 'Pekín', airport: 'Capital', country: 'China', alias: ['beijing', 'pekin'] },
+  CAN: { city: 'Cantón', airport: 'Baiyun', country: 'China', alias: ['guangzhou', 'canton'] },
+  BKK: { city: 'Bangkok', airport: 'Suvarnabhumi', country: 'Tailandia', alias: ['thailand', 'tailandia'] },
+  HKT: { city: 'Phuket', airport: 'Phuket International', country: 'Tailandia', alias: ['thailand', 'tailandia'] },
+  SIN: { city: 'Singapur', airport: 'Changi', country: 'Singapur', alias: ['singapore', 'changi'] },
 };
 
 /** Ciudades conocidas pero no cubiertas (para avisar en vez de "no encontré"). */
@@ -81,11 +99,11 @@ function lev(a, b) {
   return d[m][n];
 }
 
-/** side 'o': LATAM + Europa (vuelta). side 'd': según el origen elegido (sin origen, Europa como siempre). */
+/** side 'o': LATAM + Europa/destinos (vuelta). side 'd': según el origen elegido. */
 function codesFor(side, origin) {
   const cov = require('../../config/coverage');
-  if (side === 'o') return ALL_ORIGINS.filter(cov.originAvailable);
-  return origin ? cov.destinationsAvailable(origin) : DESTINATIONS;
+  if (side === 'o') return activeAllOrigins().filter(cov.originAvailable);
+  return origin ? cov.destinationsAvailable(origin) : activeDestinations();
 }
 
 function label(code) {
@@ -127,7 +145,7 @@ function match(text, side, origin) {
   const exact = matches.length === 1 ? matches[0] : (exactOnes.length === 1 && !closeOthers ? exactOnes[0] : null);
   let uncovered = null;
   if (!matches.length) {
-    const other = side === 'o' ? [] : ALL_ORIGINS.filter((c) => !codes.includes(c));
+    const other = side === 'o' ? [] : activeAllOrigins().filter((c) => !codes.includes(c));
     if (q.length === 3 && other.includes(up)) uncovered = { city: label(up), country: (PLACES[up] || {}).country || '' };
     const known = Object.keys(KNOWN_UNCOVERED).find((k) => k === q || lev(k, q) <= 1);
     if (known) uncovered = KNOWN_UNCOVERED[known];
@@ -142,7 +160,7 @@ function coveredIn(country, side, origin) {
 function popular(side, origin) {
   const cov = require('../../config/coverage');
   if (side === 'o') return cov.latamOriginsAvailable();
-  return (origin ? cov.destinationsAvailable(origin) : DESTINATIONS).slice(0, 6);
+  return (origin ? cov.destinationsAvailable(origin) : activeDestinations()).slice(0, 6);
 }
 
 /**
@@ -151,7 +169,7 @@ function popular(side, origin) {
  */
 const EU_RETURN_TITLES = { es: '🇪🇺 Vuelta desde Europa', en: '🇪🇺 Return from Europe', pt: '🇪🇺 Volta da Europa' };
 const EU_RETURN_TITLE = EU_RETURN_TITLES.es;
-const GROUP_NAMES_EN = { BR: 'Brazil', PE: 'Peru', MX: 'Mexico' };
+const GROUP_NAMES_EN = { BR: 'Brazil', PE: 'Peru', MX: 'Mexico', PY: 'Paraguay' };
 
 function originRows(btn, per = 2, lang = 'es') {
   const cov = require('../../config/coverage');

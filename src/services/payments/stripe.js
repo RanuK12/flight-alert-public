@@ -3,6 +3,7 @@
 const { col } = require('../../database');
 const clock = require('../../utils/clock');
 const entitlements = require('../entitlements');
+const funnel = require('../funnel');
 const { savePending } = require('./pending');
 const { paymentsMode, assertStripeKey } = require('./mode');
 const { notifyCharge } = require('./notify');
@@ -150,14 +151,26 @@ async function handleWebhook(req) {
       if (!existing) await alert();
       return { status: 200, pendingLink: true };
     }
-    const result = await entitlements.activatePro(userId, 'stripe', chargeRef, entitlements.proUntilFromNow());
+    const result = await entitlements.activatePro(userId, 'stripe', chargeRef, entitlements.proUntilFromNow(), { source: 'stripe' });
     if (currency) {
       await col('Entitlement').updateOne(
         { telegramUserId: String(userId) },
         { $set: { priceCurrency: currency } },
       );
     }
-    if (!result.duplicate) await alert();
+    if (!result.duplicate) {
+      if (!result.compPreserved) {
+        await funnel.record({
+          event: 'pro_paid',
+          userId,
+          method: 'stripe',
+          interval: 'monthly',
+          origin: checkout && checkout.origin ? checkout.origin : null,
+          subscriptionId: String(obj.subscription || event.id || chargeRef),
+        });
+      }
+      await alert();
+    }
     return { status: 200, duplicate: Boolean(result.duplicate) };
   }
   if (event.type === 'invoice.payment_failed') {

@@ -1,8 +1,10 @@
 'use strict';
 
 const copy = require('../bot/copy');
+const flags = require('../config/flags');
 const { preselect, currencyFor, EU_COUNTRIES } = require('../services/country');
 const { renderLanding } = require('./landing');
+const { flightAlertLogoSvg, ranukMarkSvg } = require('./brandSvg');
 
 const pricing = require('../config/pricing');
 const entitlements = require('../services/entitlements');
@@ -24,8 +26,9 @@ function layout(title, body, opts = {}) {
     + '<link rel="preload" href="/public/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>'
     + `<link rel="stylesheet" href="${css}">`
     + '</head><body class="page-simple">'
-    + '<header class="site-header"><div class="wrap"><a class="wordmark" href="/es"><img class="bot-logo" src="/public/avatar.webp" alt="" width="36" height="36"><span class="wordmark-label">Flight Alert</span></a></div></header>'
+    + `<header class="site-header"><div class="wrap"><a class="wordmark" href="/es">${flightAlertLogoSvg({ size: 36, cls: 'bot-logo' })}<span class="wordmark-label">Flight Alert</span></a></div></header>`
     + `<main id="contenido" class="section"><div class="wrap narrow">${body}</div></main>`
+    + `<footer class="site-footer"><div class="wrap footer-wrap"><p class="footer-copy">${ranukMarkSvg({ size: 18, cls: 'ranuk-mark' })} Hecho por <a href="https://ranuk.dev" target="_blank" rel="noopener">Ranuk IT</a></p></div></footer>`
     + (opts.script ? `<script${nonce}>${opts.script}</script>` : '')
     + '</body></html>';
 }
@@ -66,8 +69,8 @@ function priceLines(ars) {
   };
 }
 
-function priceKey(code) {
-  if (code === 'AR') return 'ars';
+function priceKey(code, mpEnabled = flags.mp()) {
+  if (code === 'AR' && mpEnabled) return 'ars';
   if (EU_COUNTRIES.some(([c]) => c === code)) return 'eur';
   return 'usd';
 }
@@ -76,7 +79,8 @@ const PRO_SCRIPT = `(function(){
 var f=document.getElementById('pro-form');if(!f)return;
 var sel=document.getElementById('pro-pais'),out=document.getElementById('pro-price'),em=document.getElementById('pro-email'),err=document.getElementById('pro-email-error');
 var eu=(f.getAttribute('data-eu')||'').split(',');
-function key(c){return c==='AR'?'ars':(eu.indexOf(c)>=0?'eur':'usd');}
+var mp=f.getAttribute('data-mp')!=='0';
+function key(c){return (c==='AR'&&mp)?'ars':(eu.indexOf(c)>=0?'eur':'usd');}
 sel.addEventListener('change',function(){out.textContent=out.getAttribute('data-'+key(sel.value));});
 function check(){var ok=/^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/.test(em.value.trim());err.hidden=ok;em.setAttribute('aria-invalid',ok?'false':'true');return ok;}
 em.addEventListener('blur',function(){if(em.value)check();});
@@ -85,15 +89,17 @@ f.addEventListener('submit',function(e){if(!check()){e.preventDefault();em.focus
 
 const PRO_TEXT = {
   es: {
-    b1: 'Búsquedas ilimitadas (uso justo).', b2: 'Te avisamos cuando un precio baja de tu techo.', b3: 'Informe de las 21:00 (hora de Argentina).',
-    mp: 'Podés pagar en pesos con Mercado Pago.', noMp: 'El pago en pesos solo aparece si elegís Argentina y estás en Argentina.',
+    b1: 'Búsquedas ilimitadas (uso justo).', b2: 'Te avisamos cuando un precio baja de tu techo, sin esperar al resumen de las 21:00.', b3: 'Informe de las 21:00 (hora de Argentina).',
+    mp: 'Podés pagar en pesos con Mercado Pago.', noMp: 'El pago en pesos solo aparece si elegís Argentina y estás en Argentina.', mpOff: 'Pagás con tarjeta, en dólares.',
+    monthlyNote: 'Pro se paga por mes y podés cancelarlo cuando quieras.',
     country: 'País', emailError: 'Escribí un email válido, por ejemplo nombre@dominio.com.',
     btnMp: 'Seguir con Mercado Pago', btnCard: 'Seguir con tarjeta', methods: 'Medios de pago',
     trial: (d) => `Prueba de Pro: ${d} días gratis, una vez por cuenta, desde el bot.`,
   },
   pt: {
-    b1: 'Buscas ilimitadas (uso justo).', b2: 'Avisamos quando um preço fica abaixo do seu teto.', b3: 'Relatório das 21:00 (horário da Argentina).',
-    mp: 'Você pode pagar em pesos com o Mercado Pago.', noMp: 'O pagamento em pesos só aparece se você escolher Argentina e estiver na Argentina.',
+    b1: 'Buscas ilimitadas (uso justo).', b2: 'Avisamos sem esperar o resumo das 21:00 quando um preço fica abaixo do seu teto.', b3: 'Relatório das 21:00 (horário da Argentina).',
+    mp: 'Você pode pagar em pesos com o Mercado Pago.', noMp: 'O pagamento em pesos só aparece se você escolher Argentina e estiver na Argentina.', mpOff: 'Você paga com cartão, em dólares.',
+    monthlyNote: 'O Pro é pago por mês e você pode cancelar quando quiser.',
     country: 'País', emailError: 'Digite um email válido, por exemplo nome@dominio.com.',
     btnMp: 'Seguir com Mercado Pago', btnCard: 'Seguir com cartão', methods: 'Formas de pagamento',
     trial: (d) => `Teste do Pro: ${d} dias grátis, uma vez por conta, pelo bot.`,
@@ -114,15 +120,17 @@ function proLang({ lang = '', language = '', country = '' } = {}) {
   return 'es';
 }
 
-function pro({ choice = '', ipCountry: geo = '', language = '', nonce = '', ars = null, lang = '' } = {}) {
+function pro({ choice = '', ipCountry: geo = '', language = '', nonce = '', ars = null, lang = '', origin = '' } = {}) {
   const suggested = String(choice || preselect(language) || '').toUpperCase();
   const offer = currencyFor(suggested, geo);
   const L = proLang({ lang, language, country: suggested });
   const raw = priceLines(Number.isInteger(ars) && ars > 0 ? ars : null);
   const lines = L === 'pt' ? ptPrices(raw) : raw;
-  const key = priceKey(suggested);
+  const mpOn = flags.mp();
+  const key = priceKey(suggested, mpOn);
   const t = PRO_TEXT[L];
-  const note = offer.rail === 'mp' ? t.mp : t.noMp;
+  const note = !mpOn ? t.mpOff : (offer.rail === 'mp' ? t.mp : t.noMp);
+  const originField = origin ? `<input type="hidden" name="origin" value="${esc(origin)}">` : '';
   return layout('Pro', `
     <h1>Pro</h1>
     <ul class="pro-benefits">
@@ -132,7 +140,8 @@ function pro({ choice = '', ipCountry: geo = '', language = '', nonce = '', ars 
     </ul>
     <p class="pro-price" id="pro-price" aria-live="polite" data-ars="${esc(lines.ars)}" data-eur="${esc(lines.eur)}" data-usd="${esc(lines.usd)}">${esc(lines[key])}</p>
     <p class="fine">${note}</p>
-    <form class="pro-form" id="pro-form" method="post" action="/pro/checkout" novalidate data-eu="${EU_COUNTRIES.map(([c]) => c).join(',')}">
+    <form class="pro-form" id="pro-form" method="post" action="/pro/checkout" novalidate data-eu="${EU_COUNTRIES.map(([c]) => c).join(',')}" data-mp="${mpOn ? '1' : '0'}">
+      ${originField}
       <label for="pro-pais">${t.country}</label>
       <select id="pro-pais" name="pais">
         ${countryOptions(suggested)}
@@ -143,7 +152,7 @@ function pro({ choice = '', ipCountry: geo = '', language = '', nonce = '', ars 
       <button class="btn btn--primary pro-submit" type="submit">${offer.rail === 'mp' ? t.btnMp : t.btnCard}</button>
     </form>
     <p class="fine">${t.methods}: ${esc(require('./payMethods').line(L).replace(/\.$/, ''))}.</p>
-    <p class="fine">${t.trial(entitlements.TRIAL_DAYS)}</p>
+    <p class="fine">${t.monthlyNote} ${t.trial(entitlements.TRIAL_DAYS)}</p>
   `, { nonce, script: PRO_SCRIPT, fullTitle: require('./seo').PRO_META.title, head: require('./seo').proHead(), lang: L === 'pt' ? 'pt-BR' : 'es' });
 }
 
@@ -151,7 +160,7 @@ function listo(url, opts = {}) {
   const link = url
     ? `<p>Abrí este link en el teléfono (vale 15 minutos, una sola vez): <a href="${url}">${url}</a></p>`
     : '<p>Falta el nombre del bot para armar el link.</p>';
-  return layout('Listo', `<h1>Listo</h1>${link}<p>Cuando se acredite el pago, las alertas que tenías pausadas vuelven como estaban.</p>`, { nonce: opts.nonce });
+  return layout('Listo', `<h1>Listo</h1>${link}<p>Cuando se acredite el pago, tus alertas pausadas por el límite del plan vuelven a activarse.</p>`, { nonce: opts.nonce });
 }
 
 function maintenance(opts = {}) {

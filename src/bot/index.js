@@ -5,9 +5,12 @@ const transport = require('./transport');
 const TelegramBot = require('node-telegram-bot-api');
 const flags = require('../config/flags');
 const copy = require('./copy');
+const { col } = require('../database');
+const entitlements = require('../services/entitlements');
 const rateLimit = require('../services/rateLimit');
 const logger = require('../utils/logger').child('bot');
 const stars = require('../services/payments/stars');
+const { t, langOf } = require('./ux/i18n');
 
 const startHandler = require('./handlers/start');
 const buscarHandler = require('./handlers/buscar');
@@ -95,13 +98,23 @@ function startBot() {
   bot.on('message', async (msg) => {
     if (msg.successful_payment) {
       try {
-        const result = await stars.onSuccess(msg);
+        const userId = msg.from && msg.from.id;
+        const u = userId ? await col('User').findOne({ telegramUserId: String(userId) }).lean() : null;
+        const lang = (u && ['es', 'en', 'pt'].includes(u.lang) && u.lang) || langOf(msg.from);
+        const result = await stars.onSuccess(msg, { bot });
         if (result && result.ok !== false && !result.reason) {
-          await bot.sendMessage(msg.chat.id, result.duplicate
-            ? 'Ese pago ya estaba acreditado.'
-            : 'Listo, ya tenés Pro por 30 días.');
+          await bot.sendMessage(
+            msg.chat.id,
+            result.duplicate
+              ? t(lang, 'starsDuplicate')
+              : t(lang, 'starsPaid', { proDays: entitlements.PRO_DAYS }),
+          );
+        } else if (result && result.refunded) {
+          await bot.sendMessage(msg.chat.id, t(lang, 'starsFailedRefunded'));
+        } else if (result && result.refundPending) {
+          await bot.sendMessage(msg.chat.id, t(lang, 'starsFailedPending', { contact: process.env.SUPPORT_CONTACT || '' }));
         } else {
-          await bot.sendMessage(msg.chat.id, 'No pude validar el pago.');
+          await bot.sendMessage(msg.chat.id, t(lang, 'starsInvalid'));
         }
       } catch (err) {
         logger.error('pago stars', err);

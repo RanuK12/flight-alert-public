@@ -5,6 +5,7 @@ const { col } = require('../../database');
 const clock = require('../../utils/clock');
 const { sha256 } = require('../../utils/mask');
 const entitlements = require('../entitlements');
+const funnel = require('../funnel');
 
 const TTL_MS = 15 * 60 * 1000;
 
@@ -38,12 +39,23 @@ async function claimPending(webUserKey, telegramUserId) {
       status: 'pending_link',
     }).lean();
     for (const pay of pays) {
-      await entitlements.activatePro(
+      const act = await entitlements.activatePro(
         telegramUserId,
         pay.provider,
         pay.ref,
         entitlements.proUntilFromNow(),
+        { source: pay.provider },
       );
+      if (!act.duplicate && !act.compPreserved) {
+        await funnel.record({
+          event: 'pro_paid',
+          userId: telegramUserId,
+          method: pay.provider === 'mp' || pay.provider === 'stripe' || pay.provider === 'stars' ? pay.provider : null,
+          interval: 'monthly',
+          origin: checkout.origin || null,
+          subscriptionId: String(pay.ref),
+        });
+      }
       const patch = {};
       if (checkout.currency) patch.priceCurrency = checkout.currency;
       if (checkout.currency === 'ARS') patch.country = 'AR';
@@ -88,6 +100,7 @@ async function newReference(provider, extra) {
     webUserKey: extra.webUserKey || null,
     amount: extra.amount || null,
     currency: extra.currency || null,
+    origin: funnel.sanitizeOrigin(extra.origin),
   });
   return externalReference;
 }

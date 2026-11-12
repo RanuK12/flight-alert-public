@@ -2,8 +2,14 @@
 
 const { col } = require('../../database');
 const entitlements = require('../../services/entitlements');
-const copy = require('../copy');
 const { page, nav } = require('../paginator');
+const { t, langOf } = require('../ux/i18n');
+
+async function resolveLang(userId, from) {
+  const u = await col('User').findOne({ telegramUserId: String(userId) }).lean();
+  if (u && ['es', 'en', 'pt'].includes(u.lang)) return u.lang;
+  return langOf(from);
+}
 
 function label(route) {
   const state = route.paused ? 'pausada' : 'activa';
@@ -11,7 +17,8 @@ function label(route) {
 }
 
 async function list(bot, chatId, userId, index = 0) {
-  const routes = await col('Route').find({ telegramUserId: String(userId) }).lean();
+  const rawRoutes = await col('Route').find({ telegramUserId: String(userId) }).lean();
+  const routes = rawRoutes.filter((r) => !r.deletedAt);
   if (!routes.length) {
     await bot.sendMessage(chatId, 'Todavía no tenés alertas. Con /nueva_alerta armás una.');
     return;
@@ -46,25 +53,42 @@ async function handleRouteCallback(bot, cq) {
     return true;
   }
   const [, action, routeId] = data.split(':');
+  const lang = await resolveLang(userId, cq.from);
   if (action === 'resume') {
-    if (!(await entitlements.canUseAlerts(userId))) {
+    const route = await col('Route').findOne({ _id: routeId, telegramUserId: String(userId) }).lean();
+    if (!route || route.deletedAt) {
       await bot.answerCallbackQuery(cq.id, {});
-      await bot.sendMessage(chatId, copy.alertsPaywall);
       return true;
+    }
+    if (route.paused) {
+      const verdict = await entitlements.canCreateOrReactivate(userId);
+      if (!verdict.ok) {
+        await bot.answerCallbackQuery(cq.id, {});
+        const msg = verdict.status === 503
+          ? t(lang, 'planConfigDown')
+          : verdict.plan === 'pro'
+            ? t(lang, 'capReachedPro', { n: verdict.cap })
+            : t(lang, 'capReached', { n: verdict.cap });
+        await bot.sendMessage(chatId, msg);
+        return true;
+      }
     }
     await col('Route').updateOne(
       { _id: routeId, telegramUserId: String(userId) },
-      { $set: { paused: false, pausedByBilling: false } },
+      { $set: { paused: false, pausedByBilling: false, pausedReason: null }, $inc: { version: 1 } },
     );
   }
   if (action === 'pause') {
     await col('Route').updateOne(
       { _id: routeId, telegramUserId: String(userId) },
-      { $set: { paused: true } },
+      { $set: { paused: true, pausedReason: 'user' }, $inc: { version: 1 } },
     );
   }
   await bot.answerCallbackQuery(cq.id, {});
-  await bot.sendMessage(chatId, action === 'resume' ? 'La alerta volvió a estar activa.' : 'Pausé esa alerta.');
+  const doneMsg = action === 'resume'
+    ? (lang === 'en' ? 'Alert is active again.' : lang === 'pt' ? 'Alerta ativado novamente.' : 'La alerta volvió a estar activa.')
+    : (lang === 'en' ? 'Paused that alert.' : lang === 'pt' ? 'Pausei esse alerta.' : 'Pausé esa alerta.');
+  await bot.sendMessage(chatId, doneMsg);
   return true;
 }
 

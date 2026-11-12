@@ -2,7 +2,10 @@
 
 const fs = require('fs');
 const path = require('path');
-const { allPairs, ORIGINS, DESTINATIONS, ORIGIN_GROUPS, EU_RETURN_HUBS, destinationsFor } = require('./airports');
+const {
+  allPairs, ORIGINS, DESTINATIONS, ORIGIN_GROUPS, EU_RETURN_HUBS, destinationsFor,
+  activeOriginGroups, activeOrigins,
+} = require('./airports');
 
 const REPORT = path.join(__dirname, '..', '..', 'data', 'coverage.json');
 
@@ -83,11 +86,11 @@ function originAvailable(origin) {
 
 /** Orígenes LATAM con al menos un destino con datos. */
 function latamOriginsAvailable() {
-  return ORIGINS.filter(originAvailable);
+  return activeOrigins().filter(originAvailable);
 }
 
 function groupsAvailable() {
-  return ORIGIN_GROUPS
+  return activeOriginGroups()
     .map((g) => ({ ...g, codes: g.codes.filter(originAvailable) }))
     .filter((g) => g.codes.length);
 }

@@ -1,7 +1,11 @@
 'use strict';
 
 const pricing = require('../config/pricing');
+const flags = require('../config/flags');
+const plans = require('../config/plans');
 const entitlements = require('../services/entitlements');
+const { flightAlertLogoSvg, ranukMarkSvg } = require('./brandSvg');
+const { STARS_TOTAL } = require('../services/payments/stars');
 
 const fs = require('fs');
 const path = require('path');
@@ -214,11 +218,17 @@ function copy(lang) {
   const en = lang === 'en';
   const nO = coverage.latamOriginsAvailable().length;
   const nD = DESTINATIONS.filter((d) => coverage.latamOriginsAvailable().some((o) => coverage.pairAllowed(o, d))).length;
+  const searchCap = entitlements.SEARCH_CAP;
+  const trialDays = entitlements.TRIAL_DAYS;
+  const proDays = entitlements.PRO_DAYS;
+  const freeAlerts = plans.current().free.maxActiveAlerts;
+  const starsOn = flags.stars();
+  const usdPrice = pricing.PRO_USD_CENTS % 100 ? pricing.figure(pricing.PRO_USD_CENTS, 'en') : String(pricing.PRO_USD_CENTS / 100);
   if (en) {
     return {
       htmlLang: 'en',
       title: 'Cheap flights between Latin America and Europe | Flight Alert',
-      description: 'Pick your origin and destination, and the bot tells you when a good fare shows up. Travelpayouts data. 10 searches a month.',
+      description: `Pick your origin and destination, and the bot tells you when a good fare shows up. Travelpayouts data. ${searchCap} searches a month.`,
       skip: 'Skip to content',
       pricesLink: 'Pricing',
       openTelegram: 'Open in Telegram',
@@ -235,7 +245,7 @@ function copy(lang) {
       ctaHero: 'Open in Telegram',
       seePrices: 'See prices',
       small: 'No sign-up. Just open the bot.',
-      quota: '10 searches a month, no card. The daily alert and the 9 PM digest are on a 7-day trial.',
+      quota: `${searchCap} searches a month and ${freeAlerts} active alert, no card. Pro benefits can be tried for ${trialDays} days.`,
       benefitsTitle: 'In short',
       benefits: [
         'Stop checking fares every day. The bot watches them for you and only messages you when it\'s worth it.',
@@ -259,22 +269,23 @@ function copy(lang) {
       originsLabel: 'Origins',
       pricesTitle: 'Pricing',
       freeTitle: 'Free',
-      freeBody: '10 searches a month, no card needed.',
+      freeBody: `${searchCap} searches a month and ${freeAlerts} daily digest alert, no card needed.`,
       freeBtn: 'Start free',
       proTitle: 'Pro',
       proBadge: 'Recommended',
       proItems: [
         'Unlimited searches (fair use)',
-        'Alert when the price drops',
+        'Alerts without waiting for the 9 PM summary',
         'Daily digest at 9 PM Argentina time',
       ],
-      trial: 'The 7-day trial covers the alert and the digest, with no card, once. Pro is charged when you pay.',
+      trial: `The ${trialDays}-day trial covers extra alerts without waiting for the summary, with no card, once. Pro is billed monthly (${proDays} days).`,
       proBtn: 'Get Pro',
-      stars: 'Or 250 Telegram Stars, in the bot.',
-      starsPeriod: 'Or 250 Telegram Stars for 30 days, in the bot.',
-      payNote: 'You pay on the web and the bot sends you the link.',
+      stars: starsOn ? `Or ${STARS_TOTAL} Telegram Stars, in the bot.` : '',
+      starsPeriod: starsOn ? `Or ${STARS_TOTAL} Telegram Stars for ${proDays} days, in the bot.` : '',
+      payNote: 'You pay on the web (Pro is billed monthly) and the bot sends you the link.',
       cancelNote: 'To stop Pro, write to the bot.',
       previewNote: 'This menu only changes the view. Checkout uses the country the server sees.',
+      mpOffNote: 'You pay by card, in US dollars.',
       countryLabel: 'Not your country?',
       optAr: 'Argentina',
       optEu: 'European Union',
@@ -284,8 +295,8 @@ function copy(lang) {
       arsWords: (n) => `${n} Argentine pesos, at today's official dollar rate.`,
       euFigure: `€${pricing.figure(pricing.PRO_EUR_CENTS, 'en')}`,
       euWords: `${pricing.figure(pricing.PRO_EUR_CENTS, 'en')} euros, VAT included.`,
-      usdFigure: 'US$5',
-      usdWords: '5 US dollars.',
+      usdFigure: `US$${usdPrice}`,
+      usdWords: `${usdPrice} US dollars.`,
       destinationsTitle: 'Popular destinations in Europe',
       destinationsSub: 'Most searched routes from Latin America.',
       trustOrigins: `${nO} origins`,
@@ -295,14 +306,14 @@ function copy(lang) {
       trustData: 'Travelpayouts',
       trustDataDesc: 'Real cached fares',
       trustPayments: 'Secure payments',
-      trustPaymentsDesc: 'Stripe · Mercado Pago · Stars',
+      trustPaymentsDesc: require('./payMethods').line('en'),
       faqTitle: 'Questions',
       faq: [
         ['Is the fare final?', 'It\'s the fare the search found at that moment. Airlines change prices fast, so always confirm it on the booking page before you pay.'],
         ['Do you sell tickets?', 'No. The bot sends you to the site where you book. Some links are affiliate links: they cost you nothing extra and help keep the bot running.'],
-        ['What\'s free?', '10 searches a month, with no card needed. The daily alert and the 9 PM digest can be tried for 7 days, once.'],
+        ['What\'s free?', `${searchCap} searches a month and ${freeAlerts} active alert with the 9 PM digest, no card needed. Extra Pro alerts can be tried for ${trialDays} days, once.`],
         ['Can I cancel Pro?', 'Write to the bot. There is no self-service cancel. /cancel in the chat only stops the step you were on, not the subscription.'],
-        ['What happens when the trial ends?', 'After 7 days the alerts and the digest pause, and the bot tells you then. Pro is a 30-day subscription charged when you pay.'],
+        ['What happens when the trial ends?', `After ${trialDays} days your alerts adjust to the free plan limit and the bot tells you then. Pro is billed monthly (${proDays} days) when you pay.`],
         ['Which cities?', `It searches from ${nO} origins to ${nD} destinations. The list is on this page and also inside the bot.`],
         ['Will you spam me?', 'No. Pro messages you when a fare you follow drops, plus one digest at 9 PM Argentina time.'],
         ['What about my IP?', PRIVACY],
@@ -318,7 +329,7 @@ function copy(lang) {
   const es = {
     htmlLang: 'es',
     title: 'Vuelos baratos entre Latinoamérica y Europa | Flight Alert',
-    description: 'Elegís origen y destino y el bot te avisa cuando aparece un buen precio. Datos de Travelpayouts. 10 búsquedas por mes.',
+    description: `Elegís origen y destino y el bot te avisa cuando aparece un buen precio. Datos de Travelpayouts. ${searchCap} búsquedas por mes.`,
     skip: 'Saltar al contenido',
     pricesLink: 'Precios',
     openTelegram: 'Abrir en Telegram',
@@ -335,7 +346,7 @@ function copy(lang) {
     ctaHero: 'Abrir en Telegram',
     seePrices: 'Ver precios',
     small: 'Sin registro. Abrís el bot y listo.',
-    quota: '10 búsquedas por mes, sin tarjeta. La alerta diaria y el reporte de las 21:00 se prueban 7 días.',
+    quota: `${searchCap} búsquedas por mes y ${freeAlerts} alerta activa, sin tarjeta. Las funciones Pro se prueban ${trialDays} días.`,
     benefitsTitle: 'En corto',
     benefits: [
       'Dejás de revisar precios todos los días: el bot mira por vos y te escribe solo cuando vale la pena.',
@@ -359,22 +370,23 @@ function copy(lang) {
     originsLabel: 'Orígenes',
     pricesTitle: 'Precios',
     freeTitle: 'Gratis',
-    freeBody: '10 búsquedas por mes, sin tarjeta.',
+    freeBody: `${searchCap} búsquedas por mes y ${freeAlerts} alerta diaria, sin tarjeta.`,
     freeBtn: 'Empezar gratis',
     proTitle: 'Pro',
     proBadge: 'Recomendado',
     proItems: [
       'Búsquedas ilimitadas (uso justo)',
-      'Aviso cuando baja el precio',
+      'Avisos sin esperar al resumen de las 21:00',
       'Reporte diario a las 21 h (hora Argentina)',
     ],
-    trial: 'La prueba de 7 días cubre la alerta y el reporte, sin tarjeta y una sola vez. Pro se cobra al confirmar el pago.',
+    trial: `La prueba de ${trialDays} días cubre avisos sin esperar al resumen, sin tarjeta y una sola vez. Pro se paga por mes (${proDays} días).`,
     proBtn: 'Quiero Pro',
-    stars: 'O 250 estrellas de Telegram, en el bot.',
-    starsPeriod: 'O 250 estrellas de Telegram por 30 días, en el bot.',
-    payNote: 'Pagás en la web y te llega el link en el bot.',
+    stars: starsOn ? `O ${STARS_TOTAL} estrellas de Telegram, en el bot.` : '',
+    starsPeriod: starsOn ? `O ${STARS_TOTAL} estrellas de Telegram por ${proDays} días, en el bot.` : '',
+    payNote: 'Pagás en la web (Pro se paga por mes) y te llega el link en el bot.',
     cancelNote: 'Para dejar Pro, escribinos al bot.',
     previewNote: 'Este selector solo cambia la vista. El cobro usa el país que ve el servidor.',
+    mpOffNote: 'Pagás con tarjeta, en dólares.',
     countryLabel: '¿No es tu país?',
     optAr: 'Argentina',
     optEu: 'Unión Europea',
@@ -384,8 +396,8 @@ function copy(lang) {
     arsWords: (n) => `${n} pesos argentinos, al dólar oficial de hoy.`,
     euFigure: `€${pricing.figure(pricing.PRO_EUR_CENTS, 'es')}`,
     euWords: `${pricing.figure(pricing.PRO_EUR_CENTS, 'es')} euros, IVA incluido.`,
-    usdFigure: 'US$5',
-    usdWords: '5 dólares estadounidenses.',
+    usdFigure: `US$${usdPrice}`,
+    usdWords: `${usdPrice} dólares estadounidenses.`,
     destinationsTitle: 'Destinos populares en Europa',
     destinationsSub: 'Las rutas más buscadas desde Latinoamérica.',
     trustOrigins: `${nO} orígenes`,
@@ -395,14 +407,14 @@ function copy(lang) {
     trustData: 'Datos de Travelpayouts',
     trustDataDesc: 'Precios reales en caché',
     trustPayments: 'Pagos seguros',
-    trustPaymentsDesc: 'Stripe · Mercado Pago · Stars',
+    trustPaymentsDesc: require('./payMethods').line('es'),
     faqTitle: 'Preguntas frecuentes',
     faq: [
       ['¿El precio es final?', 'Es el precio que encontró la búsqueda en ese momento. Las aerolíneas lo cambian rápido, así que confirmalo siempre en la página de reserva antes de pagar.'],
       ['¿Ustedes venden los pasajes?', 'No. El bot te lleva al sitio donde se compra. Algunos links son de afiliado: no te cuestan nada extra y nos ayudan a mantener el bot.'],
-      ['¿Qué incluye lo gratis?', '10 búsquedas por mes, sin tarjeta. La alerta diaria y el reporte de las 21:00 se prueban 7 días, una sola vez.'],
+      ['¿Qué incluye lo gratis?', `${searchCap} búsquedas por mes y ${freeAlerts} alerta activa con reporte a las 21:00, sin tarjeta. Las funciones Pro se prueban ${trialDays} días, una sola vez.`],
       ['¿Puedo cancelar Pro?', 'Escribinos al bot. No hay baja self-service: /cancel en el chat solo corta lo que estabas haciendo, no la suscripción.'],
-      ['¿Qué pasa cuando termina la prueba?', 'A los 7 días se pausan las alertas y el reporte, y el bot te avisa en ese momento. Pro es una suscripción de 30 días que se cobra al pagar.'],
+      ['¿Qué pasa cuando termina la prueba?', `A los ${trialDays} días tus alertas se ajustan al límite del plan gratis y el bot te avisa en ese momento. Pro se paga por mes (${proDays} días).`],
       ['¿Desde qué ciudades busca?', `Desde ${nO} orígenes y hacia ${nD} destinos. La lista está en esta página y también adentro del bot.`],
       ['¿Me van a llenar de mensajes?', 'No. Pro te avisa cuando baja una tarifa que seguís, y te manda un solo resumen a las 21:00.'],
       ['¿Qué hacen con mi IP?', PRIVACY],
@@ -414,16 +426,16 @@ function copy(lang) {
     privacyEn: '',
     affiliateNote: 'Algunos links son de afiliado: no te cuestan nada extra y nos ayudan a mantener el servicio.',
   };
-  if (lang === 'pt') return { ...es, ...ptCopy(nO, nD) };
+  if (lang === 'pt') return { ...es, ...ptCopy(nO, nD, { searchCap, trialDays, proDays, freeAlerts, starsOn, usdPrice }) };
   return es;
 }
 
 /** Português do Brasil (/pt). Mesmas chaves que es; o que não estiver aqui cai no espanhol. */
-function ptCopy(nO, nD) {
+function ptCopy(nO, nD, { searchCap, trialDays, proDays, freeAlerts, starsOn, usdPrice }) {
   return {
     htmlLang: 'pt-BR',
     title: 'Voos baratos entre a América Latina e a Europa | Flight Alert',
-    description: 'Você escolhe origem e destino e o bot avisa quando aparece um bom preço. Dados da Travelpayouts. 10 buscas por mês.',
+    description: `Você escolhe origem e destino e o bot avisa quando aparece um bom preço. Dados da Travelpayouts. ${searchCap} buscas por mês.`,
     skip: 'Pular para o conteúdo',
     pricesLink: 'Preços',
     openTelegram: 'Abrir no Telegram',
@@ -440,7 +452,7 @@ function ptCopy(nO, nD) {
     ctaHero: 'Abrir no Telegram',
     seePrices: 'Ver preços',
     small: 'Sem cadastro. Abra o bot e pronto.',
-    quota: '10 buscas por mês, sem cartão. O alerta diário e o relatório das 21:00 têm 7 dias de teste.',
+    quota: `${searchCap} buscas por mês e ${freeAlerts} alerta ativo, sem cartão. O Pro tem ${trialDays} dias de teste.`,
     benefitsTitle: 'Resumindo',
     benefits: [
       'Você para de olhar preços todo dia: o bot acompanha por você e só escreve quando vale a pena.',
@@ -464,21 +476,22 @@ function ptCopy(nO, nD) {
     originsLabel: 'Origens',
     pricesTitle: 'Preços',
     freeTitle: 'Grátis',
-    freeBody: '10 buscas por mês, sem cartão.',
+    freeBody: `${searchCap} buscas por mês e ${freeAlerts} alerta diário, sem cartão.`,
     freeBtn: 'Começar grátis',
     proBadge: 'Recomendado',
     proItems: [
       'Buscas ilimitadas (uso justo)',
-      'Aviso quando o preço baixar',
+      'Avisos sem esperar o resumo das 21:00',
       'Relatório diário às 21 h (horário da Argentina)',
     ],
-    trial: 'O teste de 7 dias cobre o alerta e o relatório, sem cartão e uma única vez. O Pro é cobrado ao confirmar o pagamento.',
+    trial: `O teste de ${trialDays} dias cobre avisos sem esperar o resumo, sem cartão e uma única vez. O Pro é pago por mês (${proDays} dias).`,
     proBtn: 'Quero o Pro',
-    stars: 'Ou 250 estrelas do Telegram, no bot.',
-    starsPeriod: 'Ou 250 estrelas do Telegram por 30 dias, no bot.',
-    payNote: 'Você paga no site e recebe o link no bot.',
+    stars: starsOn ? `Ou ${STARS_TOTAL} estrelas do Telegram, no bot.` : '',
+    starsPeriod: starsOn ? `Ou ${STARS_TOTAL} estrelas do Telegram por ${proDays} dias, no bot.` : '',
+    payNote: 'Você paga no site (Pro é pago por mês) e recebe o link no bot.',
     cancelNote: 'Para sair do Pro, escreva para o bot.',
     previewNote: 'Este seletor só muda a visualização. A cobrança usa o país que o servidor vê.',
+    mpOffNote: 'Você paga com cartão, em dólares.',
     countryLabel: 'Não é o seu país?',
     optEu: 'União Europeia',
     optOther: 'Resto do mundo',
@@ -487,7 +500,7 @@ function ptCopy(nO, nD) {
     arsWords: (n) => `${n} pesos argentinos, ao dólar oficial de hoje.`,
     euFigure: `€${pricing.figure(pricing.PRO_EUR_CENTS, 'es')}`,
     euWords: `${pricing.figure(pricing.PRO_EUR_CENTS, 'es')} euros, IVA incluído.`,
-    usdWords: '5 dólares americanos.',
+    usdWords: `${usdPrice} dólares americanos.`,
     destinationsTitle: 'Destinos populares na Europa',
     destinationsSub: 'As rotas mais buscadas a partir da América Latina.',
     trustOrigins: `${nO} origens`,
@@ -496,13 +509,14 @@ function ptCopy(nO, nD) {
     trustData: 'Dados da Travelpayouts',
     trustDataDesc: 'Preços reais em cache',
     trustPayments: 'Pagamentos seguros',
+    trustPaymentsDesc: require('./payMethods').line('pt'),
     faqTitle: 'Perguntas frequentes',
     faq: [
       ['O preço é final?', 'É o preço que a busca encontrou naquele momento. As companhias mudam rápido, então confirme sempre na página de reserva antes de pagar.'],
       ['Vocês vendem passagens?', 'Não. O bot te leva ao site onde se compra. Alguns links são de afiliado: não custam nada a mais e ajudam a manter o bot.'],
-      ['O que o grátis inclui?', '10 buscas por mês, sem cartão. O alerta diário e o relatório das 21:00 têm 7 dias de teste, uma única vez.'],
+      ['O que o grátis inclui?', `${searchCap} buscas por mês e ${freeAlerts} alerta ativo no relatório das 21:00, sem cartão. O Pro tem ${trialDays} dias de teste, uma única vez.`],
       ['Posso cancelar o Pro?', 'Escreva para o bot. Não há cancelamento automático: /cancel no chat só interrompe o que você estava fazendo, não a assinatura.'],
-      ['O que acontece quando o teste acaba?', 'Depois de 7 dias os alertas e o relatório pausam, e o bot te avisa nesse momento. O Pro é uma assinatura de 30 dias cobrada ao pagar.'],
+      ['O que acontece quando o teste acaba?', `Depois de ${trialDays} dias seus alertas se ajustam ao limite do plano grátis e o bot avisa você. O Pro é pago por mês (${proDays} dias).`],
       ['De quais cidades busca?', `De ${nO} origens para ${nD} destinos. A lista está nesta página e também dentro do bot.`],
       ['Vão me encher de mensagens?', 'Não. O Pro avisa quando baixa uma tarifa que você segue, e manda um único resumo às 21:00 (horário da Argentina).'],
       ['O que vocês fazem com meu IP?', 'Privacidade: estimamos o país com uma base GeoIP local. O IP não sai do servidor.'],
@@ -524,14 +538,19 @@ function formatArs(amount, lang) {
 
 function priceBlocks(lang, region, ars) {
   const t = copy(lang);
-  const arsInner = Number.isInteger(ars) && ars > 0
-    ? `<p class="plan__figure">${esc(formatArs(ars, lang))}</p><p class="plan__words">${esc(t.arsWords(ars))}</p><p class="fine">${esc(t.bna)}</p>`
-    : `<p class="plan__words">${esc(t.arsMissing)}</p>`;
+  const mpOn = flags.mp();
+  const starsOn = flags.stars();
+  const proDays = entitlements.PRO_DAYS;
+  const arsInner = mpOn
+    ? (Number.isInteger(ars) && ars > 0
+      ? `<p class="plan__figure">${esc(formatArs(ars, lang))}</p><p class="plan__words">${esc(t.arsWords(ars))}</p><p class="fine">${esc(t.bna)}</p>`
+      : `<p class="plan__words">${esc(t.arsMissing)}</p>`)
+    : `<p class="plan__figure">${esc(t.usdFigure)}</p><p class="plan__words">${esc(t.usdWords)}</p><p class="fine">${esc(t.mpOffNote)}</p>`;
   const blocks = [
     ['ar', arsInner],
     ['eu', `<p class="plan__figure">${esc(t.euFigure)}</p><p class="plan__words">${esc(t.euWords)}</p>`],
     ['other', `<p class="plan__figure">${esc(t.usdFigure)}</p><p class="plan__words">${esc(t.usdWords)}</p>`],
-    ['stars', `<p class="plan__figure">250 ⭐</p><p class="plan__words">${({ en: '250 Telegram Stars for 30 days, paid inside the bot.', pt: '250 estrelas do Telegram por 30 dias, pagas no bot.' }[lang] || '250 estrellas de Telegram por 30 días, se paga en el bot.')}</p>`],
+    ...(starsOn ? [['stars', `<p class="plan__figure">${STARS_TOTAL} ⭐</p><p class="plan__words">${({ en: `${STARS_TOTAL} Telegram Stars for ${proDays} days, paid inside the bot.`, pt: `${STARS_TOTAL} estrelas do Telegram por ${proDays} dias, pagas no bot.` }[lang] || `${STARS_TOTAL} estrellas de Telegram por ${proDays} días, se paga en el bot.`)}</p>`]] : []),
   ];
   return blocks.map(([id, inner]) => {
     const hidden = id === region ? '' : ' hidden';
@@ -563,12 +582,15 @@ function tabs(lang) {
 
 function jsonLd(lang, ars) {
   const t = copy(lang);
+  const usdPrice = pricing.PRO_USD_CENTS % 100 ? pricing.figure(pricing.PRO_USD_CENTS, 'en') : String(pricing.PRO_USD_CENTS / 100);
   const offers = [
     { '@type': 'Offer', price: pricing.figure(pricing.PRO_EUR_CENTS, 'en'), priceCurrency: 'EUR', description: ({ en: 'VAT included', pt: 'IVA incluído' }[lang] || 'IVA incluido') },
-    { '@type': 'Offer', price: '5', priceCurrency: 'USD' },
-    { '@type': 'Offer', price: '250', priceCurrency: 'XTR', description: 'Telegram Stars' },
+    { '@type': 'Offer', price: usdPrice, priceCurrency: 'USD' },
   ];
-  if (Number.isInteger(ars) && ars > 0) {
+  if (flags.stars()) {
+    offers.push({ '@type': 'Offer', price: String(STARS_TOTAL), priceCurrency: 'XTR', description: 'Telegram Stars' });
+  }
+  if (flags.mp() && Number.isInteger(ars) && ars > 0) {
     offers.push({ '@type': 'Offer', price: String(ars), priceCurrency: 'ARS', description: 'Dólar oficial' });
   }
   return JSON.stringify({
@@ -672,7 +694,7 @@ function renderLanding(ctx = {}) {
   const homeEn = abs(ctx.base, '/en');
   const switchHref = lang === 'es' ? '/en' : '/es';
   const wordmark = `/${lang}`;
-  const ccy = [['ar', 'ARS'], ['eu', 'EUR'], ['other', 'USD'], ['stars', 'Stars']];
+  const ccy = [['ar', flags.mp() ? 'ARS' : 'USD'], ['eu', 'EUR'], ['other', 'USD'], ...(flags.stars() ? [['stars', 'Stars']] : [])];
   const options = ccy.map(([id, label]) => `<label class="ccy-opt"><input type="radio" name="ccy" value="${id}"${id === region ? ' checked' : ''}><span>${label}</span></label>`).join('');
   const steps = t.steps.map((step, index) => {
     const copyBtn = index === 0
@@ -723,7 +745,7 @@ function renderLanding(ctx = {}) {
     + sprite
     + '<div id="top-sentinel"></div>'
     + '<header class="site-header"><div class="wrap">'
-    + `<a class="wordmark" href="${wordmark}"><img class="bot-logo" src="/public/avatar.webp" alt="" width="36" height="36"><span class="wordmark-label">Flight Alert</span></a>`
+    + `<a class="wordmark" href="${wordmark}">${flightAlertLogoSvg({ size: 36, cls: 'bot-logo' })}<span class="wordmark-label">Flight Alert</span></a>`
     + `<nav class="nav" aria-label="${({ en: 'Primary', pt: 'Principal' }[lang] || 'Principal')}">`
     + `<a href="#destinos">${({ en: 'Destinations', pt: 'Destinos' }[lang] || 'Destinos')}</a>`
     + `<a href="#como">${esc(t.howTitle)}</a>`
@@ -758,7 +780,7 @@ function renderLanding(ctx = {}) {
     + `<figure class="tg-phone-mockup"><figcaption class="sr-only">${({ en: 'Example Flight Alert message on Telegram', pt: 'Exemplo de alerta do Flight Alert no Telegram' }[lang] || 'Ejemplo de alerta de Flight Alert en Telegram')}</figcaption>`
     + '<div class="tg-phone-shell"><div class="tg-header-bar">'
     + '<span class="tg-back-arrow">‹</span>'
-    + '<img class="tg-bot-pic" src="/public/avatar.webp" alt="" width="28" height="28">'
+    + flightAlertLogoSvg({ size: 28, cls: 'tg-bot-pic' })
     + '<div class="tg-info"><span class="tg-name">Flight Alert</span><span class="tg-role">bot</span></div>'
     + '</div>'
     + '<div class="tg-screen-content">'
@@ -801,10 +823,10 @@ function renderLanding(ctx = {}) {
     + '<div class="plans">'
     + `<article class="plan plan--free"><div class="plan-head"><h3>${esc(t.freeTitle)}</h3><p class="plan-price-free">$0</p></div><p class="plan-desc">${esc(t.freeBody)}</p>`
     + '<ul class="plan-checklist">'
-    + `<li>${icon('i-check')} 10 ${({ en: 'searches per month', pt: 'buscas por mês' }[lang] || 'búsquedas por mes')}</li>`
+    + `<li>${icon('i-check')} ${entitlements.SEARCH_CAP} ${({ en: 'searches per month', pt: 'buscas por mês' }[lang] || 'búsquedas por mes')}</li>`
     + `<li>${icon('i-check')} ${({ en: 'No card or registration needed', pt: 'Sem cadastro nem cartão' }[lang] || 'Sin registro ni tarjeta')}</li>`
     + `<li>${icon('i-check')} ${({ en: 'Travelpayouts data', pt: 'Dados da Travelpayouts' }[lang] || 'Datos de Travelpayouts')}</li>`
-    + `<li>${icon('i-check')} ${({ en: '7-day trial of alerts', pt: '7 dias de teste do alerta' }[lang] || '7 días de prueba de la alerta')}</li>`
+    + `<li>${icon('i-check')} ${entitlements.TRIAL_DAYS} ${({ en: 'days of Pro trial', pt: 'dias de teste do Pro' }[lang] || 'días de prueba de Pro')}</li>`
     + '</ul>'
     + `<a class="btn btn--ghost" href="${tg('precios')}">${esc(t.freeBtn)}</a></article>`
     + '<article class="plan plan--pro is-highlight">'
@@ -814,13 +836,13 @@ function renderLanding(ctx = {}) {
     + '</div>'
     + '<ul class="plan-checklist">'
     + `<li>${icon('i-check')} <strong>${({ en: 'Unlimited searches', pt: 'Buscas ilimitadas' }[lang] || 'Búsquedas ilimitadas')}</strong> (${({ en: 'fair use', pt: 'uso justo' }[lang] || 'uso justo')})</li>`
-    + `<li>${icon('i-check')} <strong>${({ en: 'Alert when the price drops', pt: 'Aviso quando o preço baixar' }[lang] || 'Aviso cuando baja el precio')}</strong></li>`
+    + `<li>${icon('i-check')} <strong>${({ en: 'Alerts without waiting for 21:00', pt: 'Avisos sem esperar as 21 h' }[lang] || 'Avisos sin esperar a las 21 h')}</strong></li>`
     + `<li>${icon('i-check')} <strong>${({ en: 'Daily report at 21 h (Argentina time)', pt: 'Relatório diário às 21 h (horário da Argentina)' }[lang] || 'Reporte diario a las 21 h (hora Argentina)')}</strong></li>`
     + `<li>${icon('i-check')} ${esc(t.trial)}</li>`
-    + `<li>${icon('i-check')} ${esc(t.starsPeriod)}</li>`
+    + (t.starsPeriod ? `<li>${icon('i-check')} ${esc(t.starsPeriod)}</li>` : '')
     + require('./aiSoon').li(lang)
     + '</ul>'
-    + `<div class="plan-raw-items" hidden><ul>${t.proItems.map((item) => `<li>${esc(item)}</li>`).join('')}</ul><p>${esc(t.trial)}</p><p>${esc(t.stars)}</p></div>`
+    + `<div class="plan-raw-items" hidden><ul>${t.proItems.map((item) => `<li>${esc(item)}</li>`).join('')}</ul><p>${esc(t.trial)}</p>${t.stars ? `<p>${esc(t.stars)}</p>` : ''}</div>`
     + `<a class="btn btn--primary" href="/pro">${esc(t.proBtn)}</a>`
     + '</article></div>'
     + `<fieldset class="ccy-pick" id="country-preview" data-detected="${region}"><legend>${({ en: 'Currency', pt: 'Moeda' }[lang] || 'Moneda')}</legend><div role="radiogroup" aria-label="${({ en: 'Currency', pt: 'Moeda' }[lang] || 'Moneda')}" class="ccy-group">${options}</div></fieldset>`
@@ -839,14 +861,14 @@ function renderLanding(ctx = {}) {
     + '</div></section>'
     + '</main>'
     + '<footer class="site-footer"><div class="wrap footer-wrap">'
-    + '<div class="footer-brand"><img class="bot-logo" src="/public/avatar.webp" alt="" width="28" height="28"><strong>Flight Alert</strong></div>'
+    + `<div class="footer-brand">${flightAlertLogoSvg({ size: 28, cls: 'bot-logo' })}<strong>Flight Alert</strong></div>`
     + `<nav class="footer-nav" aria-label="${({ en: 'Footer', pt: 'Rodapé' }[lang] || 'Pie')}">`
     + '<a href="https://ranuk.dev" target="_blank" rel="noopener">ranuk.dev</a>'
     + `<a href="${tg('footer')}">${esc(t.contact)}</a>`
     + `<a href="#privacidad">${esc(t.privacyLink)}</a>`
     + '</nav>'
     + `<p class="affiliate-notice">${esc(t.priceFoot)}</p>`
-    + `<p class="footer-copy">${({ en: 'A product by', pt: 'Um produto da' }[lang] || 'Un producto de')} <a href="https://ranuk.dev" rel="noopener">Ranuk IT Solutions</a></p>`
+    + `<p class="footer-copy">${ranukMarkSvg({ size: 18, cls: 'ranuk-mark' })} ${({ en: 'Made by', pt: 'Feito por' }[lang] || 'Hecho por')} <a href="https://ranuk.dev" target="_blank" rel="noopener">Ranuk IT</a></p>`
     + '</div></footer>'
     + `<script src="${jsHref}" defer></script>`
     + '</body></html>';

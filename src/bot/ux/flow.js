@@ -5,7 +5,7 @@
  * El estado viaja en el callback_data; next() calcula el primer paso que falta, así
  * "Atrás" = sacar el campo del paso anterior y "Editar" = sacar ese campo y volver solo al resumen.
  */
-const { ALL_ORIGINS, destinationsFor, pairOk } = require('../../config/airports');
+const { activeAllOrigins, destinationsFor, pairOk } = require('../../config/airports');
 const places = require('./places');
 const cal = require('./calendar');
 const cb = require('./cb');
@@ -281,8 +281,8 @@ function validate(lang, f, now) {
   const dep = departIso(f);
   if (dep && dep < cal.todayIso(now)) return t(lang, 'expired');
   if (f.r && dep && cal.ymdToIso(f.r) <= dep) return t(lang, 'returnBefore');
-  if (f.o && !ALL_ORIGINS.includes(f.o)) return t(lang, 'expired');
-  if (f.d && !ALL_ORIGINS.includes(f.d)) return t(lang, 'expired');
+  if (f.o && !activeAllOrigins().includes(f.o)) return t(lang, 'expired');
+  if (f.d && !activeAllOrigins().includes(f.d)) return t(lang, 'expired');
   if (f.o && f.d && !pairOk(f.o, f.d)) return t(lang, 'expired');
   return null;
 }

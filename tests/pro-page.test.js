@@ -12,11 +12,18 @@ test('/pro usa la hoja de la landing y el copy nuevo', () => {
 });
 
 test('precio según país: AR dólar oficial, UE IVA incluido, resto US$5', () => {
-  const ar = pages.pro({ choice: 'AR', ipCountry: 'AR', ars: 7350 });
-  expect(ar).toMatch(/id="pro-price"[^>]*>\$\s?7\.350 por mes, al dólar oficial de hoy\./);
-  expect(pages.pro({ choice: 'ES' })).toContain('>€4,50 por mes, IVA incluido.<');
-  expect(pages.pro({ choice: 'OTRO' })).toContain('>US$5 por mes.<');
-  expect(pages.pro({ choice: 'AR', ipCountry: 'AR' })).toContain('Sin cotización del dólar oficial');
+  const prev = process.env.FEATURE_PAYMENTS_MP;
+  process.env.FEATURE_PAYMENTS_MP = 'on';
+  try {
+    const ar = pages.pro({ choice: 'AR', ipCountry: 'AR', ars: 7350 });
+    expect(ar).toMatch(/id="pro-price"[^>]*>\$\s?7\.350 por mes, al dólar oficial de hoy\./);
+    expect(pages.pro({ choice: 'ES' })).toContain('>€4,50 por mes, IVA incluido.<');
+    expect(pages.pro({ choice: 'OTRO' })).toContain('>US$5 por mes.<');
+    expect(pages.pro({ choice: 'AR', ipCountry: 'AR' })).toContain('Sin cotización del dólar oficial');
+  } finally {
+    if (prev === undefined) delete process.env.FEATURE_PAYMENTS_MP;
+    else process.env.FEATURE_PAYMENTS_MP = prev;
+  }
 });
 
 test('formulario: labels con for, botón menta 48px y error de email', () => {

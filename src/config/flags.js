@@ -9,6 +9,7 @@ const FEATURES = [
   'FEATURE_CHANNELS',
   'FEATURE_INSTANT_ALERTS',
   'FEATURE_REPORT_PDF',
+  'FEATURE_F3_DESTINATIONS',
 ];
 
 function on(name) {
@@ -75,6 +76,7 @@ module.exports = {
   mp: () => on('FEATURE_PAYMENTS_MP'),
   stripe: () => on('FEATURE_PAYMENTS_STRIPE'),
   channels: () => on('FEATURE_CHANNELS'),
+  f3Destinations: () => on('FEATURE_F3_DESTINATIONS'),
   instantAlerts: () => {
     const o = runtime('instantAlerts');
     if (o === 'on') return true;

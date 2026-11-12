@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const path = require('path');
 const express = require('express');
 const flags = require('./config/flags');
+const plans = require('./config/plans');
 const { summary } = require('./config');
 const logger = require('./utils/logger').child('app');
 const db = require('./database');
@@ -26,6 +27,7 @@ const { expire } = require('./services/entitlements');
 const { startBot, getBot } = require('./bot');
 const transport = require('./bot/transport');
 const stars = require('./services/payments/stars');
+const funnel = require('./services/funnel');
 
 function clientIp(req) {
   return req.ip || (req.socket && req.socket.remoteAddress) || 'local';
@@ -103,7 +105,7 @@ function createApp() {
 
   app.get('/health', (_req, res) => {
     const status = db.health();
-    const body = { ok: status.ok, db: status.db, telegram: { mode: transport.mode(process.env) } };
+    const body = { ok: status.ok, db: status.db, telegram: { mode: transport.mode(process.env) }, planConfig: plans.health() };
     if (body.telegram.mode === 'webhook') body.telegram.webhook = transport.webhookInfo();
     res.status(status.ok ? 200 : 503).json(body);
   });
@@ -241,12 +243,15 @@ function createApp() {
       const qs = new URLSearchParams();
       if (req.query.pais) qs.set('pais', String(req.query.pais));
       if (req.query.lang) qs.set('lang', String(req.query.lang));
+      if (req.query.origin) qs.set('origin', String(req.query.origin));
       const rest = qs.toString() ? `?${qs}` : '';
       return res.redirect(303, `/pro${rest}`);
     }
     deviceHash(req, res);
     const geo = await ipCountry(req);
     const choice = req.query && req.query.pais ? String(req.query.pais) : '';
+    const sess = webSession.sessionFromRequest(req);
+    const origin = (sess && sess.origin) || funnel.sanitizeOrigin(req.query && (req.query.origin || req.query.from)) || '';
     let quote = null;
     try { quote = await fx.latest(); } catch { quote = null; }
     res.type('html').send(pages.pro({
@@ -256,6 +261,7 @@ function createApp() {
       language: req.headers['accept-language'] || '',
       lang: req.query && req.query.lang ? String(req.query.lang) : '',
       nonce: res.locals.cspNonce,
+      origin,
     }));
   });
 
@@ -273,6 +279,9 @@ function createApp() {
     const geo = await ipCountry(req);
     const offer = currencyFor(choice, geo);
     const hash = deviceHash(req, res);
+    const sess = webSession.sessionFromRequest(req);
+    const tgUserId = sess ? sess.userId : null;
+    const origin = (sess && sess.origin) || funnel.sanitizeOrigin(req.body && req.body.origin) || null;
     const base = require('./config/site').baseUrl();
     try {
       if (offer.rail === 'mp') {
@@ -282,11 +291,19 @@ function createApp() {
         if (!Number.isFinite(amount) || amount <= 0) {
           return res.status(400).type('text/plain').send('No tengo una cotización en pesos para cobrar. Probá más tarde.');
         }
+        await funnel.record({
+          event: 'pro_checkout_open',
+          userId: tgUserId || hash,
+          origin,
+          method: 'mp',
+          interval: 'monthly',
+        });
         const externalReference = await link.newReference('mp', {
           webUserKey: hash,
-          telegramUserId: webSession.fromRequest(req),
+          telegramUserId: tgUserId,
           amount,
           currency: 'ARS',
+          origin,
         });
         const created = await mp.createPreapproval({
           amount,
@@ -299,10 +316,18 @@ function createApp() {
         return res.redirect(303, url);
       }
       if (!flags.stripe()) return res.status(403).type('text/plain').send('La tarjeta no está prendida.');
+      await funnel.record({
+        event: 'pro_checkout_open',
+        userId: tgUserId || hash,
+        origin,
+        method: 'stripe',
+        interval: 'monthly',
+      });
       const externalReference = await link.newReference('stripe', {
         webUserKey: hash,
-        telegramUserId: webSession.fromRequest(req),
+        telegramUserId: tgUserId,
         currency: offer.currency,
+        origin,
       });
       const session = await stripePay.createCheckout({
         externalReference,
@@ -353,6 +378,7 @@ function schedule() {
   require('./services/scheduler').start({
     digest: () => runDailyDigest(getBot()),
     expire: () => expire(getBot()),
+    starsRecovery: () => require('./services/payments/starsRecovery').sweep(getBot()),
     fx: () => fx.refresh()
       .then(() => fx.adjustSubscriptions((id, amount) => require('./services/payments/mp').updatePreapprovalAmount(id, amount))),
     instant: () => require('./services/instantAlerts').run(getBot()),
@@ -361,9 +387,10 @@ function schedule() {
 
 function start() {
   db.open();
-  stars.assertSecret();
+  stars.assertStartupConfig();
   assertDeviceSecret();
   assertConfigured();
+  plans.reload();
   const app = createApp();
   const booting = db.connect().catch((err) => {
     logger.error('mongo', err);
@@ -372,7 +399,11 @@ function start() {
   app.set('booting', booting);
   booting.then(() => samplePrice.load()).catch(() => {});
   booting.then(() => require('./services/runtimeFlags').refresh()).catch(() => {});
-  if (process.env.NODE_ENV !== 'test') require('./services/runtimeFlags').startRefresh();
+  booting.then(() => plans.refreshFromDb()).catch(() => {});
+  if (process.env.NODE_ENV !== 'test') {
+    require('./services/runtimeFlags').startRefresh();
+    plans.startRefresh();
+  }
   if (process.env.TELEGRAM_BOT_TOKEN) startBot();
   schedule();
   logger.info('servicio público', summary());

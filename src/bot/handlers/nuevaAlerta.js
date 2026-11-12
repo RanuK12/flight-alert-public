@@ -6,25 +6,56 @@ const { col } = require('../../database');
 const entitlements = require('../../services/entitlements');
 const sessions = require('../sessions');
 const rateLimit = require('../../services/rateLimit');
+const { t, langOf } = require('../ux/i18n');
 
-async function gate(userId, chatId) {
-  if (!flags.alerts()) return { ok: false, text: copy.alertsOff };
-  if (await entitlements.canUseAlerts(userId)) return { ok: true };
-  const trial = await entitlements.startTrial(userId);
-  if (!trial.ok) return { ok: false, text: copy.alertsPaywall };
-  await col('Entitlement').updateOne(
-    { telegramUserId: String(userId) },
-    { $set: { telegramChatId: String(chatId) } },
-  );
-  return { ok: true, text: copy.trialOn };
+async function resolveLang(userId, preferredLang) {
+  if (preferredLang && ['es', 'en', 'pt'].includes(preferredLang)) return preferredLang;
+  const u = await col('User').findOne({ telegramUserId: String(userId) }).lean();
+  if (u && ['es', 'en', 'pt'].includes(u.lang)) return u.lang;
+  return 'es';
 }
 
-async function finalize(bot, chatId, userId, data) {
-  const again = await gate(userId, chatId);
+async function gate(userId, chatId, opts = {}) {
+  const lang = await resolveLang(userId, typeof opts === 'string' ? opts : opts && opts.lang);
+  if (!flags.alerts()) return { ok: false, status: 403, code: 'ALERTS_OFF', text: t(lang, 'alertsOff') };
+  const verdict = await entitlements.canCreateOrReactivate(userId);
+  if (verdict.ok) {
+    await col('Entitlement').updateOne(
+      { telegramUserId: String(userId) },
+      { $set: { telegramChatId: String(chatId) } },
+      { upsert: true },
+    ).catch(() => {});
+    return { ok: true, plan: verdict.plan, active: verdict.active, cap: verdict.cap };
+  }
+  if (verdict.status === 503 || verdict.code === 'PLAN_CONFIG_UNAVAILABLE') {
+    return {
+      ok: false,
+      status: 503,
+      code: 'PLAN_CONFIG_UNAVAILABLE',
+      text: t(lang, 'planConfigDown'),
+    };
+  }
+  return {
+    ok: false,
+    status: verdict.status,
+    code: verdict.code,
+    plan: verdict.plan,
+    active: verdict.active,
+    cap: verdict.cap,
+    text: verdict.plan === 'pro'
+      ? t(lang, 'capReachedPro', { n: verdict.cap })
+      : t(lang, 'capReached', { n: verdict.cap }),
+  };
+}
+
+async function finalize(bot, chatId, userId, data, opts = {}) {
+  const lang = await resolveLang(userId, opts && opts.lang);
+  const again = await gate(userId, chatId, { lang });
   if (!again.ok) {
     await bot.sendMessage(chatId, again.text);
     return;
   }
+  const hour = data.hour || '21:00';
   await col('Route').create({
     telegramUserId: String(userId),
     telegramChatId: String(chatId),
@@ -35,17 +66,24 @@ async function finalize(bot, chatId, userId, data) {
     returnDate: data.returnDate || null,
     priceThreshold: data.threshold || null,
     currency: data.currency || 'EUR',
-    hour: data.hour || '21:00',
+    hour,
     paused: false,
+    version: 1,
     name: `${data.origin}→${data.destination}`,
   });
   const extra = again.text ? `\n${again.text}` : '';
-  await bot.sendMessage(chatId, `Quedó la alerta ${data.origin}→${data.destination}, todos los días a las ${data.hour || '21:00'}.${extra}`);
+  const msgText = lang === 'en'
+    ? `Saved alert ${data.origin}→${data.destination}, every day at ${hour}.${extra}`
+    : lang === 'pt'
+      ? `Alerta salvo ${data.origin}→${data.destination}, todo dia às ${hour}.${extra}`
+      : `Quedó la alerta ${data.origin}→${data.destination}, todos los días a las ${hour}.${extra}`;
+  await bot.sendMessage(chatId, msgText);
 }
 
 function register(bot) {
   bot.onText(/^\/nueva_alerta(?:@\w+)?$/, async (msg) => {
-    const opened = await gate(msg.from.id, msg.chat.id);
+    const lang = await resolveLang(msg.from.id, langOf(msg.from));
+    const opened = await gate(msg.from.id, msg.chat.id, { lang });
     if (!opened.ok) {
       await bot.sendMessage(msg.chat.id, opened.text);
       return;
@@ -54,9 +92,14 @@ function register(bot) {
       await bot.sendMessage(msg.chat.id, copy.slow);
       return;
     }
-    await sessions.setSession(msg.chat.id, { userId: msg.from.id, state: 'alerta:origin', data: {} });
+    await sessions.setSession(msg.chat.id, { userId: msg.from.id, state: 'alerta:origin', data: {}, lang });
     const intro = opened.text ? `${opened.text}\n\n` : '';
-    await bot.sendMessage(msg.chat.id, `${intro}¿Desde qué aeropuerto querés la alerta?`);
+    const prompt = lang === 'en'
+      ? 'From which airport do you want the alert?'
+      : lang === 'pt'
+        ? 'De qual aeroporto você quer o alerta?'
+        : '¿Desde qué aeropuerto querés la alerta?';
+    await bot.sendMessage(msg.chat.id, `${intro}${prompt}`);
   });
 }
 

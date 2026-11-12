@@ -202,15 +202,24 @@ test('checkout redirige al link real, valida el email y exige monto ARS', async 
 });
 
 test('EUR 4,50 para toda la UE, USD 5 para el resto y ARS solo en AR', () => {
-  expect(country.EU.size).toBe(27);
-  for (const code of country.EU) {
-    expect(country.currencyFor(code, 'US')).toEqual({ rail: 'stripe', currency: 'EUR', unitAmount: 450 });
+  const prev = process.env.FEATURE_PAYMENTS_MP;
+  try {
+    expect(country.EU.size).toBe(27);
+    for (const code of country.EU) {
+      expect(country.currencyFor(code, 'US')).toEqual({ rail: 'stripe', currency: 'EUR', unitAmount: 450 });
+    }
+    expect(country.currencyFor('US', 'AR')).toEqual({ rail: 'stripe', currency: 'USD', unitAmount: 500 });
+    expect(country.currencyFor('GB', 'FR')).toEqual({ rail: 'stripe', currency: 'USD', unitAmount: 500 });
+    delete process.env.FEATURE_PAYMENTS_MP;
+    expect(country.currencyFor('AR', 'AR')).toEqual({ rail: 'stripe', currency: 'USD', unitAmount: 500 });
+    process.env.FEATURE_PAYMENTS_MP = 'on';
+    expect(country.currencyFor('AR', 'AR')).toEqual({ rail: 'mp', currency: 'ARS', unitAmount: null });
+    expect(country.currencyFor('AR', 'ES').currency).toBe('EUR');
+    expect(country.currencyFor('AR', '').currency).toBe('USD');
+  } finally {
+    if (prev === undefined) delete process.env.FEATURE_PAYMENTS_MP;
+    else process.env.FEATURE_PAYMENTS_MP = prev;
   }
-  expect(country.currencyFor('US', 'AR')).toEqual({ rail: 'stripe', currency: 'USD', unitAmount: 500 });
-  expect(country.currencyFor('GB', 'FR')).toEqual({ rail: 'stripe', currency: 'USD', unitAmount: 500 });
-  expect(country.currencyFor('AR', 'AR')).toEqual({ rail: 'mp', currency: 'ARS', unitAmount: null });
-  expect(country.currencyFor('AR', 'ES').currency).toBe('EUR');
-  expect(country.currencyFor('AR', '').currency).toBe('USD');
 });
 
 test('Stars valida payload, total 250 y XTR, y el cargo no se duplica', async () => {
@@ -282,6 +291,14 @@ test('invoice.paid renueva por metadata y la baja de la suscripción deja free',
     origin: 'EZE',
     destination: 'MAD',
     paused: false,
+    updatedAt: new Date(startAt.getTime() - 60000),
+  });
+  await col('Route').create({
+    telegramUserId: '101',
+    origin: 'COR',
+    destination: 'MAD',
+    paused: false,
+    updatedAt: startAt,
   });
   Stripe.subRetrieve.mockResolvedValue({ metadata: { external_reference: 'ref-stripe' } });
   Stripe.constructEvent.mockImplementation((body) => JSON.parse(body.toString()));
@@ -320,8 +337,12 @@ test('invoice.paid renueva por metadata y la baja de la suscripción deja free',
   expect(Stripe.custRetrieve).toHaveBeenCalledWith('cus_1');
   const after = await col('Entitlement').findOne({ telegramUserId: '101' });
   expect(after.plan).toBe('free');
-  const route = await col('Route').findOne({ telegramUserId: '101' });
-  expect(route.paused).toBe(true);
+  const kept = await col('Route').findOne({ telegramUserId: '101', origin: 'COR' });
+  const paused = await col('Route').findOne({ telegramUserId: '101', origin: 'EZE' });
+  expect(kept.paused).toBe(false);
+  expect(paused.paused).toBe(true);
+  expect(paused.pausedByBilling).toBe(true);
+  expect(paused.pausedReason).toBe('plan_limit');
 });
 
 test('MP y Stripe guardan pending_link y /start link_ activa', async () => {

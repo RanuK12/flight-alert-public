@@ -33,15 +33,29 @@ test('P6. la prueba es una por cuenta y por dispositivo; el día 8 pausa y avisa
     tripType: 'oneway',
     outboundDate: '2026-12-01',
     paused: false,
+    updatedAt: new Date(clock.now().getTime() - 60000),
+  });
+  await col('Route').create({
+    telegramUserId: '101',
+    telegramChatId: '101',
+    origin: 'COR',
+    destination: 'MAD',
+    tripType: 'oneway',
+    outboundDate: '2026-12-02',
+    paused: false,
+    updatedAt: clock.now(),
   });
 
   const doc = await col('Entitlement').findOne({ telegramUserId: '101' });
   clock.setNow(new Date(new Date(doc.trialEndsAt).getTime() + 60 * 60 * 1000));
   const bot = { sendMessage: jest.fn().mockResolvedValue({}) };
   await entitlements.expire(bot);
-  const route = await col('Route').findOne({ telegramUserId: '101' });
+  const kept = await col('Route').findOne({ telegramUserId: '101', origin: 'COR' });
+  const route = await col('Route').findOne({ telegramUserId: '101', origin: 'EZE' });
+  expect(kept.paused).toBe(false);
   expect(route.paused).toBe(true);
   expect(route.pausedByBilling).toBe(true);
+  expect(route.pausedReason).toBe('plan_limit');
   expect(bot.sendMessage).toHaveBeenCalledTimes(1);
   await entitlements.expire(bot);
   expect(bot.sendMessage).toHaveBeenCalledTimes(1);

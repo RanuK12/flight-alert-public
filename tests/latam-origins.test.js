@@ -41,9 +41,18 @@ test('búsqueda por texto y la IA resuelven las ciudades nuevas', () => {
 });
 
 test('precio de Pro: USD para LATAM no AR, MP/ARS solo para AR con IP AR', () => {
-  for (const c of ['BR', 'CL', 'UY', 'PE', 'CO', 'MX', 'OTRO']) {
-    expect(country.currencyFor(c, c)).toMatchObject({ rail: 'stripe', currency: 'USD' });
+  const prev = process.env.FEATURE_PAYMENTS_MP;
+  try {
+    for (const c of ['BR', 'CL', 'UY', 'PE', 'CO', 'MX', 'OTRO']) {
+      expect(country.currencyFor(c, c)).toMatchObject({ rail: 'stripe', currency: 'USD' });
+    }
+    delete process.env.FEATURE_PAYMENTS_MP;
+    expect(country.currencyFor('AR', 'AR')).toMatchObject({ rail: 'stripe', currency: 'USD' });
+    process.env.FEATURE_PAYMENTS_MP = 'on';
+    expect(country.currencyFor('AR', 'AR')).toMatchObject({ rail: 'mp', currency: 'ARS' });
+    expect(country.currencyFor('AR', 'BR')).toMatchObject({ rail: 'stripe', currency: 'USD' });
+  } finally {
+    if (prev === undefined) delete process.env.FEATURE_PAYMENTS_MP;
+    else process.env.FEATURE_PAYMENTS_MP = prev;
   }
-  expect(country.currencyFor('AR', 'AR')).toMatchObject({ rail: 'mp', currency: 'ARS' });
-  expect(country.currencyFor('AR', 'BR')).toMatchObject({ rail: 'stripe', currency: 'USD' });
 });

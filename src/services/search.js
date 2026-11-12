@@ -96,7 +96,7 @@ async function runSearchInner(id, query) {
   }
   if (!owner) {
     const gate = await entitlements.peek(id);
-    if (!gate.ok) return { status: 402, text: copy.paywall, paywall: true, charged: false };
+    if (!gate.ok) return { status: 402, text: copy.paywall, paywall: true, charged: false, limit: gate.limit ?? entitlements.SEARCH_CAP };
   }
   const results = sortFlights(await fetchRows(query));
   if (results.length === 0) {
@@ -104,7 +104,7 @@ async function runSearchInner(id, query) {
   }
   if (!owner) {
     const reserved = await entitlements.reserveSearch(id);
-    if (!reserved.ok) return { status: 402, text: copy.paywall, paywall: true, charged: false };
+    if (!reserved.ok) return { status: 402, text: copy.paywall, paywall: true, charged: false, limit: reserved.limit ?? entitlements.SEARCH_CAP };
   }
   await remember(id, query);
   return { status: 200, results, charged: !owner };

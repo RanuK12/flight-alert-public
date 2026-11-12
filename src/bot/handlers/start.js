@@ -2,12 +2,21 @@
 
 const { col } = require('../../database');
 const copy = require('../copy');
+const flags = require('../../config/flags');
+const entitlements = require('../../services/entitlements');
 const link = require('../../services/payments/link');
 const sessions = require('../sessions');
 const ux = require('../ux');
-const { langOf } = require('../ux/i18n');
+const { t, langOf } = require('../ux/i18n');
 
 const logger = require('../../utils/logger').child('start');
+
+async function resolveLang(userId, from) {
+  if (from && from.language_code) return langOf(from);
+  const u = userId ? await col('User').findOne({ telegramUserId: String(userId) }).lean() : null;
+  if (u && ['es', 'en', 'pt'].includes(u.lang)) return u.lang;
+  return langOf(from);
+}
 
 /** Payload del deep link para atribución de campañas. Sin PII: solo el id y el payload saneado. */
 function startParam(arg) {
@@ -47,7 +56,7 @@ function register(bot) {
       },
       { upsert: true },
     );
-    await ux.welcome(bot, msg, { isNew: !existing });
+    await ux.welcome(bot, msg, { isNew: !existing, startParam: startParam(arg) });
   });
 
   bot.onText(/^\/cancel(?:@\w+)?$/, async (msg) => {
@@ -56,11 +65,14 @@ function register(bot) {
   });
 
   bot.onText(/^\/terms(?:@\w+)?$/, async (msg) => {
-    await bot.sendMessage(msg.chat.id, copy.terms);
+    const lang = await resolveLang(msg.from && msg.from.id, msg.from);
+    await bot.sendMessage(msg.chat.id, t(lang, 'termsText', { proDays: entitlements.PRO_DAYS }));
   });
 
   bot.onText(/^\/paysupport(?:@\w+)?$/, async (msg) => {
-    await bot.sendMessage(msg.chat.id, copy.paysupport);
+    if (!flags.stars()) return;
+    const lang = await resolveLang(msg.from && msg.from.id, msg.from);
+    await bot.sendMessage(msg.chat.id, t(lang, 'paysupportText', { contact: process.env.SUPPORT_CONTACT || '' }));
   });
 }
 

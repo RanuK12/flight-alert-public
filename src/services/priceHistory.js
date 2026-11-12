@@ -2,6 +2,7 @@
 
 const { col } = require('../database');
 const art = require('../utils/art');
+const suggest = require('./suggest');
 
 const TTL_DAYS = 35;
 
@@ -44,6 +45,15 @@ async function record(route, flight, now) {
     if (err && err.code === 11000) await C.updateOne(filter, update);
     else throw err;
   }
+  await suggest.recordObservation({
+    origin: route.origin,
+    destination: route.destination,
+    tripType: (route.tripType === 'roundtrip' || route.returnDate || route.stayDays) ? 'roundtrip' : 'oneway',
+    obsDate: date,
+    price,
+    currency: flight.currency || 'EUR',
+    source: flight.source || 'travelpayouts',
+  });
   return true;
 }
 

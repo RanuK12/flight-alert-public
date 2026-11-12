@@ -9,6 +9,7 @@ const schema = new mongoose.Schema({
   provider: { type: String, required: true },
   amount: { type: Number, default: null },
   currency: { type: String, default: null },
+  origin: { type: String, default: null },
 }, { timestamps: true });
 
 module.exports = mongoose.models.Checkout || mongoose.model('Checkout', schema);

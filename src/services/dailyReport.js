@@ -3,6 +3,7 @@
 const { col } = require('../database');
 const clock = require('../utils/clock');
 const flags = require('../config/flags');
+const plans = require('../config/plans');
 const entitlements = require('./entitlements');
 const { sortFlights, seenLabel, isFresh } = require('./sortFlights');
 const { bookingUrl } = require('../bot/deepLinks');
@@ -39,7 +40,7 @@ async function pdfSummary(bot, userId, chatId, budget) {
   const own = !budget;
   const b = budget || reportData.createBudget(now);
   const { queryFor, matchesRoute } = require('./instantAlerts');
-  const routes = (await col('Route').find({ telegramUserId: String(userId) }).lean()).filter((r) => !r.paused);
+  const routes = (await col('Route').find({ telegramUserId: String(userId) }).lean()).filter((r) => !r.paused && !r.deletedAt);
   const user = (await col('User').findOne({ telegramUserId: String(userId) })) || {};
   const lang = user.lang || (routes.find((r) => r.lang) || {}).lang || 'es';
   const filled = await reportData.liveFill(routes, now, b, { queryFor, matchesRoute });
@@ -94,7 +95,7 @@ function rowsFromRoutes(routes, now) {
 async function legacySummary(bot, userId, chatId) {
   const now = clock.now();
   const routes = await col('Route').find({ telegramUserId: String(userId) }).lean();
-  const active = routes.filter((r) => !r.paused);
+  const active = routes.filter((r) => !r.paused && !r.deletedAt);
   const ranked = sortFlights(rowsFromRoutes(active, now));
   const today = now.toLocaleDateString('es-AR', {
     timeZone: 'America/Argentina/Buenos_Aires',
@@ -127,14 +128,20 @@ async function legacySummary(bot, userId, chatId) {
 
 async function runDailyDigest(bot) {
   if (flags.kill()) return { skipped: true };
+  const freeDigest = Boolean(plans.current().free.digestEnabled);
   const docs = await col('Entitlement').find({}).lean();
   // Un solo presupuesto por corrida (concurrencia, Duffel total, deadline) compartido entre usuarios.
   const budget = pdfOn() ? reportData.createBudget(clock.now()) : undefined;
   let sent = 0;
   for (const doc of docs) {
-    if (!['trial', 'pro', 'owner'].includes(doc.plan)) continue;
+    const { plan } = await entitlements.planOf(doc.telegramUserId);
+    const allowed = ['trial', 'pro', 'owner'].includes(plan) || (plan === 'free' && freeDigest);
+    if (!allowed) continue;
     if (!(await entitlements.canUseAlerts(doc.telegramUserId))) continue;
-    const routes = await col('Route').find({ telegramUserId: doc.telegramUserId, paused: false }).lean();
+    const user = await col('User').findOne({ telegramUserId: doc.telegramUserId });
+    if (user && user.blocked) continue;
+    const routes = (await col('Route').find({ telegramUserId: doc.telegramUserId, paused: false }).lean())
+      .filter((r) => !r.deletedAt);
     if (!routes.length) continue;
     const chatId = doc.telegramChatId || doc.telegramUserId;
     if (budget) {

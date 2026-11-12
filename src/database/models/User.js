@@ -9,6 +9,8 @@ const schema = new mongoose.Schema({
   lang: { type: String, enum: ['es', 'en', 'pt', null], default: null },
   firstName: { type: String, default: null },
   alertMinLevel: { type: String, enum: ['steal', 'great', 'good', 'all'], default: 'good' },
+  blocked: { type: Boolean, default: false },
+  blockedAt: { type: String, default: null },
 }, { timestamps: true });
 
 module.exports = mongoose.models.User || mongoose.model('User', schema);

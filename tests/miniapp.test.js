@@ -280,15 +280,20 @@ describe('/app', () => {
     const h = { 'X-Telegram-Init-Data': authFor({ id: 501 }) };
     const app = createApp();
     const list = await call(app, 'GET', '/app/api/alerts', { headers: h });
-    expect(list.json.map((a) => a.origin)).toEqual(['COR']);
+    expect(list.json.items.map((a) => a.origin)).toEqual(['COR']);
     const id = String(mine._id);
     expect((await call(app, 'POST', `/app/api/alerts/${id}/pause`, { headers: h, body: { paused: true, telegramUserId: '999' } })).json).toEqual({ ok: true, paused: true });
-    expect((await call(app, 'PATCH', `/app/api/alerts/${id}`, { headers: h, body: { ceiling: 550 } })).json).toEqual({ ok: true, ceiling: 550 });
+    expect((await call(app, 'PATCH', `/app/api/alerts/${id}`, { headers: h, body: { ceiling: 550 } })).json).toMatchObject({ ok: true, ceiling: 550 });
     expect((await call(app, 'PATCH', `/app/api/alerts/${id}`, { headers: h, body: { ceiling: 5 } })).status).toBe(400);
     const other = await call(app, 'GET', '/app/api/alerts', { headers: { 'X-Telegram-Init-Data': authFor({ id: 999 }) } });
-    expect((await call(app, 'DELETE', `/app/api/alerts/${other.json[0].id}`, { headers: h })).status).toBe(404);
+    expect((await call(app, 'DELETE', `/app/api/alerts/${other.json.items[0].id}`, { headers: h })).status).toBe(404);
     expect((await call(app, 'DELETE', `/app/api/alerts/${id}`, { headers: h })).json).toEqual({ ok: true });
-    expect(await col('Route').find({ telegramUserId: '501' }).lean()).toHaveLength(0);
+    const rows = await col('Route').find({ telegramUserId: '501' }).lean();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].paused).toBe(true);
+    expect(rows[0].deletedAt).toBeTruthy();
+    const afterList = await call(app, 'GET', '/app/api/alerts', { headers: h });
+    expect(afterList.json.items).toHaveLength(0);
   });
 
   test('búsqueda: tarjetas con link de afiliado de la misma ruta, fechas y pasajeros', async () => {

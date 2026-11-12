@@ -14,4 +14,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+        env:
+          MEMORY_SCHEMA_AUDIT: '1'
       - run: node scripts/no-secrets.js
+      - name: Mini App gzip budget (<= 60 KB)
+        run: node -e "const fs=require('fs'),z=require('zlib'); const a=z.gzipSync(fs.readFileSync('public/app/app.js')).length, b=z.gzipSync(fs.readFileSync('public/app/app.css')).length; console.log({jsGzip:a,cssGzip:b,total:a+b}); if(a+b>61440) process.exit(1);"

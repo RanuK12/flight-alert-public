@@ -2,6 +2,7 @@
 
 const geoip = require('geoip-lite');
 const pricing = require('../config/pricing');
+const flags = require('../config/flags');
 
 /**
  * Orden: elección de la persona, IP real (geo del servidor), medio de pago.
@@ -45,14 +46,14 @@ function rail({ choice, ipCountry, paidWith } = {}) {
   if (String(paidWith || '').toLowerCase() === 'mp') return 'mp';
   const selected = String(choice || '').toUpperCase();
   const ip = String(ipCountry || '').toUpperCase();
-  if (selected === 'AR' && ip === 'AR') return 'mp';
+  if (selected === 'AR' && ip === 'AR' && flags.mp()) return 'mp';
   return 'stripe';
 }
 
 function currencyFor(choice, ipCountry) {
   const selected = String(choice || '').toUpperCase();
   const ip = String(ipCountry || '').toUpperCase();
-  if (selected === 'AR' && ip === 'AR') {
+  if (selected === 'AR' && ip === 'AR' && flags.mp()) {
     return { rail: 'mp', currency: 'ARS', unitAmount: null };
   }
   if (EU.has(selected)) {

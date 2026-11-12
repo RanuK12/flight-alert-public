@@ -126,6 +126,17 @@ test('P11. Stripe rechaza firma o timestamp viejo; el fallo abre gracia y el dí
     tripType: 'oneway',
     outboundDate: '2026-12-01',
     paused: false,
+    updatedAt: new Date(start.getTime() - 60000),
+  });
+  await col('Route').create({
+    telegramUserId: '101',
+    telegramChatId: '101',
+    origin: 'COR',
+    destination: 'MAD',
+    tripType: 'oneway',
+    outboundDate: '2026-12-02',
+    paused: false,
+    updatedAt: start,
   });
 
   Stripe.constructEvent.mockImplementationOnce(() => { throw new Error('bad sig'); });
@@ -181,8 +192,12 @@ test('P11. Stripe rechaza firma o timestamp viejo; el fallo abre gracia y el dí
   await entitlements.expire(null);
   const after = await col('Entitlement').findOne({ telegramUserId: '101' });
   expect(after.plan).toBe('free');
-  const route = await col('Route').findOne({ telegramUserId: '101' });
+  const kept = await col('Route').findOne({ telegramUserId: '101', origin: 'COR' });
+  const route = await col('Route').findOne({ telegramUserId: '101', origin: 'EZE' });
+  expect(kept.paused).toBe(false);
   expect(route.paused).toBe(true);
+  expect(route.pausedByBilling).toBe(true);
+  expect(route.pausedReason).toBe('plan_limit');
 });
 
 test('P12. FX: BNA 1540 → 7700, fallback 1600 → 8000, las dos caídas dejan el último', async () => {
@@ -206,10 +221,15 @@ test('P12. FX: BNA 1540 → 7700, fallback 1600 → 8000, las dos caídas dejan 
 });
 
 test('P13. AR con IP de España ofrece Stripe; AR con IP de Argentina ofrece MP', () => {
-  expect(country.rail({ choice: 'AR', ipCountry: 'ES' })).toBe('stripe');
-  expect(country.rail({ choice: 'AR', ipCountry: 'AR' })).toBe('mp');
-  expect(country.preselect('es-AR')).toBe('AR');
-  expect(country.rail({ choice: country.preselect('es-AR'), ipCountry: 'ES' })).toBe('stripe');
+  process.env.FEATURE_PAYMENTS_MP = 'on';
+  try {
+    expect(country.rail({ choice: 'AR', ipCountry: 'ES' })).toBe('stripe');
+    expect(country.rail({ choice: 'AR', ipCountry: 'AR' })).toBe('mp');
+    expect(country.preselect('es-AR')).toBe('AR');
+    expect(country.rail({ choice: country.preselect('es-AR'), ipCountry: 'ES' })).toBe('stripe');
+  } finally {
+    delete process.env.FEATURE_PAYMENTS_MP;
+  }
 });
 
 test('P10b. MP: firma válida pero pago inexistente (simulación del panel) da 200 sin activar', async () => {

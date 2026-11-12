@@ -51,6 +51,14 @@ Sin valores secretos. Los datos de cuentas son los observados en los dashboards 
 | `FEATURE_SEARCH`, `FEATURE_ALERTS`, `FEATURE_PAYMENTS_STARS`, `FEATURE_PAYMENTS_MP`, `FEATURE_PAYMENTS_STRIPE` | flags (hoy en `true`) | no | manual |
 | `FEATURE_CHANNELS` | fase 2 (apagado) | no | manual |
 | `ADMIN_TOKEN` | bearer de `/admin/*` (≥32 caracteres; sin él `/admin` da 404) | sí | `openssl rand -hex 32` en el MBP → llavero `flight-alert-public/ADMIN_TOKEN` |
+| `PLAN_LIMITS_JSON` | JSON con límites de `free`, `trial`, `pro` (si falta y no hay override en `PlanConfig`, entra en `source: 'safe'`) | no | manual |
+| `INSTANT_ALERTS_TRIAL_MAX_TOTAL` | máximo acumulado de avisos durante el trial (`3` por defecto) | no | manual |
+| `SUPPORT_CONTACT` | handle/link de soporte obligatorio al arranque si `FEATURE_PAYMENTS_STARS=on` (`/paysupport`) | no | manual |
+| `FUNNEL_HMAC_SALT` | salt HMAC para seudonimizar `userHash` en `FunnelEvent` | sí | generado |
+| `FEATURE_F3_DESTINATIONS` | habilita destinos Fase 3 (`US`, `CN`, `TH`, `SG`, origen `PY/ASU`) con validación de `coverage.json` | no | manual |
+| `BROADCAST_ALLOWLIST` | lista opcional separada por coma para limitar envíos piloto en `broadcast.js` | no | manual |
+| `ADMIN_TELEGRAM_IDS` | IDs admin separados por coma para `/admin` | no | manual |
+| `TELEGRAM_WEBHOOK_SECRET` | secreto de webhook Telegram (`/webhooks/telegram`) | sí | generado |
 | `FEATURE_INSTANT_ALERTS` | kill switch de la alerta instantánea Pro | no | manual |
 | `PRO_SEARCH_PER_MIN` / `PRO_SEARCH_PER_DAY` | tope anti-abuso de Pro (10 / 60 por defecto) | no | manual |
 | `INSTANT_ALERTS_EVERY_HOURS` | cada cuántas horas corre la alerta instantánea (3) | no | manual |
@@ -153,3 +161,22 @@ curl -s -H "Authorization: Bearer $TOKEN" https://flight-alert-public.onrender.c
 - Menú: estado/webhook, usuarios y pagos de hoy (sin admins/owners), kill switch (confirma), alertas instantáneas on/off, forzar chequeo de precios, logs redactados.
 - Pro de cortesía: `/admin pro <id>` / `/admin unpro <id>` (confirma). `source=comp`, sin pago.
 - Todo queda en la colección `AdminAudit` (adminId, action, target, status, at).
+
+## 7. Runbooks F1 / F2 / F3 (Planes, Stars Recovery, Índices y Pre-deploy)
+
+- **PlanConfig & Safe Mode (`PLAN_LIMITS_JSON`)**: `plans.js` lee primero `PlanConfig` (`key: 'active'`, refresco cada 60 s) y luego `PLAN_LIMITS_JSON`. Si ambos faltan o son inválidos al arranque, la app entra en `source: 'safe'` (`/health` devuelve 200 con `planConfig.source: 'safe'`), el digest de las 21:00 y alertas existentes siguen andando, pero crear/reactivar alertas devuelve `503 PLAN_CONFIG_UNAVAILABLE` sin quemar trial. Si se escribe una fila inválida en `PlanConfig` después, conserva la última configuración válida.
+- **Telegram Stars Recovery (`StarCharge`, `StarRefund`, `StarCredit`)**: si `FEATURE_PAYMENTS_STARS=on`, `SUPPORT_CONTACT` es obligatorio al arrancar. Si falla `fulfillCharge`, `starsRecovery` intenta reembolsar (`refundStarPayment`); si también falla el reembolso, encola en `StarRefund` / `StarCredit` con backoff exponencial y el cron horario `sweep(bot)` reintenta y escala a admins después de agotarse los reintentos.
+- **Índices MongoDB requeridos en Atlas**:
+  - `Route`: `{ telegramUserId: 1, paused: 1, deletedAt: 1 }`
+  - `Notification`: `{ telegramUserId: 1, alertId: 1, sentAt: -1 }`, `{ telegramUserId: 1, status: 1, sentAt: -1 }`
+  - `FunnelEvent`: `{ userHash: 1, event: 1 }` (unique partial `trial_start`/`first_cheap_alert`), `{ event: 1, subscriptionId: 1 }` (unique partial `pro_paid` string)
+  - `MarketPrice`: `{ routeKey: 1, obsDate: 1 }` (unique)
+  - `IdempotencyRecord`: `{ telegramUserId: 1, method: 1, path: 1, key: 1 }` (unique) + TTL `expiresAt`
+  - `StarCharge` / `StarRefund` / `StarCredit`: `{ chargeId: 1 }` (unique)
+  - `BroadcastSend`: `{ campaignKey: 1, telegramUserId: 1 }` (unique)
+  - `PlanConfig`: `{ key: 1 }` (unique)
+- **Checklist manual obligatorio antes de pasar a producción**:
+  1. Confirmar en Render que `NODE_ENV=production` (si no, `POST /app/api/test/plan` queda expuesto y permite cambiar de plan).
+  2. Confirmar en Stripe que todas las suscripciones activas usan los `STRIPE_PRICE_EUR` / `STRIPE_PRICE_USD` vigentes (precios viejos no extienden `proUntil` en renovaciones).
+  3. Verificar índices creados en Atlas y variables `PLAN_LIMITS_JSON`, `SUPPORT_CONTACT`, `FUNNEL_HMAC_SALT`, `FEATURE_PAYMENTS_MP` cargadas en Render.
+  4. `broadcast.js`: `dryRun` es `true` por defecto; nunca ejecutar `dryRun: false` contra usuarios reales sin campaña aprobada y `BROADCAST_ALLOWLIST` validada primero.

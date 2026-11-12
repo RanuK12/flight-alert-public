@@ -270,7 +270,11 @@ test('/mis_alertas: detalle, pausar y borrar con confirmación', async () => {
   await tap(bot, bot.button(/Borrar/).callback_data);
   expect(bot.last().text).toBe('¿Borro la alerta COR → MAD?');
   await tap(bot, bot.button(/Sí, borrar/).callback_data);
-  expect(await col('Route').find({ telegramUserId: '501' }).lean()).toHaveLength(0);
+  const routes = await col('Route').find({ telegramUserId: '501' }).lean();
+  expect(routes).toHaveLength(1);
+  expect(routes[0].paused).toBe(true);
+  expect(routes[0].deletedAt).toBeTruthy();
+  expect(await col('Route').find({ telegramUserId: '501', deletedAt: null }).lean()).toHaveLength(0);
 });
 
 test('/buscar cor mad dic salta los pasos resueltos; EN usa su copia', async () => {
