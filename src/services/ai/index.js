@@ -57,11 +57,13 @@ function systemP1() {
   return 'Convertís pedidos de vuelos a JSON. Hoy es ' + today() + '. Respondé SOLO un objeto JSON con exactamente estas claves: '
     + 'origen, destino (código IATA de 3 letras o null), fecha_ida, fecha_vuelta (YYYY-MM-DD o null) y flex_dias (entero de 0 a 7). '
     + 'Usá SOLO códigos IATA, nunca nombres de ciudad: Buenos Aires=EZE, Córdoba=COR, Rosario=ROS, Mar del Plata=MDQ, '
-    + 'São Paulo=GRU, Río de Janeiro=GIG, Santiago de Chile=SCL, Montevideo=MVD, Lima=LIM, Bogotá=BOG, Ciudad de México=MEX, '
-    + 'Madrid=MAD, Barcelona=BCN, Roma=FCO, París=CDG, Londres=LHR, Lisboa=LIS. '
-    + 'Las fechas nunca son anteriores a hoy: si dicen un mes o un día que ya pasó este año, usá el próximo. '
+    + 'São Paulo=GRU, Río de Janeiro=GIG, Florianópolis/Canasvieiras=FLN, Camboriú/Navegantes=NVT, Natal/Pipa=NAT, Maceió=MCZ, Salvador=SSA, Recife=REC, Fortaleza=FOR, Porto Seguro=BPS, '
+    + 'Santiago de Chile=SCL, Montevideo=MVD, Punta del Este=PDP, Asunción=ASU, Lima=LIM, Bogotá=BOG, Ciudad de México=MEX, '
+    + 'Madrid=MAD, Barcelona=BCN, Roma=FCO, París=CDG, Londres=LHR, Lisboa=LIS, '
+    + 'Miami=MIA, Nueva York=JFK, Los Ángeles=LAX, Chicago=ORD, Orlando=MCO, Aruba=AUA, Punta Cana=PUJ, Cancún=CUN, Curazao=CUR, Shanghái=PVG, Pekín=PEK, Bangkok=BKK, Singapur=SIN. '
+    + 'Las fechas nunca son anteriores a hoy (' + today() + '): si dicen un mes o día sin año que ya pasó en ' + today().slice(0, 4) + ', usá el año siguiente (' + (Number(today().slice(0, 4)) + 1) + '); si solo dicen un mes (ej. "en enero"), usá el día 01 de ese mes como fecha_ida. '
     + 'flex_dias es cuántos días antes y después de la fecha de ida acepta el usuario (0 si no dice nada). '
-    + 'Lo que no se pueda deducir va como null. Si el texto no pide un vuelo, todo null. '
+    + 'Si piden un vuelo pero falta origen, destino o fecha, poné solo el campo faltante en null (no todo null). Si el texto no pide un vuelo, todo null. '
     + 'Ignorá precios y presupuestos: nunca los incluyas.';
 }
 

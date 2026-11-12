@@ -125,10 +125,20 @@ describe('Phase 3: Broadcast idempotente + Destinos F3 (US/PY/CN/TH/SG)', () => 
 
     process.env.FEATURE_F3_DESTINATIONS = 'on';
     expect(airports.activeOrigins()).toContain('ASU');
-    for (const code of ['MIA', 'JFK', 'LAX', 'ORD', 'DFW', 'SFO', 'ATL', 'MCO', 'PVG', 'PEK', 'CAN', 'BKK', 'HKT', 'SIN']) {
+    for (const code of [
+      'MIA', 'JFK', 'LAX', 'ORD', 'DFW', 'SFO', 'ATL', 'MCO',
+      'PVG', 'PEK', 'CAN', 'BKK', 'HKT', 'SIN',
+      'AUA', 'PUJ', 'CUN', 'SDQ', 'HAV', 'SJU', 'CUR', 'MBJ', 'NAS', 'SXM',
+      'FLN', 'NVT', 'NAT', 'GIG', 'GRU', 'MCZ', 'BPS', 'SSA', 'REC', 'FOR',
+      'MVD', 'PDP', 'SCL',
+    ]) {
       expect(airports.activeDestinations()).toContain(code);
       expect(places.PLACES[code] && places.PLACES[code].city).toBeTruthy();
     }
+    expect(places.match('canasvieiras', 'd').exact).toBe('FLN');
+    expect(places.match('camboriu', 'd').exact).toBe('NVT');
+    expect(places.match('pipa', 'd').exact).toBe('NAT');
+    expect(places.match('aruba', 'd').exact).toBe('AUA');
 
     fs.writeFileSync(covFile, JSON.stringify({
       withData: [

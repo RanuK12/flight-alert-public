@@ -40,8 +40,12 @@ const F3_DESTINATION_GROUPS = {
   CN: ['PVG', 'PEK', 'CAN'],
   TH: ['BKK', 'HKT'],
   SG: ['SIN'],
+  CARIBE: ['AUA', 'PUJ', 'CUN', 'SDQ', 'HAV', 'SJU', 'CUR', 'MBJ', 'NAS', 'SXM'],
+  BR: ['FLN', 'NVT', 'NAT', 'GIG', 'GRU', 'MCZ', 'BPS', 'SSA', 'REC', 'FOR'],
+  UY: ['MVD', 'PDP'],
+  CL: ['SCL'],
 };
-const F3_DESTINATIONS = Object.values(F3_DESTINATION_GROUPS).flat();
+const F3_DESTINATIONS = [...new Set(Object.values(F3_DESTINATION_GROUPS).flat())];
 
 function activeOriginGroups() {
   return flags.f3Destinations() ? [...ORIGIN_GROUPS, ...F3_ORIGIN_GROUPS] : ORIGIN_GROUPS;
@@ -52,28 +56,32 @@ function activeOrigins() {
 }
 
 function activeDestinations() {
-  return flags.f3Destinations() ? [...DESTINATIONS, ...F3_DESTINATIONS] : DESTINATIONS;
+  return flags.f3Destinations() ? [...new Set([...DESTINATIONS, ...F3_DESTINATIONS])] : DESTINATIONS;
 }
 
 function activeAllOrigins() {
-  return [...activeOrigins(), ...activeDestinations()];
+  return [...new Set([...activeOrigins(), ...activeDestinations()])];
 }
 
 /** Ida LATAM→Europa/F3 y vuelta destino→LATAM (lo que mide el chequeo de cobertura). */
 function allPairs(opts = {}) {
   const includeF3 = opts && opts.includeF3 !== undefined ? Boolean(opts.includeF3) : flags.f3Destinations();
   const orig = includeF3 ? [...ORIGINS, ...F3_ORIGINS] : ORIGINS;
-  const dest = includeF3 ? [...DESTINATIONS, ...F3_DESTINATIONS] : DESTINATIONS;
+  const dest = includeF3 ? [...new Set([...DESTINATIONS, ...F3_DESTINATIONS])] : DESTINATIONS;
+  const seen = new Set();
   const pairs = [];
+  const push = (origin, destination) => {
+    if (origin === destination) return;
+    const k = `${origin}-${destination}`;
+    if (seen.has(k)) return;
+    seen.add(k);
+    pairs.push({ origin, destination });
+  };
   for (const origin of orig) {
-    for (const destination of dest) {
-      pairs.push({ origin, destination });
-    }
+    for (const destination of dest) push(origin, destination);
   }
   for (const origin of dest) {
-    for (const destination of orig) {
-      pairs.push({ origin, destination });
-    }
+    for (const destination of orig) push(origin, destination);
   }
   return pairs;
 }

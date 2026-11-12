@@ -637,7 +637,7 @@ async function notUnderstood(bot, msg) {
 const COMMAND_ROUTES = [
   [/^\/(?:alertas|alerts|mis_alertas|my_alerts)(?:@\w+)?$/, 'alerts'],
   [/^\/pro(?:@\w+)?$/, 'pro'],
-  [/^\/(?:ayuda|help)(?:@\w+)?$/, 'help'],
+  [/^\/(?:ayuda|help|tutorial)(?:@\w+)?$/, 'help'],
   [/^\/(?:ajustes|settings)(?:@\w+)?$/, 'settings'],
 ];
 

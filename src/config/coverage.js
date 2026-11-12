@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const {
   allPairs, ORIGINS, DESTINATIONS, ORIGIN_GROUPS, EU_RETURN_HUBS, destinationsFor,
-  activeOriginGroups, activeOrigins,
+  activeOriginGroups, activeOrigins, activeDestinations,
 } = require('./airports');
 
 const REPORT = path.join(__dirname, '..', '..', 'data', 'coverage.json');
@@ -70,7 +70,7 @@ const GRANDFATHERED_ORIGINS = ['EZE', 'COR', 'MDQ', 'ROS', 'BUE'];
 
 function pairAllowed(origin, destination) {
   if (disabled()) return true;
-  if (GRANDFATHERED_ORIGINS.includes(origin) && DESTINATIONS.includes(destination)) return true;
+  if (GRANDFATHERED_ORIGINS.includes(origin) && activeDestinations().includes(destination)) return true;
   const r = report();
   if (!r) return FALLBACK_ORIGINS.includes(origin) && DESTINATIONS.includes(destination);
   return allowedSet(r).has(`${origin}-${destination}`);

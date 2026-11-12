@@ -170,7 +170,7 @@ describe('menú, comandos y /start', () => {
     const inline = bot.sent[1].extra.reply_markup.inline_keyboard;
     expect(inline[0][0].web_app).toEqual({ url: `${BASE}/app` });
     expect(inline[1].map((b) => b.text)).toEqual(['🔔 Mis alertas', '📊 Informe']);
-    expect(inline[2].map((b) => b.text)).toEqual(['⭐ Pro']);
+    expect(inline[2].map((b) => b.text)).toEqual(['⭐ Pro', '📖 Tutorial']);
   });
 
   test('onboarding en 3 toques hasta la alerta creada, y después el teclado', async () => {

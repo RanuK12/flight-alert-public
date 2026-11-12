@@ -101,7 +101,7 @@ function homeInline(lang, cbEncode, env = process.env) {
     inline_keyboard: [
       [search],
       [{ text: (KEY_TEXT[lang] || KEY_TEXT.es).alerts, callback_data: cbEncode('m', 'ls') }, { text: (KEY_TEXT[lang] || KEY_TEXT.es).report, callback_data: cbEncode('r', 'go') }],
-      [{ text: t(lang, 'btnPro'), callback_data: cbEncode('p', 'show') }],
+      [{ text: t(lang, 'btnPro'), callback_data: cbEncode('p', 'show') }, { text: t(lang, 'btnTutorial'), callback_data: cbEncode('s', 'help') }],
     ],
   };
 }
