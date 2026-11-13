@@ -112,6 +112,19 @@
       sv('polygon', { points: '13,18 27,6 20,26', fill: '#64ffda', opacity: '0.82' }),
       sv('polygon', { points: '13,18 16,25 18,20', fill: '#3fcfae' }));
   }
+  function ico(d, size) {
+    return sv('svg', { width: String(size || 16), height: String(size || 16), viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' },
+      sv('path', { d: d }));
+  }
+  var IC = {
+    search: 'M21 21l-4.3-4.3M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z',
+    bell: 'M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0',
+    swap: 'M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4',
+    cal: 'M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z',
+    pin: 'M12 21s-6-5.3-6-10a6 6 0 1 1 12 0c0 4.7-6 10-6 10zm0-7a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+    takeoff: 'M2 19h20M4.5 14.5l3.2-1.5 5.3-5.3 4.8-1.2c1-.2 1.8.6 1.5 1.5l-1.2 4.8-5.3 5.3',
+    user: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
+  };
   function ranukSvg(size) {
     return sv('svg', { width: String(size), height: String(size), viewBox: '0 0 32 32', 'aria-hidden': 'true' },
       sv('rect', { width: '32', height: '32', rx: '7', fill: '#0a192f', stroke: '#64ffda', 'stroke-opacity': '0.35' }),
@@ -184,8 +197,8 @@
       h('span', { 'class': 'badge mono' + (me.plan === 'pro' ? ' on' : ''), text: planLabel + q })));
     if (me.safeMode) root.appendChild(h('div', { 'class': 'fa-banner', role: 'status', text: S.planConfigDown }));
     root.appendChild(h('nav', { 'class': 'fa-tabs' },
-      h('button', { type: 'button', 'aria-current': activeTab === 'search' ? 'page' : false, on: { click: function () { stack = [searchScreen]; render(); } }, text: S.tabSearch }),
-      h('button', { type: 'button', 'aria-current': activeTab === 'alerts' ? 'page' : false, on: { click: function () { stack = [alertsScreen]; render(); } }, text: S.tabAlerts })));
+      h('button', { type: 'button', 'aria-current': activeTab === 'search' ? 'page' : false, on: { click: function () { stack = [searchScreen]; render(); } } }, ico(IC.search, 16), h('span', { text: S.tabSearch })),
+      h('button', { type: 'button', 'aria-current': activeTab === 'alerts' ? 'page' : false, on: { click: function () { stack = [alertsScreen]; render(); } } }, ico(IC.bell, 16), h('span', { text: S.tabAlerts }))));
   }
   function renderFooter() {
     root.appendChild(h('footer', { 'class': 'fa-foot' },
@@ -251,7 +264,7 @@
     }
     input.addEventListener('input', function () { st[side] = null; fill(); validMain(); });
     input.addEventListener('focus', fill);
-    wrap.appendChild(h('label', { 'for': id, text: side === 'o' ? S.from : S.to }));
+    wrap.appendChild(h('label', { 'for': id }, ico(side === 'o' ? IC.takeoff : IC.pin, 14), h('span', { text: side === 'o' ? S.from : S.to })));
     wrap.appendChild(input);
     wrap.appendChild(ul);
     return wrap;
@@ -267,7 +280,7 @@
     renderChrome('search');
     root.appendChild(h('h1', { text: S.search }));
     root.appendChild(cityField('o'));
-    var swap = h('button', { type: 'button', 'class': 'swap', 'aria-label': S.swap, title: canSwap() ? S.swap : S.swapOff, disabled: !canSwap(), on: { click: function () { var x = st.o; st.o = st.d; st.d = x; hap('sel'); render(); } } }, '⇄');
+    var swap = h('button', { type: 'button', 'class': 'swap', 'aria-label': S.swap, title: canSwap() ? S.swap : S.swapOff, disabled: !canSwap(), on: { click: function () { var x = st.o; st.o = st.d; st.d = x; hap('sel'); render(); } } }, ico(IC.swap, 18));
     root.appendChild(h('div', { 'class': 'swap-row' }, swap));
     root.appendChild(cityField('d'));
     root.appendChild(h('div', { 'class': 'seg', role: 'group' },
@@ -275,13 +288,13 @@
       h('button', { type: 'button', 'aria-pressed': st.t === '2' ? 'true' : 'false', on: { click: function () { st.t = '2'; hap('sel'); render(); } }, text: S.round })));
     var dateBtn = function (label, value, empty) {
       return h('button', { type: 'button', 'class': 'date' + (empty ? ' empty' : ''), disabled: !(st.o && st.d), 'aria-describedby': (st.o && st.d) ? null : 'date-hint', on: { click: function () { go(calendarScreen); } } },
-        h('small', { text: label }), h('strong', { text: value }));
+        h('small', null, ico(IC.cal, 12), h('span', { text: label })), h('strong', { text: value }));
     };
     var depText = st.dep ? (st.flex ? S.months[Number(st.dep.slice(5, 7)) - 1] : dm(st.dep)) : S.pick;
     root.appendChild(h('div', { 'class': 'row dates' }, dateBtn(S.dep, depText, !st.dep), st.t === '2' ? dateBtn(S.ret, st.ret ? dm(st.ret) : (st.flex ? '—' : S.pick), !st.ret) : null));
     if (!(st.o && st.d)) root.appendChild(h('p', { 'class': 'date-hint', id: 'date-hint', text: S.pickDestFirst }));
     root.appendChild(h('div', { 'class': 'card stepper' },
-      h('span', { 'class': 'grow mono', text: '👤 ' + st.adults + ' ' + S.adults }),
+      h('span', { 'class': 'grow mono row', style: 'gap:8px;flex:1' }, ico(IC.user, 16), h('span', { text: st.adults + ' ' + S.adults })),
       h('button', { type: 'button', 'aria-label': '−', disabled: st.adults <= 1, on: { click: function () { st.adults--; hap('imp', 'light'); render(); } } }, '−'),
       h('button', { type: 'button', 'aria-label': '+', disabled: st.adults >= 9, on: { click: function () { st.adults++; hap('imp', 'light'); render(); } } }, '+')));
     renderFooter();
