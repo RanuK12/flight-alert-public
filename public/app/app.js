@@ -242,11 +242,13 @@
     if (!n) return list;
     var scored = [];
     list.forEach(function (p, i) {
-      var names = [p.city, p.airport, p.country].concat(p.alias || []).concat(regionKeywords(p.region)).filter(Boolean).map(norm), s = null;
+      var names = [p.city, p.airport, p.country].concat(p.alias || []).filter(Boolean).map(norm);
+      var kws = regionKeywords(p.region).map(norm);
+      var allTerms = names.concat(kws), s = null;
       if (p.code.toLowerCase() === n) s = 0;
-      else if (names.some(function (x) { return x.indexOf(n) === 0; })) s = 1;
-      else if (names.some(function (x) { return x.indexOf(n) >= 0; })) s = 2;
-      else if (n.length >= 3) { var b = Math.min.apply(null, names.map(function (x) { return lev(x, n); })); if (b <= 2) s = 3 + b; }
+      else if (allTerms.some(function (x) { return x.indexOf(n) === 0; })) s = 1;
+      else if (allTerms.some(function (x) { return x.indexOf(n) >= 0; })) s = 2;
+      else if (n.length >= 4) { var maxD = n.length >= 5 ? 2 : 1; var b = Math.min.apply(null, names.map(function (x) { return lev(x, n); })); if (b <= maxD) s = 3 + b; }
       if (s !== null) scored.push({ p: p, s: s, i: i });
     });
     scored.sort(function (a, b) { return a.s - b.s || a.i - b.i; });
