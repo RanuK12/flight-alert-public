@@ -414,7 +414,7 @@ if (require.main === module) {
   try {
     const app = start();
     const port = Number(process.env.PORT || 4000);
-    const host = process.env.HOST || '127.0.0.1';
+    const host = process.env.HOST || (process.env.NODE_ENV === 'production' ? '0.0.0.0' : '127.0.0.1');
     app.listen(port, host, () => logger.info('escuchando', { port, host }));
   } catch (err) {
     logger.error('arranque', err);
