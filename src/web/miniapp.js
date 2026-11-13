@@ -27,6 +27,12 @@ const funnel = require('../services/funnel');
 const logger = require('../utils/logger').child('miniapp');
 
 const PUBLIC = path.join(__dirname, '..', '..', 'public', 'app');
+function assetVer(file) {
+  try {
+    return crypto.createHash('sha1').update(fs.readFileSync(path.join(PUBLIC, file))).digest('hex').slice(0, 8);
+  } catch { return '1'; }
+}
+const ASSET_VER = { css: assetVer('app.css'), js: assetVer('app.js') };
 const FONTS_DIR = path.join(__dirname, '..', '..', 'public', 'fonts');
 const FONT_WHITELIST = new Set([
   'inter-latin-wght-normal.woff2',
@@ -62,12 +68,12 @@ function html(nonce, lang, botUser = '') {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Flight Alert</title>
-<link rel="stylesheet" href="/app/app.css">
+<link rel="stylesheet" href="/app/app.css?v=${ASSET_VER.css}">
 <script nonce="${nonce}" src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body data-bot="${cleanBot}">
 <main id="root" aria-live="polite"><p class="muted">…</p></main>
-<script nonce="${nonce}" src="/app/app.js" defer></script>
+<script nonce="${nonce}" src="/app/app.js?v=${ASSET_VER.js}" defer></script>
 </body>
 </html>`;
 }
