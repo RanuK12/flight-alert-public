@@ -2,7 +2,15 @@
 (function () {
   'use strict';
   var tg = window.Telegram && window.Telegram.WebApp;
-  var initData = (tg && tg.initData) || '';
+  function getInitData() {
+    var d = (tg && tg.initData) || '';
+    if (!d && location.hash) {
+      try { d = new URLSearchParams(location.hash.replace(/^#/, '')).get('tgWebAppData') || ''; } catch (_) {}
+    }
+    if (d) { try { sessionStorage.setItem('__fa_init', d); } catch (_) {} return d; }
+    try { return sessionStorage.getItem('__fa_init') || ''; } catch (_) { return ''; }
+  }
+  var initData = getInitData();
   var langCode = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code) || navigator.language || 'es';
   var lang = /^es/i.test(langCode) ? 'es' : (/^pt/i.test(langCode) ? 'pt' : 'en');
   var STR = {
@@ -31,7 +39,8 @@
       auth: 'Abrí esta pantalla desde el bot en Telegram.',
       months: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
       dows: ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'], of: 'de', euReturn: '🇪🇺 Vuelta desde Europa',
-      regAll: 'Todos', regBr: '🇧🇷 Brasil', regCaribe: '🏝️ Caribe', regUs: '🇺🇸 EE. UU.', regAsia: '🇨🇳 Asia', regSur: '🇺🇾🇨🇱 Cono Sur', regEu: '🇪🇺 Europa'
+      regAll: 'Todos', regBr: '🇧🇷 Brasil', regCaribe: '🏝️ Caribe', regUs: '🇺🇸 EE. UU.', regAsia: '🇨🇳 Asia', regSur: '🇺🇾🇨🇱 Cono Sur', regEu: '🇪🇺 Europa',
+      phFrom: 'Origen (ej. Buenos Aires)', phTo: 'Destino (Brasil, Caribe, EE. UU., Asia, Europa...)', destOnlyHint: '{c} está disponible como destino — elegilo en HASTA ↓'
     },
     pt: {
       search: 'Buscar voo', from: 'De', to: 'Para', swap: 'Inverter origem e destino', swapOff: 'A rota invertida não está coberta',
@@ -58,7 +67,8 @@
       auth: 'Abra esta tela pelo bot no Telegram.',
       months: ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'],
       dows: ['Se', 'Te', 'Qa', 'Qi', 'Sx', 'Sá', 'Do'], of: 'de', euReturn: '🇪🇺 Volta da Europa',
-      regAll: 'Todos', regBr: '🇧🇷 Brasil', regCaribe: '🏝️ Caribe', regUs: '🇺🇸 EUA', regAsia: '🇨🇳 Ásia', regSur: '🇺🇾🇨🇱 Cone Sul', regEu: '🇪🇺 Europa'
+      regAll: 'Todos', regBr: '🇧🇷 Brasil', regCaribe: '🏝️ Caribe', regUs: '🇺🇸 EUA', regAsia: '🇨🇳 Ásia', regSur: '🇺🇾🇨🇱 Cone Sul', regEu: '🇪🇺 Europa',
+      phFrom: 'Origem (ex. Buenos Aires)', phTo: 'Destino (Brasil, Caribe, EUA, Ásia, Europa...)', destOnlyHint: '{c} está disponível como destino — escolha em PARA ↓'
     },
     en: {
       search: 'Search flight', from: 'From', to: 'To', swap: 'Swap origin and destination', swapOff: 'The reversed route is not covered',
@@ -85,7 +95,8 @@
       auth: 'Open this screen from the bot in Telegram.',
       months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
       dows: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'], of: '', euReturn: '🇪🇺 Return from Europe',
-      regAll: 'All', regBr: '🇧🇷 Brazil', regCaribe: '🏝️ Caribbean', regUs: '🇺🇸 USA', regAsia: '🇨🇳 Asia', regSur: '🇺🇾🇨🇱 South Cone', regEu: '🇪🇺 Europe'
+      regAll: 'All', regBr: '🇧🇷 Brazil', regCaribe: '🏝️ Caribbean', regUs: '🇺🇸 USA', regAsia: '🇨🇳 Asia', regSur: '🇺🇾🇨🇱 South Cone', regEu: '🇪🇺 Europe',
+      phFrom: 'Origin (e.g. Buenos Aires)', phTo: 'Destination (Brazil, Caribbean, USA, Asia, Europe...)', destOnlyHint: '{c} is available as a destination — pick it in TO ↓'
     }
   };
   var S = STR[lang];
@@ -154,6 +165,7 @@
   }
   function hap(kind, arg) { try { var H = tg && tg.HapticFeedback; if (!H) return; if (kind === 'sel') H.selectionChanged(); else if (kind === 'imp') H.impactOccurred(arg || 'light'); else H.notificationOccurred(arg); } catch (e) { /* noop */ } }
   function api(method, url, body, extraHeaders) {
+    initData = getInitData() || initData;
     var hdr = { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': initData };
     if (extraHeaders) Object.keys(extraHeaders).forEach(function (k) { if (extraHeaders[k] != null) hdr[k] = extraHeaders[k]; });
     return fetch(url, { method: method, headers: hdr, body: body ? JSON.stringify(body) : undefined })
@@ -194,10 +206,10 @@
   function hideMain() { mainHandler = null; if (tg && tg.MainButton) tg.MainButton.hide(); }
   function renderChrome(activeTab) {
     var planLabel = String(me.plan || 'free').toUpperCase();
-    var q = me.quota && me.quota.alerts ? ' ' + me.quota.alerts.used + '/' + me.quota.alerts.cap : '';
+    var q = me.quota && me.quota.alerts ? ' ' + me.quota.alerts.used + '/' + (me.quota.alerts.cap == null ? '∞' : me.quota.alerts.cap) : '';
     root.appendChild(h('header', { 'class': 'fa-hdr' },
       h('div', { 'class': 'fa-brand' }, planeSvg(28), h('span', { text: 'Flight Alert' })),
-      h('span', { 'class': 'badge mono' + (me.plan === 'pro' ? ' on' : ''), text: planLabel + q })));
+      h('span', { 'class': 'badge mono' + (me.plan === 'pro' || me.plan === 'owner' ? ' on' : ''), text: planLabel + q })));
     if (me.safeMode) root.appendChild(h('div', { 'class': 'fa-banner', role: 'status', text: S.planConfigDown }));
     root.appendChild(h('nav', { 'class': 'fa-tabs' },
       h('button', { type: 'button', 'aria-current': activeTab === 'search' ? 'page' : false, on: { click: function () { stack = [searchScreen]; render(); } } }, ico(IC.search, 16), h('span', { text: S.tabSearch })),
@@ -258,7 +270,7 @@
 
   function cityField(side) {
     var wrap = h('div', { 'class': 'card' }), id = 'f-' + side, regFilter = 'all';
-    var input = h('input', { type: 'text', id: id, autocomplete: 'off', value: st[side] ? labelOf(st[side]) : '', 'aria-autocomplete': 'list' });
+    var input = h('input', { type: 'text', id: id, autocomplete: 'off', placeholder: side === 'o' ? S.phFrom : S.phTo, value: st[side] ? labelOf(st[side]) : '', 'aria-autocomplete': 'list' });
     var ul = h('ul', { 'class': 'sugg', role: 'listbox' });
     function fill(forceOpen) {
       ul.textContent = '';
@@ -267,7 +279,9 @@
       var res = suggest(q, side);
       if (!res.length && norm(q).length >= 3) {
         var all = sideList(side);
-        ul.appendChild(h('li', { 'class': 'muted', text: tr('notCovered', { c: q }) }));
+        var asDest = side === 'o' ? suggest(q, 'd') : [];
+        var msg = asDest.length ? tr('destOnlyHint', { c: asDest[0].city || q }) : tr('notCovered', { c: q });
+        ul.appendChild(h('li', { 'class': 'muted', text: msg }));
         res = all.slice(0, 8);
       }
       var pickBtn = function (p) {
@@ -637,7 +651,7 @@
     return [searchScreen];
   }
 
-  function boot() {
+  function boot(retried) {
     if (tg) {
       tg.ready(); tg.expand(); theme();
       tg.onEvent('themeChanged', theme);
@@ -645,9 +659,20 @@
       tg.MainButton.onClick(function () { if (mainHandler) mainHandler(); });
       tg.BackButton.onClick(back);
     }
-    if (!initData) { root.textContent = ''; root.appendChild(h('p', { text: S.auth })); return; }
+    initData = getInitData();
+    if (!initData) {
+      if (!retried) { setTimeout(function () { boot(true); }, 150); return; }
+      root.textContent = ''; root.appendChild(h('p', { text: S.auth })); return;
+    }
     api('GET', '/app/api/places').then(function (r) {
-      if (r.status !== 200) { root.textContent = ''; root.appendChild(h('p', { text: S.auth })); return; }
+      if (r.status === 401) { root.textContent = ''; root.appendChild(h('p', { text: S.auth })); return; }
+      if (r.status !== 200) {
+        root.textContent = '';
+        root.appendChild(h('div', { 'class': 'card' },
+          h('p', { text: S.error }),
+          h('button', { type: 'button', 'class': 'primary', on: { click: function () { boot(true); } }, text: S.retry })));
+        return;
+      }
       P = r.data;
       api('GET', '/app/api/me').then(function (mr) {
         if (mr.status === 200 && mr.data && mr.data.plan) { me = mr.data; render(); }
@@ -658,7 +683,12 @@
       var start = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || '';
       stack = routeStartParam(start);
       render();
+    }).catch(function () {
+      root.textContent = '';
+      root.appendChild(h('div', { 'class': 'card' },
+        h('p', { text: S.error }),
+        h('button', { type: 'button', 'class': 'primary', on: { click: function () { boot(true); } }, text: S.retry })));
     });
   }
-  boot();
+  boot(false);
 })();
