@@ -12,7 +12,7 @@ const crypto = require('crypto');
 const initData = require('./initData');
 const clock = require('../utils/clock');
 const { col } = require('../database');
-const { activeDestinations, pairOk } = require('../config/airports');
+const { activeDestinations, pairOk, F3_DESTINATION_GROUPS } = require('../config/airports');
 const { pairAllowed } = require('../config/coverage');
 const places = require('../bot/ux/places');
 const travelpayouts = require('../providers/travelpayouts');
@@ -101,6 +101,15 @@ function auth(req, res, next) {
   return next();
 }
 
+function destRegion(code) {
+  if (F3_DESTINATION_GROUPS.BR.includes(code)) return 'br';
+  if (F3_DESTINATION_GROUPS.CARIBE.includes(code)) return 'caribe';
+  if (F3_DESTINATION_GROUPS.US.includes(code)) return 'us';
+  if ([...F3_DESTINATION_GROUPS.CN, ...F3_DESTINATION_GROUPS.TH, ...F3_DESTINATION_GROUPS.SG].includes(code)) return 'asia';
+  if ([...F3_DESTINATION_GROUPS.UY, ...F3_DESTINATION_GROUPS.CL].includes(code)) return 'sur';
+  return 'eu';
+}
+
 function placesPayload() {
   const item = (code, extra = {}) => {
     const p = places.PLACES[code] || { city: code, country: '', alias: [] };
@@ -112,10 +121,10 @@ function placesPayload() {
   const euAll = cov.euOriginsAvailable();
   // "Vuelta desde Europa": hubs primero (los muestra el selector), el resto se encuentra escribiendo.
   const euOrigins = [...hubs, ...euAll.filter((c) => !hubs.includes(c))].map((c) => item(c, { eu: true, hub: hubs.includes(c) }));
-  const ret = latam.filter((o) => euAll.some((e) => cov.pairAllowed(e, o))).map((c) => item(c, { ret: true }));
+  const ret = latam.filter((o) => euAll.some((e) => cov.pairAllowed(e, o))).map((c) => item(c, { ret: true, region: 'ret' }));
   return {
     origins: latam.map((c) => item(c)).concat(euOrigins),
-    destinations: activeDestinations().filter((d) => latam.some((o) => cov.pairAllowed(o, d))).map((c) => item(c)).concat(ret),
+    destinations: activeDestinations().filter((d) => latam.some((o) => cov.pairAllowed(o, d))).map((c) => item(c, { region: destRegion(c) })).concat(ret),
     euHubs: hubs,
   };
 }

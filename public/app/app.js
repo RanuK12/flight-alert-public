@@ -30,7 +30,8 @@
       madeBy: 'Hecho por Ranuk IT', tabSearch: 'Buscar', tabAlerts: 'Mis alertas',
       auth: 'Abrí esta pantalla desde el bot en Telegram.',
       months: ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'],
-      dows: ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'], of: 'de', euReturn: '🇪🇺 Vuelta desde Europa'
+      dows: ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'], of: 'de', euReturn: '🇪🇺 Vuelta desde Europa',
+      regAll: 'Todos', regBr: '🇧🇷 Brasil', regCaribe: '🏝️ Caribe', regUs: '🇺🇸 EE. UU.', regAsia: '🇨🇳 Asia', regSur: '🇺🇾🇨🇱 Cono Sur', regEu: '🇪🇺 Europa'
     },
     pt: {
       search: 'Buscar voo', from: 'De', to: 'Para', swap: 'Inverter origem e destino', swapOff: 'A rota invertida não está coberta',
@@ -56,7 +57,8 @@
       madeBy: 'Feito por Ranuk IT', tabSearch: 'Buscar', tabAlerts: 'Meus alertas',
       auth: 'Abra esta tela pelo bot no Telegram.',
       months: ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'],
-      dows: ['Se', 'Te', 'Qa', 'Qi', 'Sx', 'Sá', 'Do'], of: 'de', euReturn: '🇪🇺 Volta da Europa'
+      dows: ['Se', 'Te', 'Qa', 'Qi', 'Sx', 'Sá', 'Do'], of: 'de', euReturn: '🇪🇺 Volta da Europa',
+      regAll: 'Todos', regBr: '🇧🇷 Brasil', regCaribe: '🏝️ Caribe', regUs: '🇺🇸 EUA', regAsia: '🇨🇳 Ásia', regSur: '🇺🇾🇨🇱 Cone Sul', regEu: '🇪🇺 Europa'
     },
     en: {
       search: 'Search flight', from: 'From', to: 'To', swap: 'Swap origin and destination', swapOff: 'The reversed route is not covered',
@@ -82,7 +84,8 @@
       madeBy: 'Built by Ranuk IT', tabSearch: 'Search', tabAlerts: 'My alerts',
       auth: 'Open this screen from the bot in Telegram.',
       months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-      dows: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'], of: '', euReturn: '🇪🇺 Return from Europe'
+      dows: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'], of: '', euReturn: '🇪🇺 Return from Europe',
+      regAll: 'All', regBr: '🇧🇷 Brazil', regCaribe: '🏝️ Caribbean', regUs: '🇺🇸 USA', regAsia: '🇨🇳 Asia', regSur: '🇺🇾🇨🇱 South Cone', regEu: '🇪🇺 Europe'
     }
   };
   var S = STR[lang];
@@ -221,13 +224,25 @@
     var backRoute = st.o && isEu(st.o);
     return P.destinations.filter(function (p) { return backRoute ? p.ret : !p.ret; });
   }
+  var REGIONS = [
+    { id: 'br', key: 'regBr', kw: ['brasil', 'brazil', 'playa', 'praia'] },
+    { id: 'caribe', key: 'regCaribe', kw: ['caribe', 'caribbean', 'playa'] },
+    { id: 'us', key: 'regUs', kw: ['usa', 'eeuu', 'ee. uu.', 'estados unidos', 'united states'] },
+    { id: 'asia', key: 'regAsia', kw: ['asia', 'china', 'orient'] },
+    { id: 'sur', key: 'regSur', kw: ['cono sur', 'uruguay', 'chile'] },
+    { id: 'eu', key: 'regEu', kw: ['europa', 'europe'] }
+  ];
+  function regionKeywords(reg) {
+    for (var i = 0; i < REGIONS.length; i++) if (REGIONS[i].id === reg) return REGIONS[i].kw;
+    return [];
+  }
   function suggest(q, side) {
     var list = sideList(side), n = norm(q);
-    if (!n && side === 'o') return list.filter(function (p) { return !p.eu; }).slice(0, 6);
-    if (!n) return list.slice(0, 6);
+    if (!n && side === 'o') return list.filter(function (p) { return !p.eu; });
+    if (!n) return list;
     var scored = [];
     list.forEach(function (p, i) {
-      var names = [p.city, p.airport].concat(p.alias || []).map(norm), s = null;
+      var names = [p.city, p.airport, p.country].concat(p.alias || []).concat(regionKeywords(p.region)).filter(Boolean).map(norm), s = null;
       if (p.code.toLowerCase() === n) s = 0;
       else if (names.some(function (x) { return x.indexOf(n) === 0; })) s = 1;
       else if (names.some(function (x) { return x.indexOf(n) >= 0; })) s = 2;
@@ -235,35 +250,56 @@
       if (s !== null) scored.push({ p: p, s: s, i: i });
     });
     scored.sort(function (a, b) { return a.s - b.s || a.i - b.i; });
-    return scored.slice(0, 6).map(function (x) { return x.p; });
+    return scored.slice(0, 24).map(function (x) { return x.p; });
   }
   function labelOf(code) { var all = P.origins.concat(P.destinations); for (var i = 0; i < all.length; i++) if (all[i].code === code) return all[i].label; return code; }
 
   function cityField(side) {
-    var wrap = h('div', { 'class': 'card' }), id = 'f-' + side;
+    var wrap = h('div', { 'class': 'card' }), id = 'f-' + side, regFilter = 'all';
     var input = h('input', { type: 'text', id: id, autocomplete: 'off', value: st[side] ? labelOf(st[side]) : '', 'aria-autocomplete': 'list' });
     var ul = h('ul', { 'class': 'sugg', role: 'listbox' });
-    function fill() {
+    function fill(forceOpen) {
       ul.textContent = '';
-      var q = input.value;
-      if (st[side] && labelOf(st[side]) === q) return;
+      var q = forceOpen && st[side] && labelOf(st[side]) === input.value ? '' : input.value;
+      if (!forceOpen && st[side] && labelOf(st[side]) === q) return;
       var res = suggest(q, side);
       if (!res.length && norm(q).length >= 3) {
         var all = sideList(side);
         ul.appendChild(h('li', { 'class': 'muted', text: tr('notCovered', { c: q }) }));
-        res = all.slice(0, 6);
+        res = all.slice(0, 8);
       }
       var pickBtn = function (p) {
         return h('li', null, h('button', { type: 'button', role: 'option', on: { click: function () { if (side === 'o' && isEu(p.code) !== isEu(st.o)) st.d = null; st[side] = p.code; hap('sel'); if (side === 'd') st.month = null; render(); } } }, p.label + ' · ' + p.country));
       };
+      var backRoute = st.o && isEu(st.o);
+      if (side === 'd' && !norm(q) && !backRoute) {
+        var availRegs = REGIONS.filter(function (rg) { return res.some(function (p) { return (p.region || 'eu') === rg.id; }); });
+        if (availRegs.length > 1) {
+          var tabsLi = h('li', { 'class': 'sugg-tabs', role: 'presentation' });
+          var mkTab = function (regId, label) {
+            return h('button', { type: 'button', 'class': 'sugg-tab', 'aria-pressed': String(regFilter === regId), text: label, on: { mousedown: function (e) { e.preventDefault(); }, click: function () { regFilter = regId; hap('sel'); fill(true); } } });
+          };
+          tabsLi.appendChild(mkTab('all', S.regAll));
+          availRegs.forEach(function (rg) { tabsLi.appendChild(mkTab(rg.id, S[rg.key])); });
+          ul.appendChild(tabsLi);
+          availRegs.forEach(function (rg) {
+            if (regFilter !== 'all' && regFilter !== rg.id) return;
+            var group = res.filter(function (p) { return (p.region || 'eu') === rg.id; });
+            if (!group.length) return;
+            ul.appendChild(h('li', { 'class': 'sugg-head', role: 'presentation', text: S[rg.key] }));
+            group.forEach(function (p) { ul.appendChild(pickBtn(p)); });
+          });
+          return;
+        }
+      }
       res.forEach(function (p) { ul.appendChild(pickBtn(p)); });
       if (side === 'o' && !norm(q)) {
         var hubs = P.origins.filter(function (p) { return p.eu && p.hub; });
         if (hubs.length) { ul.appendChild(h('li', { 'class': 'sugg-head', role: 'presentation', text: S.euReturn })); hubs.forEach(function (p) { ul.appendChild(pickBtn(p)); }); }
       }
     }
-    input.addEventListener('input', function () { st[side] = null; fill(); validMain(); });
-    input.addEventListener('focus', fill);
+    input.addEventListener('input', function () { st[side] = null; regFilter = 'all'; fill(false); validMain(); });
+    input.addEventListener('focus', function () { if (input.value) try { input.select(); } catch (_) {} fill(true); });
     wrap.appendChild(h('label', { 'for': id }, ico(side === 'o' ? IC.takeoff : IC.pin, 14), h('span', { text: side === 'o' ? S.from : S.to })));
     wrap.appendChild(input);
     wrap.appendChild(ul);

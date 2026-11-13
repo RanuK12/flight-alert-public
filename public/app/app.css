@@ -124,10 +124,15 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .seg { display: flex; background: color-mix(in srgb, var(--card) 70%, var(--bg)); border: 1px solid var(--line); border-radius: 12px; padding: 3px; gap: 3px; margin-bottom: 12px; }
 .seg button { flex: 1; border: 0; border-radius: 9px; font-size: 14px; }
 .seg button[aria-pressed=true] { background: var(--accent); color: var(--accent-text); font-weight: 600; }
-.sugg { list-style: none; margin: 6px 0 0; padding: 0; border-radius: 12px; overflow: hidden; }
-.sugg li button { width: 100%; text-align: left; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--line) 65%, transparent); border-radius: 0; padding: 8px 10px; font-size: 14px; }
-.sugg li:last-child button { border-bottom: 0; }
-.sugg-head { font-size: .78rem; font-weight: 600; opacity: .75; padding: .55rem .4rem .25rem; list-style: none; }
+.sugg { list-style: none; margin: 8px 0 0; padding: 0; border-radius: 12px; overflow-y: auto; max-height: 290px; border: 1px solid color-mix(in srgb, var(--line) 80%, transparent); background: color-mix(in srgb, var(--card) 96%, var(--bg)); }
+.sugg:empty { display: none; border: 0; margin: 0; }
+.sugg-tabs { display: flex; gap: 6px; overflow-x: auto; padding: 8px 8px 6px; position: sticky; top: 0; z-index: 2; background: color-mix(in srgb, var(--card) 98%, var(--bg)); border-bottom: 1px solid var(--line); scrollbar-width: none; }
+.sugg-tabs::-webkit-scrollbar { display: none; }
+.sugg-tab { flex: 0 0 auto; width: auto !important; border: 1px solid var(--line) !important; border-radius: 999px !important; padding: 4px 10px !important; font-size: 12px !important; font-weight: 500; background: transparent; color: var(--hint-strong); cursor: pointer; white-space: nowrap; }
+.sugg-tab[aria-pressed=true] { background: var(--accent) !important; color: var(--accent-text) !important; border-color: var(--accent) !important; font-weight: 600; }
+.sugg li button:not(.sugg-tab) { width: 100%; text-align: left; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--line) 65%, transparent); border-radius: 0; padding: 9px 12px; font-size: 14px; background: transparent; }
+.sugg li:last-child button:not(.sugg-tab) { border-bottom: 0; }
+.sugg-head { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--hint-strong); padding: 10px 12px 5px; list-style: none; background: color-mix(in srgb, var(--bg) 55%, var(--card)); border-bottom: 1px solid color-mix(in srgb, var(--line) 50%, transparent); }
 .dates { margin-bottom: 12px; }
 .date {
   display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
