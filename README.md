@@ -1,3 +1,12 @@
+---
+title: Flight Alert
+emoji: ✈️
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+---
+
 # flight-alert-public
 
 Buscador y alertas de vuelos baratos **Argentina → Europa**, por Telegram (@flightalertpro_bot) y una web pública. Única fuente de precios: Travelpayouts (caché de Aviasales). El bot privado de Emilio no vive en este repo.
