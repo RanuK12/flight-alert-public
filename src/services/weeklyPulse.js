@@ -16,8 +16,28 @@ const { sortFlights } = require('./sortFlights');
 const places = require('../bot/ux/places');
 const miniapp = require('../bot/miniapp');
 const cb = require('../bot/ux/cb');
-const { extractRetryAfterSec, isBlockedError } = require('./broadcast');
 const logger = require('../utils/logger').child('weekly-pulse');
+
+function extractRetryAfterSec(err) {
+  if (!err) return null;
+  const direct = err.parameters && Number(err.parameters.retry_after);
+  if (Number.isFinite(direct) && direct > 0) return direct;
+  const resp = err.response && err.response.body && err.response.body.parameters && Number(err.response.body.parameters.retry_after);
+  if (Number.isFinite(resp) && resp > 0) return resp;
+  const status = (err.response && err.response.statusCode) || err.statusCode;
+  if (status === 429) {
+    const m = /retry after (\d+)/i.exec(String(err.message || ''));
+    return m ? Number(m[1]) : 1;
+  }
+  return null;
+}
+
+function isBlockedError(err) {
+  if (!err) return false;
+  const status = (err.response && err.response.statusCode) || err.statusCode;
+  if (status === 403) return true;
+  return /bot was blocked by the user|user is deactivated|chat not found|have no rights to send/i.test(String(err.message || ''));
+}
 
 const MAX_RATE_PER_SEC = 25;
 const defaultSleep = (ms) => new Promise((r) => setTimeout(r, ms));
