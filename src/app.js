@@ -382,6 +382,7 @@ function schedule() {
     fx: () => fx.refresh()
       .then(() => fx.adjustSubscriptions((id, amount) => require('./services/payments/mp').updatePreapprovalAmount(id, amount))),
     instant: () => require('./services/instantAlerts').run(getBot()),
+    weeklyPulse: () => require('./services/weeklyPulse').run(getBot()),
   });
 }
 

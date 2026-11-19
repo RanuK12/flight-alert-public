@@ -96,9 +96,33 @@ function matchesRoute(r, f) {
 }
 
 const ALERT_TEXT = {
-  es: { title: 'Bajó el precio', ceiling: 'Tu techo', cached: 'Precio en caché; el final lo ves en Aviasales.', live: 'Precio de referencia; el final lo ves en Aviasales.' },
-  en: { title: 'Price drop', ceiling: 'Your ceiling', cached: 'Cached price; see the final price on Aviasales.', live: 'Reference price; see the final price on Aviasales.' },
-  pt: { title: 'O preço caiu', ceiling: 'Seu teto', cached: 'Preço em cache; o final você vê na Aviasales.', live: 'Preço de referência; o final você vê na Aviasales.' },
+  es: {
+    title: '🔥 Bajó el precio',
+    ceiling: 'Tu techo',
+    saved: 'Ahorrás €{diff}',
+    cached: 'Precio en caché; el final lo ves en Aviasales.',
+    live: 'Precio de referencia; el final lo ves en Aviasales.',
+    seeBtn: '✈️ Ver en Aviasales',
+    manageBtn: '⚙️ Gestionar alerta',
+  },
+  en: {
+    title: '🔥 Price drop',
+    ceiling: 'Your ceiling',
+    saved: 'You save €{diff}',
+    cached: 'Cached price; see the final price on Aviasales.',
+    live: 'Reference price; see the final price on Aviasales.',
+    seeBtn: '✈️ See on Aviasales',
+    manageBtn: '⚙️ Manage alert',
+  },
+  pt: {
+    title: '🔥 O preço caiu',
+    ceiling: 'Seu teto',
+    saved: 'Você economiza €{diff}',
+    cached: 'Preço em cache; o final você vê na Aviasales.',
+    live: 'Preço de referência; o final você vê na Aviasales.',
+    seeBtn: '✈️ Ver na Aviasales',
+    manageBtn: '⚙️ Gerenciar alerta',
+  },
 };
 
 async function storeBest(list, best, now) {
@@ -127,12 +151,30 @@ async function storeBest(list, best, now) {
 function messageFor(route, flight, now) {
   const lang = ALERT_TEXT[route.lang] ? route.lang : 'es';
   const T = ALERT_TEXT[lang];
+  const diff = Number(route.priceThreshold) - Number(flight.price);
+  const diffPart = Number.isFinite(diff) && diff > 0 ? ` (${T.saved.replace('{diff}', Math.round(diff))})` : '';
   return [
     `${T.title}: ${flight.origin} → ${flight.destination}`,
     `€${flight.price} · ${flight.departureDate}${flight.returnDate ? ` → ${flight.returnDate}` : ''}`,
-    `${T.ceiling}: €${route.priceThreshold} · ${seenLabel(flight.foundAt, now, lang)}`,
+    `${T.ceiling}: €${route.priceThreshold}${diffPart} · ${seenLabel(flight.foundAt, now, lang)}`,
     flight.source === 'duffel' ? T.live : T.cached,
   ].join('\n');
+}
+
+function buttonsFor(route, flight) {
+  const lang = ALERT_TEXT[route.lang] ? route.lang : 'es';
+  const T = ALERT_TEXT[lang];
+  const row = [{ text: T.seeBtn, url: bookingUrl(flight) }];
+  const ma = require('../bot/miniapp');
+  const direct = ma.directLink();
+  const webUrl = ma.miniAppUrl();
+  if (direct && route._id) {
+    const sep = direct.includes('?') ? '&' : '?';
+    row.push({ text: T.manageBtn, url: `${direct}${sep}startapp=alert_${encodeURIComponent(String(route._id))}` });
+  } else if (webUrl) {
+    row.push({ text: T.manageBtn, web_app: { url: webUrl } });
+  }
+  return { inline_keyboard: [row] };
 }
 
 /**
@@ -167,7 +209,7 @@ async function runTick(bot, opts = {}) {
   // Forzado desde /admin: revisa igual, pero no manda nada en horario de silencio.
   if (art.isQuiet(now)) return { quiet: true, forced: Boolean(opts.force) };
   const routes = (await col('Route').find({ paused: false }).lean())
-    .filter((r) => !r.deletedAt && Number(r.priceThreshold) > 0);
+    .filter((r) => !r.deletedAt && Number(r.priceThreshold) > 0 && r.notify !== 'daily');
   const cfg = plans.current();
   const userStateCache = new Map();
   const eligible = [];
@@ -264,7 +306,7 @@ async function runTick(bot, opts = {}) {
       try {
         const advice = await require('./ai/advice').forAlert(route, best, now);
         await notifier.send(bot, route.telegramChatId, messageFor(route, best, now) + (advice ? `\n${advice}` : ''), {
-          reply_markup: { inline_keyboard: [[{ text: 'Ver en Aviasales', url: bookingUrl(best) }]] },
+          reply_markup: buttonsFor(route, best),
         });
       } catch (err) {
         logger.warn('send', { error: err.message });

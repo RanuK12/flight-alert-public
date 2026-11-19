@@ -477,6 +477,18 @@ async function onCallback(bot, cq) {
       return true;
     }
     if (fl === 's' && s === 'help') { await show(bot, chatId, ctx.mid, t(ctx.lang, 'help', { n: entitlements.SEARCH_CAP }), menu(ctx.lang)); return true; }
+    if (fl === 's' && (s === 'poff' || s === 'pon')) {
+      const optOut = s === 'poff';
+      await col('User').updateOne(
+        { telegramUserId: String(ctx.userId) },
+        { $set: { weeklyPulseOptOut: optOut, telegramChatId: String(chatId) } },
+        { upsert: true },
+      );
+      await show(bot, chatId, ctx.mid, t(ctx.lang, optOut ? 'pulseMuted' : 'pulseUnmuted'), {
+        inline_keyboard: [[{ text: t(ctx.lang, optOut ? 'btnPulseOn' : 'btnPulseOff'), callback_data: cb.encode('s', optOut ? 'pon' : 'poff') }]],
+      });
+      return true;
+    }
     await expired(bot, ctx);
   } catch (err) {
     logger.error('callback ux', err);
@@ -583,6 +595,8 @@ async function help(bot, msg) {
 async function settings(bot, msg) {
   const lang = langOf(msg.from);
   const pro = flags.isOwner(msg.from.id) || await entitlements.isPro(msg.from.id);
+  const user = await col('User').findOne({ telegramUserId: String(msg.from.id) }).lean().catch(() => null);
+  const optOut = Boolean(user && user.weeklyPulseOptOut);
   const text = [
     t(lang, 'settingsTitle'),
     t(lang, 'settingsLang'),
@@ -591,6 +605,11 @@ async function settings(bot, msg) {
     t(lang, 'settingsHint'),
   ].join('\n');
   await bot.sendMessage(msg.chat.id, text, { reply_markup: kbFor(lang, msg.from.id) });
+  await bot.sendMessage(msg.chat.id, t(lang, optOut ? 'settingsPulseOff' : 'settingsPulseOn'), {
+    reply_markup: {
+      inline_keyboard: [[{ text: t(lang, optOut ? 'btnPulseOn' : 'btnPulseOff'), callback_data: cb.encode('s', optOut ? 'pon' : 'poff') }]],
+    },
+  });
 }
 
 function ctxOf(msg) {

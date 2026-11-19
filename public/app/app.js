@@ -29,7 +29,11 @@
       pause: 'Pausar', resume: 'Reanudar', edit: 'Editar', del: 'Borrar', undo: 'Deshacer', confirmDel: '¿Borrar la alerta {r}?', delAlert: 'Borrar alerta {r}',
       deletedToast: 'Alerta borrada', versionConflict: 'Esta alerta se actualizó recién. Recargamos el estado actual.',
       ceiling: 'Techo', last: 'último', save: 'Guardar', saved: 'Alerta actualizada', created: 'Alerta creada', back: 'Volver', next: 'Siguiente',
-      confirm: 'Confirmar alerta', notifyLabel: 'Tipo de aviso', notifyDrop: 'Avisos si baja del techo', notifyDaily: 'Resumen de las 21:00',
+      confirm: 'Confirmar alerta', notifyLabel: '¿Cómo querés que te avisemos?', notifyDrop: '⚡ Cuando baje del techo', notifyDaily: '📅 Solo resumen diario 21:00',
+      notifyDropDesc: 'Te avisamos apenas encontremos una oferta bajo tu techo (revisamos cada 3 h) + reporte PDF.',
+      notifyDailyDesc: 'Un único reporte diario con PDF todos los días a las 21:00.',
+      badgeInstant: '⚡ Bajada de precio', badgeDaily: '📅 Diario 21:00',
+      instantFreeHint: 'Los avisos sin esperar al resumen están incluidos en la prueba gratis de 7 días y en Pro.',
       suggestOk: 'Sugerido ({s} días): €{p} (mediana €{m})', suggestUse: 'Usar sugerido €{p}',
       suggestCold: 'Recién hay {s} días reales; en 10 días calculamos techo automático.', suggestNone: 'Sin histórico aún; elegí tu techo manual.',
       seriesNone: 'Sin serie diaria aún', seriesCold: '{s} observación(es) — recolectando serie', seriesTitle: 'Últimos {n} días reales',
@@ -57,7 +61,11 @@
       pause: 'Pausar', resume: 'Retomar', edit: 'Editar', del: 'Apagar', undo: 'Desfazer', confirmDel: 'Apagar o alerta {r}?', delAlert: 'Apagar alerta {r}',
       deletedToast: 'Alerta apagado', versionConflict: 'Este alerta foi atualizado recentemente. Recarregando.',
       ceiling: 'Teto', last: 'último', save: 'Salvar', saved: 'Alerta atualizado', created: 'Alerta criado', back: 'Voltar', next: 'Próximo',
-      confirm: 'Confirmar alerta', notifyLabel: 'Tipo de aviso', notifyDrop: 'Avisos se cair do teto', notifyDaily: 'Resumo das 21:00',
+      confirm: 'Confirmar alerta', notifyLabel: 'Como você quer ser avisado?', notifyDrop: '⚡ Na hora se cair do teto', notifyDaily: '📅 Só resumo diário 21:00',
+      notifyDropDesc: 'Avisamos assim que surgir uma oferta abaixo do seu teto (a cada 3 h) + PDF diário.',
+      notifyDailyDesc: 'Um único relatório diário com PDF todos os dias às 21:00.',
+      badgeInstant: '⚡ Na hora', badgeDaily: '📅 Diário 21:00',
+      instantFreeHint: 'Avisos na hora estão incluídos no teste grátis de 7 dias e no Pro.',
       suggestOk: 'Sugerido ({s} dias): €{p} (mediana €{m})', suggestUse: 'Usar sugerido €{p}',
       suggestCold: 'Só temos {s} dias reais; com 10 calculamos teto automático.', suggestNone: 'Sem histórico ainda; defina seu teto manual.',
       seriesNone: 'Sem série diária ainda', seriesCold: '{s} ponto(s) — coletando histórico', seriesTitle: 'Últimos {n} dias reais',
@@ -85,7 +93,11 @@
       pause: 'Pause', resume: 'Resume', edit: 'Edit', del: 'Delete', undo: 'Undo', confirmDel: 'Delete the alert {r}?', delAlert: 'Delete alert {r}',
       deletedToast: 'Alert deleted', versionConflict: 'Alert changed elsewhere. Reloading.',
       ceiling: 'Ceiling', last: 'last', save: 'Save', saved: 'Alert updated', created: 'Alert created', back: 'Back', next: 'Next',
-      confirm: 'Confirm alert', notifyLabel: 'Alert type', notifyDrop: 'Alerts if below ceiling', notifyDaily: '21:00 daily summary',
+      confirm: 'Confirm alert', notifyLabel: 'How do you want to be notified?', notifyDrop: '⚡ When price drops', notifyDaily: '📅 Daily summary only (21:00)',
+      notifyDropDesc: 'Get notified when a flight drops below your ceiling (checked every 3 h) + daily PDF.',
+      notifyDailyDesc: 'One clean daily PDF report every evening at 21:00.',
+      badgeInstant: '⚡ Price drop', badgeDaily: '📅 Daily 21:00',
+      instantFreeHint: 'Drop alerts without waiting for 21:00 are included in the 7-day free trial and Pro.',
       suggestOk: 'Suggested ({s} days): €{p} (median €{m})', suggestUse: 'Use €{p} suggestion',
       suggestCold: '{s} real days collected so far; need 10 days for auto suggestion.', suggestNone: 'No history yet — set your own ceiling.',
       seriesNone: 'No daily history yet', seriesCold: '{s} point(s) — collecting history', seriesTitle: 'Last {n} real days',
@@ -472,6 +484,33 @@
     toast((r.data && r.data.text) || S.error);
   }
 
+  function notifyPicker(current, onSelect) {
+    var box = h('div', null);
+    var cards = h('div', { 'class': 'mode-cards' });
+    var hintBox = h('div', null);
+    function draw(val) {
+      cards.textContent = '';
+      hintBox.textContent = '';
+      var mk = function (id, title, desc) {
+        return h('button', {
+          type: 'button', 'class': 'mode-card', 'aria-pressed': String(val === id),
+          on: { click: function () { hap('sel'); onSelect(id); draw(id); } },
+        }, h('span', { 'class': 'mode-title', text: title }), h('span', { 'class': 'mode-desc', text: desc }));
+      };
+      cards.appendChild(mk('drop', S.notifyDrop, S.notifyDropDesc));
+      cards.appendChild(mk('daily', S.notifyDaily, S.notifyDailyDesc));
+      if (val === 'drop' && me.plan === 'free') {
+        hintBox.appendChild(h('div', { 'class': 'mode-hint' },
+          h('span', { text: S.instantFreeHint }),
+          h('button', { type: 'button', 'class': 'primary', on: { click: openProLink }, text: S.verPro })));
+      }
+    }
+    draw(current || 'drop');
+    box.appendChild(cards);
+    box.appendChild(hintBox);
+    return box;
+  }
+
   function startCreateFlow(x) {
     var draft = { o: x.origin, d: x.destination, dep: x.departureDate, ret: x.returnDate || null, notify: 'drop', ceiling: x.price || 600, ceilingSource: 'manual', step: 1, suggest: null, idem: uuid4() };
     var trip = draft.ret ? '2' : '1';
@@ -486,11 +525,8 @@
       var card = h('div', { 'class': 'card' });
       if (draft.step === 1) {
         card.appendChild(h('div', { text: dm(draft.dep) + (draft.ret ? ' → ' + dm(draft.ret) : '') }));
-        card.appendChild(h('label', { 'for': 'nw-not', text: S.notifyLabel }));
-        var sel = h('select', { id: 'nw-not', on: { change: function (e) { draft.notify = e.target.value; } } },
-          h('option', { value: 'drop', selected: draft.notify === 'drop' ? 'selected' : null, text: S.notifyDrop }),
-          h('option', { value: 'daily', selected: draft.notify === 'daily' ? 'selected' : null, text: S.notifyDaily }));
-        card.appendChild(sel);
+        card.appendChild(h('label', { text: S.notifyLabel }));
+        card.appendChild(notifyPicker(draft.notify, function (v) { draft.notify = v; }));
         card.appendChild(h('div', { 'class': 'row', style: 'margin-top:12px' },
           h('button', { type: 'button', on: back, text: S.back }),
           h('button', { type: 'button', 'class': 'primary cta-main', on: function () { draft.step = 2; render(); }, text: S.next })));
@@ -575,26 +611,27 @@
         var m = a.outboundDate ? S.months[Number(a.outboundDate.slice(5, 7)) - 1].slice(0, 3) : '';
         var badgeCls = 'badge' + (!a.paused ? ' on' : (a.pausedReason === 'plan_limit' ? ' warn' : ''));
         var badgeTxt = !a.paused ? '● ' + S.active : (a.pausedReason === 'plan_limit' ? S.pausedPlan : S.paused);
+        var isDrop = a.notify === 'drop';
         card.appendChild(h('div', { 'class': 'row' }, h('strong', { text: a.origin + ' → ' + a.destination + (m ? ' · ' + m : '') + (a.tripType === 'roundtrip' ? ' · ⇄' : '') }), h('span', { 'class': badgeCls, text: badgeTxt })));
-        card.appendChild(h('div', { 'class': 'muted mono', text: (a.ceiling ? S.ceiling + ' ' + money(a.ceiling, a.currency) : '') + (a.lastPrice ? ' · ' + S.last + ' ' + money(a.lastPrice, 'EUR') : '') }));
+        card.appendChild(h('div', { 'class': 'badge-row' },
+          h('span', { 'class': 'badge ' + (isDrop ? 'instant' : 'daily'), text: isDrop ? S.badgeInstant : S.badgeDaily }),
+          h('span', { 'class': 'muted mono', text: (a.ceiling ? S.ceiling + ' ' + money(a.ceiling, a.currency) : '') + (a.lastPrice ? ' · ' + S.last + ' ' + money(a.lastPrice, 'EUR') : '') })));
         var sparkBox = h('div', { 'class': 'spark', text: '…' });
         card.appendChild(sparkBox);
         api('GET', '/app/api/alerts/' + a.id + '/series').then(function (sr) { if (sr.status === 200) renderSparkline(sparkBox, sr.data); else sparkBox.remove(); });
         var edCeil = h('input', { type: 'number', id: 'c-' + a.id, min: 50, max: 9999, value: a.ceiling || 600 });
         var edDep = h('input', { type: 'date', id: 'd-' + a.id, value: a.outboundDate || '' });
         var edRet = a.tripType === 'roundtrip' ? h('input', { type: 'date', id: 'r-' + a.id, value: a.returnDate || '' }) : null;
-        var edNot = h('select', { id: 'n-' + a.id },
-          h('option', { value: 'drop', selected: a.notify === 'drop' ? 'selected' : null, text: S.notifyDrop }),
-          h('option', { value: 'daily', selected: a.notify === 'daily' ? 'selected' : null, text: S.notifyDaily }));
+        var edNotifyVal = a.notify === 'drop' ? 'drop' : 'daily';
         var editor = h('div', { hidden: true },
           h('label', { 'for': 'c-' + a.id, text: S.ceiling + ' (€)' }),
           h('input', { type: 'range', min: 50, max: 3000, step: 10, value: a.ceiling || 600, 'aria-label': S.ceiling, on: { input: function (e) { edCeil.value = e.target.value; } } }),
           edCeil,
           h('label', { 'for': 'd-' + a.id, text: S.dep }), edDep,
           edRet ? h('label', { 'for': 'r-' + a.id, text: S.ret }) : null, edRet,
-          h('label', { 'for': 'n-' + a.id, text: S.notifyLabel }), edNot,
+          h('label', { text: S.notifyLabel }), notifyPicker(edNotifyVal, function (v) { edNotifyVal = v; }),
           h('button', { type: 'button', 'class': 'primary cta-main', style: 'margin-top:8px;width:100%', on: { click: function () {
-            var patch = { ceiling: Number(edCeil.value), notify: edNot.value, version: a.version || 1 };
+            var patch = { ceiling: Number(edCeil.value), notify: edNotifyVal, version: a.version || 1 };
             if (edDep.value) patch.outboundDate = edDep.value;
             if (edRet && edRet.value) patch.returnDate = edRet.value;
             api('PATCH', '/app/api/alerts/' + a.id, patch, { 'If-Match': String(a.version || 1) }).then(function (x) {

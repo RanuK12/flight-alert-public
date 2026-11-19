@@ -21,6 +21,21 @@ function dailyAt(hour) {
   };
 }
 
+/** Ventana semanal en un día (0=Dom..6=Sáb) y hora ART: la última ocurrencia <= now. */
+function weeklyAt(dayOfWeek, hour) {
+  const targetDow = ((Number(dayOfWeek) % 7) + 7) % 7;
+  return (now) => {
+    const todayAt = art.atArtHour(now, hour);
+    const { day } = art.parts(todayAt);
+    const [y, m, d] = day.split('-').map(Number);
+    const currentDow = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+    let diffDays = (currentDow - targetDow + 7) % 7;
+    let at = new Date(todayAt.getTime() - diffDays * art.DAY_MS);
+    if (at.getTime() > now.getTime()) at = new Date(at.getTime() - 7 * art.DAY_MS);
+    return { key: `${art.parts(at).day}T${String(hour).padStart(2, '0')}`, at };
+  };
+}
+
 /** Ventana cada N horas desde las 00:00 ART. */
 function everyHours(n) {
   return (now) => {
@@ -60,6 +75,8 @@ async function runDue(job, now = clock.now()) {
 
 function buildJobs(deps) {
   const instantEvery = num('INSTANT_ALERTS_EVERY_HOURS', 3);
+  const pulseDay = process.env.WEEKLY_PULSE_DAY !== undefined && process.env.WEEKLY_PULSE_DAY !== '' ? Number(process.env.WEEKLY_PULSE_DAY) : 1;
+  const pulseHour = num('WEEKLY_PULSE_HOUR', 11);
   return [
     { name: 'digest', window: dailyAt(21), graceMs: num('DIGEST_GRACE_HOURS', 3) * art.HOUR_MS, leaseMs: 30 * MIN_MS, run: deps.digest },
     { name: 'expire', window: everyHours(1), graceMs: art.HOUR_MS, leaseMs: 15 * MIN_MS, run: deps.expire },
@@ -68,6 +85,7 @@ function buildJobs(deps) {
     { name: 'instant', window: everyHours(instantEvery), graceMs: instantEvery * art.HOUR_MS, leaseMs: 30 * MIN_MS, run: deps.instant },
     // Lo que se guardó por horario de silencio sale a las 08:00.
     { name: 'instant-morning', window: dailyAt(8), graceMs: 4 * art.HOUR_MS, leaseMs: 30 * MIN_MS, run: deps.instant },
+    { name: 'weekly-pulse', window: weeklyAt(pulseDay, pulseHour), graceMs: 12 * art.HOUR_MS, leaseMs: 30 * MIN_MS, run: deps.weeklyPulse },
   ].filter((job) => typeof job.run === 'function');
 }
 
@@ -96,4 +114,4 @@ function stop() {
   timer = null;
 }
 
-module.exports = { start, stop, tick, runDue, buildJobs, dailyAt, everyHours };
+module.exports = { start, stop, tick, runDue, buildJobs, dailyAt, weeklyAt, everyHours };

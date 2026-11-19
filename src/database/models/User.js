@@ -11,6 +11,7 @@ const schema = new mongoose.Schema({
   alertMinLevel: { type: String, enum: ['steal', 'great', 'good', 'all'], default: 'good' },
   blocked: { type: Boolean, default: false },
   blockedAt: { type: String, default: null },
+  weeklyPulseOptOut: { type: Boolean, default: false },
 }, { timestamps: true });
 
 module.exports = mongoose.models.User || mongoose.model('User', schema);
