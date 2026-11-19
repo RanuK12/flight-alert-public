@@ -239,21 +239,6 @@ async function run(bot, {
     if (!summary.sampleText) summary.sampleText = text;
     if (dryRun) continue;
 
-    let recId = null;
-    try {
-      const rec = await col('BroadcastSend').create({
-        campaignKey: key,
-        telegramUserId: uid,
-        status: 'pending',
-        sentAt: null,
-        error: null,
-      });
-      recId = rec && rec._id;
-    } catch (err) {
-      if (err && err.code === 11000) { summary.skippedAlreadySent += 1; continue; }
-      throw err;
-    }
-
     const waitMs = minIntervalMs - (Date.now() - lastSentAt);
     if (lastSentAt > 0 && waitMs > 0) await sleep(waitMs);
 
@@ -278,26 +263,28 @@ async function run(bot, {
     }
 
     const stamp = clock.now().toISOString();
+    const record = async (status, error = null) => {
+      try {
+        await col('BroadcastSend').updateOne(
+          { campaignKey: key, telegramUserId: uid },
+          { $set: { campaignKey: key, telegramUserId: uid, telegramChatId: chatId, status, error, sentAt: stamp } },
+          { upsert: true },
+        );
+      } catch (err) {
+        if (!err || err.code !== 11000) logger.warn('broadcast record failed', { userId: uid, error: err && err.message });
+      }
+    };
+
     if (sentOk) {
       summary.sent += 1;
-      if (recId) await col('BroadcastSend').updateOne({ _id: recId }, { $set: { status: 'sent', sentAt: stamp } });
+      await record('sent', null);
     } else if (isBlockedError(lastErr)) {
       summary.blocked += 1;
-      if (recId) {
-        await col('BroadcastSend').updateOne(
-          { _id: recId },
-          { $set: { status: 'blocked', error: String(lastErr && lastErr.message || '403').slice(0, 200) } },
-        );
-      }
+      await record('blocked', String((lastErr && lastErr.message) || '403').slice(0, 200));
       await col('User').updateOne({ telegramUserId: uid }, { $set: { blocked: true, blockedAt: stamp } }).catch(() => {});
     } else {
       summary.failed += 1;
-      if (recId) {
-        await col('BroadcastSend').updateOne(
-          { _id: recId },
-          { $set: { status: 'failed', error: String(lastErr && lastErr.message || 'error').slice(0, 200) } },
-        );
-      }
+      await record('failed', String((lastErr && lastErr.message) || 'error').slice(0, 200));
       logger.warn('pulse send failed', { userId: uid, error: lastErr && lastErr.message });
     }
   }
